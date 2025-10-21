@@ -163,8 +163,7 @@ async def get_accounts():
     return accounts
 
 @api_router.post("/accounts", response_model=Account)
-async def create_account(account_data: AccountCreate, authorization: str = None):
-    user = await get_current_user(authorization)
+async def create_account(account_data: AccountCreate, user: dict = Depends(get_current_user)):
     if user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can create accounts")
     
@@ -176,8 +175,7 @@ async def create_account(account_data: AccountCreate, authorization: str = None)
     return account
 
 @api_router.delete("/accounts/{account_id}")
-async def delete_account(account_id: str, authorization: str = None):
-    user = await get_current_user(authorization)
+async def delete_account(account_id: str, user: dict = Depends(get_current_user)):
     if user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can delete accounts")
     
