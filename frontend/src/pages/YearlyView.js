@@ -45,32 +45,38 @@ function YearlyView() {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn">
-              <ArrowLeft className="h-5 w-5" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn" size="sm">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <h1 className="text-3xl font-bold" style={{ color: '#d63031' }}>Jahresübersicht {currentYear}</h1>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>
+              <span className="hidden sm:inline">Fahrschule Saferide by Nadine Stäubli - </span>
+              Jahresübersicht {currentYear}
+            </h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Year selector */}
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => setCurrentYear(currentYear - 1)} data-testid="prev-year-btn">
-            ←
-          </Button>
-          <h2 className="text-2xl font-bold" data-testid="current-year">{currentYear}</h2>
-          <Button variant="outline" onClick={() => setCurrentYear(currentYear + 1)} data-testid="next-year-btn">
-            →
-          </Button>
+          <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Year totals */}
         <Card className="mb-6 border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Jahres-Total</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Jahres-Total</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
