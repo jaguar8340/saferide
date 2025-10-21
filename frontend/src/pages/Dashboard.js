@@ -354,13 +354,11 @@ function Dashboard() {
                             <SelectValue placeholder="Konto auswählen" />
                           </SelectTrigger>
                           <SelectContent>
-                            {accounts
-                              .filter(acc => acc.type === formData.type)
-                              .map(account => (
-                                <SelectItem key={account.id} value={account.id}>
-                                  {account.name}
-                                </SelectItem>
-                              ))}
+                            {accounts.map(account => (
+                              <SelectItem key={account.id} value={account.id}>
+                                {account.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
