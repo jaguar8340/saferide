@@ -393,7 +393,7 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
     styles = getSampleStyleSheet()
     
     # Title
-    title = Paragraph(f"Fahrschule Saferide - {month}/{year}", styles['Title'])
+    title = Paragraph(f"Fahrschule Saferide by Nadine Stäubli - {month}/{year}", styles['Title'])
     elements.append(title)
     elements.append(Spacer(1, 0.5*cm))
     
