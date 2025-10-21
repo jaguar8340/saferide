@@ -256,9 +256,7 @@ async def delete_transaction(transaction_id: str, user: dict = Depends(get_curre
 
 # File upload
 @api_router.post("/upload/{transaction_id}")
-async def upload_file(transaction_id: str, file: UploadFile = File(...), authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def upload_file(transaction_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
     # Save file
     file_extension = file.filename.split('.')[-1]
     file_name = f"{transaction_id}_{uuid.uuid4()}.{file_extension}"
