@@ -96,7 +96,7 @@ def verify_token(token: str) -> dict:
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def get_current_user(authorization: str = None) -> dict:
+async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     if not authorization:
         raise HTTPException(status_code=401, detail="No token provided")
     
