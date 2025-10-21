@@ -225,6 +225,89 @@ function Dashboard() {
     setShowAddDialog(true);
   };
 
+  // Bank documents handlers
+  const handleAddBankDocument = async (file) => {
+    try {
+      const response = await axios.post(`${API}/bank-documents`, {
+        date: getCurrentDateISO(),
+        month: monthKey
+      }, {
+        headers: { Authorization: token }
+      });
+
+      const docId = response.data.id;
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      await axios.post(`${API}/bank-documents/${docId}/upload`, formData, {
+        headers: { Authorization: token }
+      });
+      
+      toast.success('Bankbeleg hochgeladen');
+      fetchBankDocuments();
+    } catch (error) {
+      toast.error('Fehler beim Hochladen');
+    }
+  };
+
+  const handleDeleteBankDocument = async (docId) => {
+    try {
+      await axios.delete(`${API}/bank-documents/${docId}`, {
+        headers: { Authorization: token }
+      });
+      toast.success('Bankbeleg gelöscht');
+      fetchBankDocuments();
+    } catch (error) {
+      toast.error('Fehler beim Löschen');
+    }
+  };
+
+  // Misc items handlers
+  const handleAddMiscItem = async (remarks, file) => {
+    if (!remarks.trim()) {
+      toast.error('Bitte Bemerkungen eingeben');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API}/misc-items`, {
+        date: getCurrentDateISO(),
+        month: monthKey,
+        remarks
+      }, {
+        headers: { Authorization: token }
+      });
+
+      if (file) {
+        const itemId = response.data.id;
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        await axios.post(`${API}/misc-items/${itemId}/upload`, formData, {
+          headers: { Authorization: token }
+        });
+      }
+      
+      toast.success('Diverses-Eintrag hinzugefügt');
+      fetchMiscItems();
+    } catch (error) {
+      toast.error('Fehler beim Speichern');
+    }
+  };
+
+  const handleDeleteMiscItem = async (itemId) => {
+    try {
+      await axios.delete(`${API}/misc-items/${itemId}`, {
+        headers: { Authorization: token }
+      });
+      toast.success('Diverses-Eintrag gelöscht');
+      fetchMiscItems();
+    } catch (error) {
+      toast.error('Fehler beim Löschen');
+    }
+  };
+
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       {/* Delete Confirmation Dialog */}
