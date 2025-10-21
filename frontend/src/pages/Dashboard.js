@@ -203,7 +203,7 @@ function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold" style={{ color: '#d63031' }}>Saferide</h1>
+              <h1 className="text-3xl font-bold" style={{ color: '#d63031' }}>Fahrschule Saferide by Nadine Stäubli</h1>
               <p className="text-sm text-gray-600">Willkommen, {user?.username} ({user?.role})</p>
             </div>
             
