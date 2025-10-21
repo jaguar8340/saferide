@@ -44,11 +44,12 @@ function Dashboard() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
   const monthKey = getMonthKey(year, month);
-  const month = currentDate.getMonth() + 1;
 
   useEffect(() => {
     fetchAccounts();
     fetchTransactions();
+    fetchBankDocuments();
+    fetchMiscItems();
   }, [currentDate]);
 
   const fetchAccounts = async () => {
@@ -68,6 +69,28 @@ function Dashboard() {
       setTransactions(response.data);
     } catch (error) {
       toast.error('Fehler beim Laden der Einträge');
+    }
+  };
+
+  const fetchBankDocuments = async () => {
+    try {
+      const response = await axios.get(`${API}/bank-documents?month=${monthKey}`, {
+        headers: { Authorization: token }
+      });
+      setBankDocuments(response.data);
+    } catch (error) {
+      console.error('Fehler beim Laden der Bankbelege:', error);
+    }
+  };
+
+  const fetchMiscItems = async () => {
+    try {
+      const response = await axios.get(`${API}/misc-items?month=${monthKey}`, {
+        headers: { Authorization: token }
+      });
+      setMiscItems(response.data);
+    } catch (error) {
+      console.error('Fehler beim Laden der Diverses-Einträge:', error);
     }
   };
 
