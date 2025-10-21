@@ -332,11 +332,14 @@ function Dashboard() {
 
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold" style={{ color: '#d63031' }}>Fahrschule Saferide by Nadine Stäubli</h1>
-              <p className="text-sm text-gray-600">Willkommen, {user?.username} ({user?.role})</p>
+              <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>
+                <span className="hidden sm:inline">Fahrschule Saferide by Nadine Stäubli</span>
+                <span className="sm:hidden">Saferide</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600">Willkommen, {user?.username}</p>
             </div>
             
             <div className="flex items-center gap-3">
