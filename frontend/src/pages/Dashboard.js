@@ -534,19 +534,19 @@ function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-lg" style={{ background: '#e8f8f5' }}>
                 <p className="text-sm text-gray-600">Total Einnahmen</p>
-                <p className="text-2xl font-bold" style={{ color: '#27ae60' }} data-testid="total-income">
+                <p className="text-xl sm:text-2xl font-bold" style={{ color: '#27ae60' }} data-testid="total-income">
                   CHF {totalIncome.toFixed(2)}
                 </p>
               </div>
               <div className="p-4 rounded-lg" style={{ background: '#fef5e7' }}>
                 <p className="text-sm text-gray-600">Total Ausgaben</p>
-                <p className="text-2xl font-bold" style={{ color: '#e67e22' }} data-testid="total-expense">
+                <p className="text-xl sm:text-2xl font-bold" style={{ color: '#e67e22' }} data-testid="total-expense">
                   CHF {totalExpense.toFixed(2)}
                 </p>
               </div>
               <div className="p-4 rounded-lg" style={{ background: totalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}>
                 <p className="text-sm text-gray-600">Total Einkommen</p>
-                <p className="text-2xl font-bold" style={{ color: totalBalance >= 0 ? '#27ae60' : '#c0392b' }} data-testid="total-balance">
+                <p className="text-xl sm:text-2xl font-bold" style={{ color: totalBalance >= 0 ? '#27ae60' : '#c0392b' }} data-testid="total-balance">
                   CHF {totalBalance.toFixed(2)}
                 </p>
               </div>
