@@ -174,6 +174,24 @@ async def create_account(account_data: AccountCreate, user: dict = Depends(get_c
     await db.accounts.insert_one(account_dict)
     return account
 
+
+@api_router.put("/accounts/{account_id}", response_model=Account)
+async def update_account(account_id: str, account_data: AccountCreate, user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can update accounts")
+    
+    update_data = account_data.model_dump()
+    result = await db.accounts.update_one({"id": account_id}, {"$set": update_data})
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    updated_account = await db.accounts.find_one({"id": account_id}, {"_id": 0})
+    if isinstance(updated_account.get('created_at'), str):
+        updated_account['created_at'] = datetime.fromisoformat(updated_account['created_at'])
+    
+    return Account(**updated_account)
+
 @api_router.delete("/accounts/{account_id}")
 async def delete_account(account_id: str, user: dict = Depends(get_current_user)):
     if user['role'] != 'admin':
