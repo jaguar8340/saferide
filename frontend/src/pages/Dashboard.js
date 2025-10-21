@@ -107,8 +107,6 @@ function Dashboard() {
         payment_method: '',
         remarks: ''
       });
-        remarks: ''
-      });
       fetchTransactions();
     } catch (error) {
       toast.error('Fehler beim Speichern');
