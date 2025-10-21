@@ -304,12 +304,14 @@ function Dashboard() {
                   setShowAddDialog(open);
                   if (!open) {
                     setEditingTransaction(null);
+                    setUploadFile(null);
                     setFormData({
                       date: new Date().toISOString().split('T')[0],
                       description: '',
                       type: 'income',
                       amount: '',
                       account_id: '',
+                      payment_method: '',
                       remarks: ''
                     });
                   }
