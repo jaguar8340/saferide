@@ -476,6 +476,141 @@ async def delete_user(user_id: str, user: dict = Depends(get_current_user)):
     
     return {"message": "User deleted successfully"}
 
+# Bank Documents
+@api_router.get("/bank-documents")
+async def get_bank_documents(month: str, user: dict = Depends(get_current_user)):
+    docs = await db.bank_documents.find({"month": month}, {"_id": 0}).sort("date", -1).to_list(1000)
+    for doc in docs:
+        if isinstance(doc.get('created_at'), str):
+            doc['created_at'] = datetime.fromisoformat(doc['created_at'])
+    return docs
+
+@api_router.post("/bank-documents")
+async def create_bank_document(doc_data: BankDocumentCreate, user: dict = Depends(get_current_user)):
+    bank_doc = BankDocument(
+        date=doc_data.date,
+        month=doc_data.month,
+        file_url="",
+        user_id=user['id']
+    )
+    
+    bank_doc_dict = bank_doc.model_dump()
+    bank_doc_dict['created_at'] = bank_doc_dict['created_at'].isoformat()
+    
+    await db.bank_documents.insert_one(bank_doc_dict)
+    return bank_doc
+
+@api_router.post("/bank-documents/{doc_id}/upload")
+async def upload_bank_document(doc_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"bank_{doc_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.bank_documents.update_one({"id": doc_id}, {"$set": {"file_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.delete("/bank-documents/{doc_id}")
+async def delete_bank_document(doc_id: str, user: dict = Depends(get_current_user)):
+    result = await db.bank_documents.delete_one({"id": doc_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"message": "Document deleted successfully"}
+
+# Misc Items
+@api_router.get("/misc-items")
+async def get_misc_items(month: str, user: dict = Depends(get_current_user)):
+    items = await db.misc_items.find({"month": month}, {"_id": 0}).sort("date", -1).to_list(1000)
+    for item in items:
+        if isinstance(item.get('created_at'), str):
+            item['created_at'] = datetime.fromisoformat(item['created_at'])
+    return items
+
+@api_router.post("/misc-items")
+async def create_misc_item(item_data: MiscItemCreate, user: dict = Depends(get_current_user)):
+    misc_item = MiscItem(
+        date=item_data.date,
+        month=item_data.month,
+        remarks=item_data.remarks,
+        user_id=user['id']
+    )
+    
+    misc_item_dict = misc_item.model_dump()
+    misc_item_dict['created_at'] = misc_item_dict['created_at'].isoformat()
+    
+    await db.misc_items.insert_one(misc_item_dict)
+    return misc_item
+
+@api_router.post("/misc-items/{item_id}/upload")
+async def upload_misc_file(item_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"misc_{item_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.misc_items.update_one({"id": item_id}, {"$set": {"file_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.delete("/misc-items/{item_id}")
+async def delete_misc_item(item_id: str, user: dict = Depends(get_current_user)):
+    result = await db.misc_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Item deleted successfully"}
+
+# Statistics for accounting report
+@api_router.get("/reports/statistics")
+async def get_statistics(year: int, user: dict = Depends(get_current_user)):
+    # Get all transactions for the year
+    transactions = await db.transactions.find(
+        {"date": {"$regex": f"^{year}"}},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Count Fahrstunden (driving lessons)
+    fahrstunden_account = await db.accounts.find_one({"name": {"$regex": "Fahrstunden", "$options": "i"}}, {"_id": 0})
+    fahrstunden_count = 0
+    fahrstunden_revenue = 0
+    
+    if fahrstunden_account:
+        fahrstunden_trans = [t for t in transactions if t['account_id'] == fahrstunden_account['id']]
+        fahrstunden_count = len(fahrstunden_trans)
+        fahrstunden_revenue = sum([t['amount'] for t in fahrstunden_trans])
+    
+    # Monthly breakdown
+    monthly_data = {}
+    for month in range(1, 13):
+        month_key = f"{year}-{month:02d}"
+        month_trans = [t for t in transactions if t['date'].startswith(month_key)]
+        monthly_data[month_key] = {
+            'income': sum([t['amount'] for t in month_trans if t['type'] == 'income']),
+            'expense': sum([t['amount'] for t in month_trans if t['type'] == 'expense'])
+        }
+    
+    # Payment methods breakdown
+    payment_methods = {}
+    for trans in transactions:
+        method = trans.get('payment_method', 'Unbekannt')
+        if method not in payment_methods:
+            payment_methods[method] = 0
+        payment_methods[method] += trans['amount']
+    
+    return {
+        'fahrstunden_count': fahrstunden_count,
+        'fahrstunden_revenue': fahrstunden_revenue,
+        'monthly_data': monthly_data,
+        'payment_methods': payment_methods
+    }
+
+
 app.include_router(api_router)
 
 app.add_middleware(
