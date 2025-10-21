@@ -192,6 +192,7 @@ function Dashboard() {
       type: transaction.type,
       amount: transaction.amount.toString(),
       account_id: transaction.account_id,
+      payment_method: transaction.payment_method || '',
       remarks: transaction.remarks || ''
     });
     setShowAddDialog(true);
