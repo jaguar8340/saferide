@@ -187,9 +187,7 @@ async def delete_account(account_id: str, user: dict = Depends(get_current_user)
 
 # Transaction routes
 @api_router.get("/transactions", response_model=List[Transaction])
-async def get_transactions(year: int = None, month: int = None, authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def get_transactions(year: int = None, month: int = None, user: dict = Depends(get_current_user)):
     query = {}
     if year and month:
         # Filter by year and month
@@ -209,9 +207,7 @@ async def get_transactions(year: int = None, month: int = None, authorization: s
     return transactions
 
 @api_router.post("/transactions", response_model=Transaction)
-async def create_transaction(transaction_data: TransactionCreate, authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def create_transaction(transaction_data: TransactionCreate, user: dict = Depends(get_current_user)):
     transaction = Transaction(
         date=transaction_data.date,
         description=transaction_data.description,
@@ -234,9 +230,7 @@ async def create_transaction(transaction_data: TransactionCreate, authorization:
     return transaction
 
 @api_router.put("/transactions/{transaction_id}")
-async def update_transaction(transaction_id: str, transaction_data: TransactionCreate, authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def update_transaction(transaction_id: str, transaction_data: TransactionCreate, user: dict = Depends(get_current_user)):
     update_data = transaction_data.model_dump()
     
     # Get account name
@@ -252,9 +246,7 @@ async def update_transaction(transaction_id: str, transaction_data: TransactionC
     return {"message": "Transaction updated successfully"}
 
 @api_router.delete("/transactions/{transaction_id}")
-async def delete_transaction(transaction_id: str, authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def delete_transaction(transaction_id: str, user: dict = Depends(get_current_user)):
     result = await db.transactions.delete_one({"id": transaction_id})
     
     if result.deleted_count == 0:
