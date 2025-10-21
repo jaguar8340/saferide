@@ -326,7 +326,7 @@ function Dashboard() {
                       </div>
                       <div>
                         <Label>Typ</Label>
-                        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value, account_id: '' })}>
+                        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                           <SelectTrigger data-testid="transaction-type-select">
                             <SelectValue />
                           </SelectTrigger>
