@@ -404,8 +404,7 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
 
 # User management (Admin only)
 @api_router.get("/users", response_model=List[User])
-async def get_users(authorization: str = None):
-    user = await get_current_user(authorization)
+async def get_users(user: dict = Depends(get_current_user)):
     if user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can view users")
     
@@ -416,8 +415,7 @@ async def get_users(authorization: str = None):
     return users
 
 @api_router.delete("/users/{user_id}")
-async def delete_user(user_id: str, authorization: str = None):
-    user = await get_current_user(authorization)
+async def delete_user(user_id: str, user: dict = Depends(get_current_user)):
     if user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Only admins can delete users")
     
