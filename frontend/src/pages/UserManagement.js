@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
@@ -17,6 +18,7 @@ function UserManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({ username: '', password: '', role: 'user' });
   const [loading, setLoading] = useState(false);
 
@@ -52,22 +54,42 @@ function UserManagement() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Benutzer wirklich löschen?')) return;
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await axios.delete(`${API}/users/${id}`, {
+      await axios.delete(`${API}/users/${deleteConfirm}`, {
         headers: { Authorization: token }
       });
       toast.success('Benutzer gelöscht');
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Fehler beim Löschen');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Benutzer löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} style={{ background: '#d63031', color: 'white' }}>
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
@@ -162,7 +184,7 @@ function UserManagement() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => setDeleteConfirm(user.id)}
                             data-testid="delete-user-btn"
                           >
                             <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />

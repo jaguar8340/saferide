@@ -9,14 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2 } from 'lucide-react';
 
 function AccountManagement() {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({ name: '', type: 'income' });
   const [loading, setLoading] = useState(false);
 
@@ -38,36 +41,70 @@ function AccountManagement() {
     setLoading(true);
 
     try {
-      await axios.post(`${API}/accounts`, formData, {
-        headers: { Authorization: token }
-      });
-      toast.success('Konto erstellt');
-      setShowAddDialog(false);
+      if (editingAccount) {
+        await axios.put(`${API}/accounts/${editingAccount.id}`, formData, {
+          headers: { Authorization: token }
+        });
+        toast.success('Konto aktualisiert');
+      } else {
+        await axios.post(`${API}/accounts`, formData, {
+          headers: { Authorization: token }
+        });
+        toast.success('Konto erstellt');
+      }
+      setShowDialog(false);
+      setEditingAccount(null);
       setFormData({ name: '', type: 'income' });
       fetchAccounts();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Fehler beim Erstellen');
+      toast.error(error.response?.data?.detail || 'Fehler beim Speichern');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Konto wirklich löschen?')) return;
+  const handleEdit = (account) => {
+    setEditingAccount(account);
+    setFormData({ name: account.name, type: account.type });
+    setShowDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await axios.delete(`${API}/accounts/${id}`, {
+      await axios.delete(`${API}/accounts/${deleteConfirm}`, {
         headers: { Authorization: token }
       });
       toast.success('Konto gelöscht');
       fetchAccounts();
     } catch (error) {
       toast.error('Fehler beim Löschen');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konto löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie dieses Konto wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} style={{ background: '#d63031', color: 'white' }}>
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
@@ -84,7 +121,13 @@ function AccountManagement() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Konten</CardTitle>
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <Dialog open={showDialog} onOpenChange={(open) => {
+                setShowDialog(open);
+                if (!open) {
+                  setEditingAccount(null);
+                  setFormData({ name: '', type: 'income' });
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button style={{ background: '#d63031', color: 'white' }} data-testid="add-account-btn">
                     <Plus className="mr-2 h-4 w-4" />
@@ -93,7 +136,7 @@ function AccountManagement() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Neues Konto</DialogTitle>
+                    <DialogTitle>{editingAccount ? 'Konto bearbeiten' : 'Neues Konto'}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -119,7 +162,7 @@ function AccountManagement() {
                       </Select>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading} data-testid="submit-account-btn">
-                      {loading ? 'Erstellen...' : 'Erstellen'}
+                      {loading ? 'Speichern...' : (editingAccount ? 'Aktualisieren' : 'Erstellen')}
                     </Button>
                   </form>
                 </DialogContent>
@@ -149,14 +192,24 @@ function AccountManagement() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(account.id)}
-                          data-testid="delete-account-btn"
-                        >
-                          <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(account)}
+                            data-testid="edit-account-btn"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteConfirm(account.id)}
+                            data-testid="delete-account-btn"
+                          >
+                            <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
