@@ -420,12 +420,12 @@ function Dashboard() {
                   }
                 }}>
                   <DialogTrigger asChild>
-                    <Button style={{ background: '#d63031', color: 'white' }} data-testid="add-transaction-btn">
+                    <Button style={{ background: '#d63031', color: 'white' }} data-testid="add-transaction-btn" className="flex-1 sm:flex-none">
                       <Plus className="mr-2 h-4 w-4" />
                       Eintrag
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingTransaction ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}</DialogTitle>
                     </DialogHeader>
