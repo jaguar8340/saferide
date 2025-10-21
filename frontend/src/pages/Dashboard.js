@@ -562,99 +562,21 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Transactions table */}
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow style={{ background: '#f8f9fa' }}>
-                    <TableHead>Datum</TableHead>
-                    <TableHead>Bezeichnung</TableHead>
-                    <TableHead>Konto</TableHead>
-                    <TableHead className="text-right">Einnahmen</TableHead>
-                    <TableHead className="text-right">Ausgaben</TableHead>
-                    <TableHead>Bemerkungen</TableHead>
-                    <TableHead>Datei</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={transaction.id} data-testid="transaction-row">
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 rounded text-xs" style={{ 
-                          background: transaction.type === 'income' ? '#e8f8f5' : '#fef5e7',
-                          color: transaction.type === 'income' ? '#27ae60' : '#e67e22'
-                        }}>
-                          {transaction.account_name}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right" style={{ color: '#27ae60', fontWeight: '600' }}>
-                        {transaction.type === 'income' ? `CHF ${transaction.amount.toFixed(2)}` : ''}
-                      </TableCell>
-                      <TableCell className="text-right" style={{ color: '#e67e22', fontWeight: '600' }}>
-                        {transaction.type === 'expense' ? `CHF ${transaction.amount.toFixed(2)}` : ''}
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">{transaction.remarks || '-'}</TableCell>
-                      <TableCell>
-                        {transaction.file_url ? (
-                          <a href={`${API.replace('/api', '')}${transaction.file_url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                            Ansehen
-                          </a>
-                        ) : (
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => e.target.files[0] && handleFileUpload(transaction.id, e.target.files[0])}
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              disabled={uploadingFile === transaction.id}
-                            />
-                            <Button variant="ghost" size="sm" asChild disabled={uploadingFile === transaction.id}>
-                              <span>
-                                <Upload className="h-4 w-4" />
-                              </span>
-                            </Button>
-                          </label>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(transaction)}
-                            data-testid="edit-transaction-btn"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteConfirm(transaction.id)}
-                            data-testid="delete-transaction-btn"
-                          >
-                            <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {transactions.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        Keine Einträge für diesen Monat
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Transaction Tabs */}
+        <TransactionTabs
+          transactions={transactions}
+          bankDocuments={bankDocuments}
+          miscItems={miscItems}
+          handleEdit={handleEdit}
+          setDeleteConfirm={setDeleteConfirm}
+          handleFileUpload={handleFileUpload}
+          uploadingFile={uploadingFile}
+          handleAddBankDocument={handleAddBankDocument}
+          handleDeleteBankDocument={handleDeleteBankDocument}
+          handleAddMiscItem={handleAddMiscItem}
+          handleDeleteMiscItem={handleDeleteMiscItem}
+          API={API}
+        />
       </main>
     </div>
   );
