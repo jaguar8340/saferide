@@ -75,6 +75,7 @@ class Transaction(BaseModel):
     amount: float
     account_id: str
     account_name: Optional[str] = None
+    payment_method: Optional[str] = None  # 'bar', 'kreditkarte', 'twint', 'bank'
     remarks: Optional[str] = None
     file_url: Optional[str] = None
     user_id: str
@@ -86,7 +87,36 @@ class TransactionCreate(BaseModel):
     type: str
     amount: float
     account_id: str
+    payment_method: Optional[str] = None
     remarks: Optional[str] = None
+
+class BankDocument(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    month: str  # Format: YYYY-MM
+    file_url: str
+    user_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BankDocumentCreate(BaseModel):
+    date: str
+    month: str
+
+class MiscItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    month: str  # Format: YYYY-MM
+    remarks: str
+    file_url: Optional[str] = None
+    user_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MiscItemCreate(BaseModel):
+    date: str
+    month: str
+    remarks: str
 
 # Auth helpers
 def verify_token(token: str) -> dict:
