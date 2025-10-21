@@ -3,6 +3,7 @@ import { AuthContext, API } from '../App';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { TransactionTabs } from '../components/TransactionTabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
