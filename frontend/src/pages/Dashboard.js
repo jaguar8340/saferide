@@ -30,8 +30,10 @@ function Dashboard() {
     type: 'income',
     amount: '',
     account_id: '',
+    payment_method: '',
     remarks: ''
   });
+  const [uploadFile, setUploadFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
