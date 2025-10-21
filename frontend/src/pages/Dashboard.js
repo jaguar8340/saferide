@@ -382,35 +382,26 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Month selector and summary */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Month selector */}
+        <MonthYearPicker 
+          currentDate={currentDate} 
+          onDateChange={setCurrentDate}
+        />
+
+        {/* Summary and actions */}
         <Card className="mb-6 border-0 shadow-lg">
           <CardHeader>
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentDate(new Date(year, month - 2, 1))}
-                  data-testid="prev-month-btn"
-                >
-                  ←
-                </Button>
-                <CardTitle className="text-2xl" data-testid="current-month">
-                  {new Date(year, month - 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentDate(new Date(year, month, 1))}
-                  data-testid="next-month-btn"
-                >
-                  →
-                </Button>
-              </div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle className="text-xl sm:text-2xl">
+                {new Date(year, month - 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+              </CardTitle>
               
-              <div className="flex gap-2">
-                <Button onClick={handleExportPDF} variant="outline" data-testid="export-pdf-btn">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <Button onClick={handleExportPDF} variant="outline" data-testid="export-pdf-btn" className="flex-1 sm:flex-none">
                   <Download className="mr-2 h-4 w-4" />
-                  PDF Export
+                  <span className="hidden sm:inline">PDF Export</span>
+                  <span className="sm:hidden">PDF</span>
                 </Button>
                 <Dialog open={showAddDialog} onOpenChange={(open) => {
                   setShowAddDialog(open);
