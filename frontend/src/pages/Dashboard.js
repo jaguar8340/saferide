@@ -70,26 +70,43 @@ function Dashboard() {
     setLoading(true);
 
     try {
+      let transactionId;
+      
       if (editingTransaction) {
         await axios.put(`${API}/transactions/${editingTransaction.id}`, formData, {
           headers: { Authorization: token }
         });
         toast.success('Eintrag aktualisiert');
+        transactionId = editingTransaction.id;
       } else {
-        await axios.post(`${API}/transactions`, formData, {
+        const response = await axios.post(`${API}/transactions`, formData, {
           headers: { Authorization: token }
         });
         toast.success('Eintrag hinzugefügt');
+        transactionId = response.data.id;
+      }
+
+      // Upload file if selected
+      if (uploadFile && transactionId) {
+        const fileFormData = new FormData();
+        fileFormData.append('file', uploadFile);
+        await axios.post(`${API}/upload/${transactionId}`, fileFormData, {
+          headers: { Authorization: token }
+        });
       }
       
       setShowAddDialog(false);
       setEditingTransaction(null);
+      setUploadFile(null);
       setFormData({
         date: new Date().toISOString().split('T')[0],
         description: '',
         type: 'income',
         amount: '',
         account_id: '',
+        payment_method: '',
+        remarks: ''
+      });
         remarks: ''
       });
       fetchTransactions();
