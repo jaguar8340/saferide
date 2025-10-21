@@ -21,13 +21,15 @@ function Dashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
+  const [bankDocuments, setBankDocuments] = useState([]);
+  const [miscItems, setMiscItems] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getCurrentDateISO(),
     description: '',
     type: 'income',
     amount: '',
@@ -40,6 +42,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+  const monthKey = getMonthKey(year, month);
   const month = currentDate.getMonth() + 1;
 
   useEffect(() => {
