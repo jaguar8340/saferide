@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LogOut, Plus, Trash2, Upload, Download, Menu, Settings, Users, FileText, BarChart3, Edit2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -22,6 +23,7 @@ function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -57,7 +59,7 @@ function Dashboard() {
       });
       setTransactions(response.data);
     } catch (error) {
-      toast.error('Fehler beim Laden der Transaktionen');
+      toast.error('Fehler beim Laden der Einträge');
     }
   };
 
@@ -70,12 +72,12 @@ function Dashboard() {
         await axios.put(`${API}/transactions/${editingTransaction.id}`, formData, {
           headers: { Authorization: token }
         });
-        toast.success('Transaktion aktualisiert');
+        toast.success('Eintrag aktualisiert');
       } else {
         await axios.post(`${API}/transactions`, formData, {
           headers: { Authorization: token }
         });
-        toast.success('Transaktion hinzugefügt');
+        toast.success('Eintrag hinzugefügt');
       }
       
       setShowAddDialog(false);
@@ -96,17 +98,19 @@ function Dashboard() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Transaktion wirklich löschen?')) return;
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await axios.delete(`${API}/transactions/${id}`, {
+      await axios.delete(`${API}/transactions/${deleteConfirm}`, {
         headers: { Authorization: token }
       });
-      toast.success('Transaktion gelöscht');
+      toast.success('Eintrag gelöscht');
       fetchTransactions();
     } catch (error) {
       toast.error('Fehler beim Löschen');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -176,6 +180,24 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eintrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} style={{ background: '#d63031', color: 'white' }}>
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -275,12 +297,12 @@ function Dashboard() {
                   <DialogTrigger asChild>
                     <Button style={{ background: '#d63031', color: 'white' }} data-testid="add-transaction-btn">
                       <Plus className="mr-2 h-4 w-4" />
-                      Transaktion
+                      Eintrag
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
-                      <DialogTitle>{editingTransaction ? 'Transaktion bearbeiten' : 'Neue Transaktion'}</DialogTitle>
+                      <DialogTitle>{editingTransaction ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
@@ -304,7 +326,7 @@ function Dashboard() {
                       </div>
                       <div>
                         <Label>Typ</Label>
-                        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value, account_id: '' })}>
                           <SelectTrigger data-testid="transaction-type-select">
                             <SelectValue />
                           </SelectTrigger>
@@ -455,7 +477,7 @@ function Dashboard() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(transaction.id)}
+                            onClick={() => setDeleteConfirm(transaction.id)}
                             data-testid="delete-transaction-btn"
                           >
                             <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
@@ -467,7 +489,7 @@ function Dashboard() {
                   {transactions.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        Keine Transaktionen für diesen Monat
+                        Keine Einträge für diesen Monat
                       </TableCell>
                     </TableRow>
                   )}
