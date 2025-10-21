@@ -281,9 +281,7 @@ async def get_file(file_name: str):
 
 # Reports
 @api_router.get("/reports/yearly")
-async def get_yearly_report(year: int, authorization: str = None):
-    user = await get_current_user(authorization)
-    
+async def get_yearly_report(year: int, user: dict = Depends(get_current_user)):
     # Get all transactions for the year
     transactions = await db.transactions.find(
         {"date": {"$regex": f"^{year}"}},
@@ -325,8 +323,7 @@ async def get_yearly_report(year: int, authorization: str = None):
     }
 
 @api_router.get("/reports/export-pdf")
-async def export_pdf(year: int, month: int, authorization: str = None):
-    user = await get_current_user(authorization)
+async def export_pdf(year: int, month: int, user: dict = Depends(get_current_user)):
     
     # Get transactions for the month
     transactions = await db.transactions.find(
