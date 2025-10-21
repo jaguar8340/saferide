@@ -96,7 +96,7 @@ function UserManagement() {
             <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-3xl font-bold" style={{ color: '#d63031' }}>Benutzer verwalten</h1>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>Benutzer verwalten</h1>
           </div>
         </div>
       </header>
