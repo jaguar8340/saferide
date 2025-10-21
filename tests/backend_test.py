@@ -275,7 +275,8 @@ class SaferideAPITester:
         if failed_tests:
             print("\n❌ Failed tests:")
             for test in failed_tests:
-                print(f"   - {test['test']}: {test.get('error', f\"Status {test.get('code')} (expected {test.get('expected')})\")}")
+                error_msg = test.get('error', f"Status {test.get('code')} (expected {test.get('expected')})")
+                print(f"   - {test['test']}: {error_msg}")
         
         return self.tests_passed == self.tests_run
 
