@@ -383,12 +383,38 @@ function Dashboard() {
                         </Select>
                       </div>
                       <div>
+                        <Label>Bezahlung</Label>
+                        <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
+                          <SelectTrigger data-testid="transaction-payment-select">
+                            <SelectValue placeholder="Bezahlmethode wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bar">Bar</SelectItem>
+                            <SelectItem value="kreditkarte">Kreditkarte</SelectItem>
+                            <SelectItem value="twint">Twint</SelectItem>
+                            <SelectItem value="bank">Bank</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
                         <Label>Bemerkungen</Label>
                         <Textarea
                           value={formData.remarks}
                           onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                           data-testid="transaction-remarks-input"
                         />
+                      </div>
+                      <div>
+                        <Label>Datei (optional)</Label>
+                        <Input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => setUploadFile(e.target.files[0])}
+                          data-testid="transaction-file-input"
+                        />
+                        {uploadFile && (
+                          <p className="text-sm text-gray-600 mt-1">{uploadFile.name}</p>
+                        )}
                       </div>
                       <Button type="submit" className="w-full" disabled={loading} data-testid="submit-transaction-btn">
                         {loading ? 'Speichern...' : (editingTransaction ? 'Aktualisieren' : 'Hinzufügen')}
