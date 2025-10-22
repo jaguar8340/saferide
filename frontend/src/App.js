@@ -52,6 +52,8 @@ function App() {
             <Route path="/" element={token ? <Dashboard /> : <Navigate to="/login" />} />
             <Route path="/yearly" element={token ? <YearlyView /> : <Navigate to="/login" />} />
             <Route path="/accounting" element={token ? <AccountingReport /> : <Navigate to="/login" />} />
+            <Route path="/vehicles" element={token ? <VehicleManagement /> : <Navigate to="/login" />} />
+            <Route path="/customers" element={token ? <CustomerManagement /> : <Navigate to="/login" />} />
             <Route path="/accounts" element={token && user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
             <Route path="/users" element={token && user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
           </Routes>
