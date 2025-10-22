@@ -36,6 +36,31 @@ function YearlyView() {
   const yearTotalExpense = Object.values(yearlyData.monthly_totals).reduce((sum, m) => sum + m.expense, 0);
   const yearTotalBalance = yearTotalIncome - yearTotalExpense;
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Fahrschule saferide by Nadine Staeubli - Jahresuebersicht ${currentYear}`, 14, 15);
+    
+    const monthlyData = months.map((m, idx) => {
+      const monthKey = `${currentYear}-${String(idx + 1).padStart(2, '0')}`;
+      const data = yearlyData.monthly_totals[monthKey] || { income: 0, expense: 0, total: 0 };
+      return [m, `CHF ${data.income.toFixed(2)}`, `CHF ${data.expense.toFixed(2)}`, `CHF ${data.total.toFixed(2)}`];
+    });
+    
+    monthlyData.push(['', '', '', '']);
+    monthlyData.push(['Total', `CHF ${yearTotalIncome.toFixed(2)}`, `CHF ${yearTotalExpense.toFixed(2)}`, `CHF ${yearTotalBalance.toFixed(2)}`]);
+    
+    doc.autoTable({
+      head: [['Monat', 'Einnahmen', 'Ausgaben', 'Einkommen']],
+      body: monthlyData,
+      startY: 25
+    });
+    
+    doc.save(`jahresuebersicht_${currentYear}.pdf`);
+    toast.success('PDF exportiert');
+  };
+
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="flex justify-between items-center mb-6">
