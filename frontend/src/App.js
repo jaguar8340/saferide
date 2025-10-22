@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '@/App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios';
-import { VerticalNavigation } from './components/VerticalNavigation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import YearlyView from './pages/YearlyView';
@@ -25,7 +23,6 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      // Verify token and get user info
       const userData = JSON.parse(localStorage.getItem('user'));
       setUser(userData);
     }
@@ -47,29 +44,22 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
-      <BrowserRouter>
-        {token ? (
-          <VerticalNavigation>
-            <Routes>
-              <Route path="/login" element={<Navigate to="/" />} />
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/yearly" element={<YearlyView />} />
-              <Route path="/statistics" element={<Statistics />} />
-              <Route path="/vehicles" element={<VehicleManagement />} />
-              <Route path="/customers" element={<CustomerManagement />} />
-              <Route path="/files" element={<FilesOverview />} />
-              <Route path="/accounts" element={user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
-              <Route path="/users" element={user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
-            </Routes>
-          </VerticalNavigation>
-        ) : (
+      <div className="App">
+        <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" />} />
+            <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
+            <Route path="/" element={token ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="/yearly" element={token ? <YearlyView /> : <Navigate to="/login" />} />
+            <Route path="/statistics" element={token ? <Statistics /> : <Navigate to="/login" />} />
+            <Route path="/vehicles" element={token ? <VehicleManagement /> : <Navigate to="/login" />} />
+            <Route path="/customers" element={token ? <CustomerManagement /> : <Navigate to="/login" />} />
+            <Route path="/files" element={token ? <FilesOverview /> : <Navigate to="/login" />} />
+            <Route path="/accounts" element={token && user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
+            <Route path="/users" element={token && user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
           </Routes>
-        )}
+        </BrowserRouter>
         <Toaster position="top-right" richColors />
-      </BrowserRouter>
+      </div>
     </AuthContext.Provider>
   );
 }
