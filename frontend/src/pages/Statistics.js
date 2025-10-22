@@ -97,20 +97,18 @@ function Statistics() {
 
       <Card className="border-0 shadow-lg mb-6">
         <CardHeader><CardTitle>Monatliche Übersicht</CardTitle></CardHeader>
-        <CardContent>
-          <div style={{ width: '100%', height: '400px' }}>
-            <ResponsiveContainer>
-              <BarChart data={monthlyChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="month" stroke="#666" />
-                <YAxis stroke="#666" />
-                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #ccc' }} />
-                <Legend />
-                <Bar dataKey="Einnahmen" fill="#27ae60" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Ausgaben" fill="#e67e22" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <CardContent className="p-6">
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={monthlyChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis dataKey="month" stroke="#666" />
+              <YAxis stroke="#666" />
+              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #ccc' }} />
+              <Legend />
+              <Bar dataKey="Einnahmen" fill="#27ae60" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Ausgaben" fill="#e67e22" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
