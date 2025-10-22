@@ -95,23 +95,6 @@ function Statistics() {
         <Card className="border-0 shadow-lg"><CardHeader><CardTitle>Durchschnittlicher Monatsumsatz</CardTitle></CardHeader><CardContent><div className="space-y-3"><div><p className="text-sm text-gray-600">Ø Einnahmen pro Monat</p><p className="text-2xl font-bold" style={{ color: '#27ae60' }}>CHF {(totalIncome / 12).toFixed(2)}</p></div><div><p className="text-sm text-gray-600">Ø Ausgaben pro Monat</p><p className="text-2xl font-bold" style={{ color: '#e67e22' }}>CHF {(totalExpense / 12).toFixed(2)}</p></div></div></CardContent></Card>
       </div>
 
-      <Card className="border-0 shadow-lg mb-6">
-        <CardHeader><CardTitle>Monatliche Übersicht</CardTitle></CardHeader>
-        <CardContent className="p-6">
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={monthlyChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="month" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #ccc' }} />
-              <Legend />
-              <Bar dataKey="Einnahmen" fill="#27ae60" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Ausgaben" fill="#e67e22" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-0 shadow-lg"><CardHeader><CardTitle className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: '#27ae60' }}></span>Einnahmen-Konten</CardTitle></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full"><thead><tr className="border-b bg-green-50"><th className="p-3 text-left">Konto</th><th className="p-3 text-right">Betrag</th></tr></thead><tbody>{incomeAccounts.map(acc => (<tr key={acc.name} className="border-b"><td className="p-3 font-medium">{acc.name}</td><td className="p-3 text-right font-semibold" style={{ color: '#27ae60' }}>CHF {acc.income.toFixed(2)}</td></tr>))}<tr className="bg-green-50"><td className="p-3 font-bold">Total</td><td className="p-3 text-right font-bold" style={{ color: '#27ae60' }}>CHF {totalIncome.toFixed(2)}</td></tr></tbody></table></div></CardContent></Card>
         <Card className="border-0 shadow-lg"><CardHeader><CardTitle className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: '#e67e22' }}></span>Ausgaben-Konten</CardTitle></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full"><thead><tr className="border-b bg-orange-50"><th className="p-3 text-left">Konto</th><th className="p-3 text-right">Betrag</th></tr></thead><tbody>{expenseAccounts.map(acc => (<tr key={acc.name} className="border-b"><td className="p-3 font-medium">{acc.name}</td><td className="p-3 text-right font-semibold" style={{ color: '#e67e22' }}>CHF {acc.expense.toFixed(2)}</td></tr>))}<tr className="bg-orange-50"><td className="p-3 font-bold">Total</td><td className="p-3 text-right font-bold" style={{ color: '#e67e22' }}>CHF {totalExpense.toFixed(2)}</td></tr></tbody></table></div></CardContent></Card>
