@@ -65,10 +65,13 @@ function YearlyView() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#d63031' }}>Jahresübersicht {currentYear}</h1>
-        <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
-          <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{years.map(y => (<SelectItem key={y} value={y.toString()}>{y}</SelectItem>))}</SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button onClick={handleExportPDF} style={{ background: '#d63031', color: 'white' }}><Download className="mr-2 h-4 w-4" />PDF Export</Button>
+          <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
+            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectContent>{years.map(y => (<SelectItem key={y} value={y.toString()}>{y}</SelectItem>))}</SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card className="mb-6 border-0 shadow-lg"><CardHeader><CardTitle>Jahres-Total</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><div className="p-4 rounded-lg" style={{ background: '#e8f8f5' }}><p className="text-sm text-gray-600">Total Einnahmen</p><p className="text-2xl font-bold" style={{ color: '#27ae60' }}>CHF {yearTotalIncome.toFixed(2)}</p></div><div className="p-4 rounded-lg" style={{ background: '#fef5e7' }}><p className="text-sm text-gray-600">Total Ausgaben</p><p className="text-2xl font-bold" style={{ color: '#e67e22' }}>CHF {yearTotalExpense.toFixed(2)}</p></div><div className="p-4 rounded-lg" style={{ background: yearTotalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}><p className="text-sm text-gray-600">Total Einkommen</p><p className="text-2xl font-bold" style={{ color: yearTotalBalance >= 0 ? '#27ae60' : '#c0392b' }}>CHF {yearTotalBalance.toFixed(2)}</p></div></div></CardContent></Card>
