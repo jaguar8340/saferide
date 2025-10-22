@@ -519,7 +519,7 @@ function Dashboard() {
           API={API}
         />
       </main>
-    </div>
+    </>
   );
 }
 
