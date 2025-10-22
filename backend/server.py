@@ -183,6 +183,7 @@ class Customer(BaseModel):
     ort: str
     telefon: str
     email: str
+    active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCreate(BaseModel):
@@ -193,6 +194,7 @@ class CustomerCreate(BaseModel):
     ort: str
     telefon: str
     email: str
+    active: bool = True
 
 class CustomerRemark(BaseModel):
     model_config = ConfigDict(extra="ignore")
