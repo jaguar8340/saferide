@@ -47,6 +47,7 @@ function Dashboard() {
 
   useEffect(() => {
     fetchAccounts();
+    fetchCustomers();
     fetchTransactions();
     fetchBankDocuments();
     fetchMiscItems();
@@ -56,6 +57,19 @@ function Dashboard() {
     try {
       const response = await axios.get(`${API}/accounts`);
       setAccounts(response.data);
+    } catch (error) {
+      toast.error('Fehler beim Laden der Konten');
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${API}/customers`, { headers: { Authorization: token } });
+      setCustomers(response.data.filter(c => c.active !== false));
+    } catch (error) {
+      console.error('Fehler:', error);
+    }
+  };
     } catch (error) {
       toast.error('Fehler beim Laden der Konten');
     }
