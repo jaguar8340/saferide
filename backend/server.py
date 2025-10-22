@@ -118,6 +118,82 @@ class MiscItemCreate(BaseModel):
     month: str
     remarks: str
 
+
+class Vehicle(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    marke: str
+    modell: str
+    chassis_nr: str
+    first_inv: str
+    km_stand: int
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class VehicleCreate(BaseModel):
+    marke: str
+    modell: str
+    chassis_nr: str
+    first_inv: str
+    km_stand: int
+
+class VehicleUpdate(BaseModel):
+    marke: Optional[str] = None
+    modell: Optional[str] = None
+    chassis_nr: Optional[str] = None
+    first_inv: Optional[str] = None
+    km_stand: Optional[int] = None
+
+class ServiceEntry(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    vehicle_id: str
+    date: str
+    description: str
+    km_stand: int
+    file_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ServiceEntryCreate(BaseModel):
+    vehicle_id: str
+    date: str
+    description: str
+    km_stand: int
+
+class Customer(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    vorname: str
+    strasse: str
+    plz: str
+    ort: str
+    telefon: str
+    email: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CustomerCreate(BaseModel):
+    name: str
+    vorname: str
+    strasse: str
+    plz: str
+    ort: str
+    telefon: str
+    email: str
+
+class CustomerRemark(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    date: str
+    remarks: str
+    file_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CustomerRemarkCreate(BaseModel):
+    customer_id: str
+    date: str
+    remarks: str
+
 # Auth helpers
 def verify_token(token: str) -> dict:
     try:
