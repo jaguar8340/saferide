@@ -91,18 +91,11 @@ function UserManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>Benutzer verwalten</h1>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: '#d63031' }}>Benutzer verwalten</h1>
+        
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <div className="flex justify-between items-center">
