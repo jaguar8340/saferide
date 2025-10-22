@@ -15,8 +15,6 @@ export function Navigation() {
     { path: '/', icon: FileText, label: 'Monatsansicht' },
     { path: '/yearly', icon: BarChart3, label: 'Jahresübersicht' },
     { path: '/accounting', icon: BarChart3, label: 'Buchhaltung/Abschluss' },
-    { path: '/vehicles', icon: Car, label: 'Fahrzeugübersicht' },
-    { path: '/customers', icon: UsersIcon, label: 'Kundenverwaltung' },
   ];
 
   const adminItems = [
