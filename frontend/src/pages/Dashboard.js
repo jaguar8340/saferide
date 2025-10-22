@@ -247,7 +247,23 @@ function Dashboard() {
                   <DialogHeader><DialogTitle>{editingTransaction ? 'Bearbeiten' : 'Neuer Eintrag'}</DialogTitle></DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div><Label>Datum</Label><Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required /></div>
-                    <div><Label>Bezeichnung</Label><Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required /></div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <input type="checkbox" checked={useCustomer} onChange={(e) => setUseCustomer(e.target.checked)} className="mr-2" />
+                      <Label>Kunde aus Liste wählen</Label>
+                    </div>
+                    {useCustomer ? (
+                      <div><Label>Kunde</Label>
+                        <Select value={formData.customer_id} onValueChange={(value) => {
+                          const customer = customers.find(c => c.id === value);
+                          setFormData({ ...formData, customer_id: value, description: customer ? `${customer.vorname} ${customer.name}` : '' });
+                        }}>
+                          <SelectTrigger><SelectValue placeholder="Kunde wählen" /></SelectTrigger>
+                          <SelectContent>{customers.map(c => (<SelectItem key={c.id} value={c.id}>{c.vorname} {c.name}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div><Label>Bezeichnung</Label><Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required /></div>
+                    )}
                     <div><Label>Typ</Label>
                       <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
