@@ -31,8 +31,8 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl border-0" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-4xl font-bold" style={{ color: '#d63031' }}>Saferide</CardTitle>
-          <CardDescription className="text-base">Fahrschule Abrechnungssystem</CardDescription>
+          <CardTitle className="text-4xl font-bold" style={{ color: '#d63031' }}>Fahrschule saferide by Nadine Stäubli</CardTitle>
+          <CardDescription className="text-base">Abrechnungssystem</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
