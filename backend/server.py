@@ -356,6 +356,8 @@ async def create_transaction(transaction_data: TransactionCreate, user: dict = D
         type=transaction_data.type,
         amount=transaction_data.amount,
         account_id=transaction_data.account_id,
+        customer_id=transaction_data.customer_id,
+        payment_method=transaction_data.payment_method,
         remarks=transaction_data.remarks,
         user_id=user['id']
     )
@@ -369,6 +371,18 @@ async def create_transaction(transaction_data: TransactionCreate, user: dict = D
         transaction_dict['account_name'] = account['name']
     
     await db.transactions.insert_one(transaction_dict)
+    
+    # If customer_id provided, add remark to customer
+    if transaction_data.customer_id:
+        remark_text = f"Fahrstunde: {transaction_data.description} - CHF {transaction_data.amount}"
+        await db.customer_remarks.insert_one({
+            "id": str(uuid.uuid4()),
+            "customer_id": transaction_data.customer_id,
+            "date": transaction_data.date,
+            "remarks": remark_text,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+    
     return transaction
 
 @api_router.put("/transactions/{transaction_id}")
