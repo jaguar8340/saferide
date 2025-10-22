@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
 import { useNavigate } from 'react-router-dom';
+import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
