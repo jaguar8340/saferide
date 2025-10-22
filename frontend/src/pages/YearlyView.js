@@ -2,9 +2,13 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 function YearlyView() {
   const { token } = useContext(AuthContext);
