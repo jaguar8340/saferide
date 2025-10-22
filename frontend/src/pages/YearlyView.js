@@ -50,7 +50,7 @@ function YearlyView() {
     monthlyData.push(['', '', '', '']);
     monthlyData.push(['Total', `CHF ${yearTotalIncome.toFixed(2)}`, `CHF ${yearTotalExpense.toFixed(2)}`, `CHF ${yearTotalBalance.toFixed(2)}`]);
     
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Monat', 'Einnahmen', 'Ausgaben', 'Einkommen']],
       body: monthlyData,
       startY: 25
