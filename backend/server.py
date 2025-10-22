@@ -584,6 +584,31 @@ async def delete_user(user_id: str, user: dict = Depends(get_current_user)):
     
     return {"message": "User deleted successfully"}
 
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
+
+@api_router.post("/users/change-password")
+async def change_password(password_data: PasswordChange, user: dict = Depends(get_current_user)):
+    # Get current user from database
+    db_user = await db.users.find_one({"id": user['id']}, {"_id": 0})
+    
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify old password
+    if not bcrypt.checkpw(password_data.old_password.encode(), db_user['password_hash'].encode()):
+        raise HTTPException(status_code=400, detail="Altes Passwort ist falsch")
+    
+    # Hash new password
+    new_password_hash = bcrypt.hashpw(password_data.new_password.encode(), bcrypt.gensalt()).decode()
+    
+    # Update password
+    await db.users.update_one({"id": user['id']}, {"$set": {"password_hash": new_password_hash}})
+    
+    return {"message": "Passwort erfolgreich geaendert"}
+
+
 # Bank Documents
 @api_router.get("/bank-documents")
 async def get_bank_documents(month: str, user: dict = Depends(get_current_user)):
