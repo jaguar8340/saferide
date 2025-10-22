@@ -26,53 +26,53 @@ export function Sidebar({ children }) {
   ];
 
   return (
-    <div className=\"flex min-h-screen\">
+    <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <div className=\"hidden lg:block w-64 bg-white border-r shadow-lg fixed h-full overflow-y-auto\">
-        <div className=\"p-6 border-b\">
-          <h1 className=\"text-xl font-bold leading-tight\" style={{ color: '#d63031' }}>
+      <div className="hidden lg:block w-64 bg-white border-r shadow-lg fixed h-full overflow-y-auto">
+        <div className="p-6 border-b">
+          <h1 className="text-xl font-bold leading-tight" style={{ color: '#d63031' }}>
             Fahrschule saferide<br/>by Nadine Stäubli
           </h1>
-          <p className=\"text-xs text-gray-600 mt-2\">{user?.username} ({user?.role})</p>
+          <p className="text-xs text-gray-600 mt-2">{user?.username} ({user?.role})</p>
         </div>
         
-        <nav className=\"p-4 space-y-1\">
+        <nav className="p-4 space-y-1">
           {navItems.map((item) => (
             <Button
               key={item.path}
-              variant=\"ghost\"
+              variant="ghost"
               onClick={() => navigate(item.path)}
               className={`w-full justify-start ${isActive(item.path) ? 'bg-red-50' : ''}`}
               style={isActive(item.path) ? { color: '#d63031', fontWeight: '600' } : {}}
             >
-              <item.icon className=\"mr-3 h-4 w-4\" />
+              <item.icon className="mr-3 h-4 w-4" />
               {item.label}
             </Button>
           ))}
           
           {user?.role === 'admin' && (
             <>
-              <div className=\"pt-4 pb-2\">
-                <p className=\"px-3 text-xs font-semibold text-gray-500 uppercase\">Admin</p>
+              <div className="pt-4 pb-2">
+                <p className="px-3 text-xs font-semibold text-gray-500 uppercase">Admin</p>
               </div>
               {adminItems.map((item) => (
                 <Button
                   key={item.path}
-                  variant=\"ghost\"
+                  variant="ghost"
                   onClick={() => navigate(item.path)}
                   className={`w-full justify-start ${isActive(item.path) ? 'bg-red-50' : ''}`}
                   style={isActive(item.path) ? { color: '#d63031', fontWeight: '600' } : {}}
                 >
-                  <item.icon className=\"mr-3 h-4 w-4\" />
+                  <item.icon className="mr-3 h-4 w-4" />
                   {item.label}
                 </Button>
               ))}
             </>
           )}
 
-          <div className=\"pt-4\">
-            <Button variant=\"ghost\" onClick={logout} className=\"w-full justify-start text-gray-600\">
-              <LogOut className=\"mr-3 h-4 w-4\" />
+          <div className="pt-4">
+            <Button variant="ghost" onClick={logout} className="w-full justify-start text-gray-600">
+              <LogOut className="mr-3 h-4 w-4" />
               Abmelden
             </Button>
           </div>
@@ -80,20 +80,20 @@ export function Sidebar({ children }) {
       </div>
 
       {/* Mobile Header */}
-      <div className=\"lg:hidden fixed top-0 left-0 right-0 bg-white border-b z-50 shadow-sm\">
-        <div className=\"px-4 py-3\">
-          <div className=\"flex justify-between items-center mb-2\">
-            <h1 className=\"text-lg font-bold\" style={{ color: '#d63031' }}>Fahrschule saferide</h1>
-            <Button variant=\"ghost\" onClick={logout} size=\"sm\">
-              <LogOut className=\"h-4 w-4\" />
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b z-50 shadow-sm">
+        <div className="px-4 py-3">
+          <div className="flex justify-between items-center mb-2">
+            <h1 className="text-lg font-bold" style={{ color: '#d63031' }}>Fahrschule saferide</h1>
+            <Button variant="ghost" onClick={logout} size="sm">
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
           <select 
-            className=\"w-full px-3 py-2 border rounded-md text-sm\"
+            className="w-full px-3 py-2 border rounded-md text-sm"
             onChange={(e) => { if (e.target.value) navigate(e.target.value); }}
             value={location.pathname}
           >
-            <option value=\"\">Menü wählen</option>
+            <option value="">Menü wählen</option>
             {navItems.map((item) => (
               <option key={item.path} value={item.path}>{item.label}</option>
             ))}
@@ -105,8 +105,8 @@ export function Sidebar({ children }) {
       </div>
 
       {/* Main Content */}
-      <div className=\"flex-1 lg:ml-64\" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)', minHeight: '100vh' }}>
-        <div className=\"lg:pt-0 pt-24\">
+      <div className="flex-1 lg:ml-64" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)', minHeight: '100vh' }}>
+        <div className="lg:pt-0 pt-24">
           {children}
         </div>
       </div>
