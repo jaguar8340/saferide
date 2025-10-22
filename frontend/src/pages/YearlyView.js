@@ -45,21 +45,10 @@ function YearlyView() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn" size="sm">
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>
-              <span className="hidden sm:inline">Fahrschule Saferide by Nadine Stäubli - </span>
-              Jahresübersicht {currentYear}
-            </h1>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8\">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6\" style={{ color: '#d63031' }}>Jahres\u00fcbersicht {currentYear}</h1>
         {/* Year selector */}
         <div className="flex items-center gap-4 mb-6">
           <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
