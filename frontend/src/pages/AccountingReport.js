@@ -83,20 +83,13 @@ function AccountingReport() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')} data-testid="back-btn">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#d63031' }}>Buchhaltung/Abschluss {currentYear}</h1>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: '#d63031' }}>Buchhaltung/Abschluss {currentYear}</h1>
+        
         {/* Year selector */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6\">
           <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue />
