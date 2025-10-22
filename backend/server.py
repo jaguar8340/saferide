@@ -850,6 +850,51 @@ async def delete_customer_remark(remark_id: str, user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Remark not found")
     return {"message": "Remark deleted successfully"}
 
+
+# Important Uploads
+@api_router.get("/important-uploads")
+async def get_important_uploads(user: dict = Depends(get_current_user)):
+    uploads = await db.important_uploads.find({}, {"_id": 0}).sort("date", -1).to_list(1000)
+    for upload in uploads:
+        if isinstance(upload.get('created_at'), str):
+            upload['created_at'] = datetime.fromisoformat(upload['created_at'])
+    return uploads
+
+@api_router.post("/important-uploads")
+async def create_important_upload(upload_data: ImportantUploadCreate, user: dict = Depends(get_current_user)):
+    upload = ImportantUpload(
+        date=upload_data.date,
+        description=upload_data.description,
+        user_id=user['id']
+    )
+    
+    upload_dict = upload.model_dump()
+    upload_dict['created_at'] = upload_dict['created_at'].isoformat()
+    
+    await db.important_uploads.insert_one(upload_dict)
+    return upload
+
+@api_router.post("/important-uploads/{upload_id}/upload")
+async def upload_important_file(upload_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"important_{upload_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.important_uploads.update_one({"id": upload_id}, {"$set": {"file_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.delete("/important-uploads/{upload_id}")
+async def delete_important_upload(upload_id: str, user: dict = Depends(get_current_user)):
+    result = await db.important_uploads.delete_one({"id": upload_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    return {"message": "Upload deleted successfully"}
+
 app.include_router(api_router)
 
 app.add_middleware(
