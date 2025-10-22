@@ -118,6 +118,20 @@ class MiscItemCreate(BaseModel):
     month: str
     remarks: str
 
+class ImportantUpload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    description: str
+    file_url: Optional[str] = None
+    user_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ImportantUploadCreate(BaseModel):
+    date: str
+    description: str
+
+
 
 class Vehicle(BaseModel):
     model_config = ConfigDict(extra="ignore")
