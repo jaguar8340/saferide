@@ -70,10 +70,6 @@ function Dashboard() {
       console.error('Fehler:', error);
     }
   };
-    } catch (error) {
-      toast.error('Fehler beim Laden der Konten');
-    }
-  };
 
   const fetchTransactions = async () => {
     try {
