@@ -687,6 +687,155 @@ async def get_statistics(year: int, user: dict = Depends(get_current_user)):
     }
 
 
+
+# Vehicle Management
+@api_router.get("/vehicles", response_model=List[Vehicle])
+async def get_vehicles(user: dict = Depends(get_current_user)):
+    vehicles = await db.vehicles.find({}, {"_id": 0}).sort("marke", 1).to_list(1000)
+    for vehicle in vehicles:
+        if isinstance(vehicle.get('created_at'), str):
+            vehicle['created_at'] = datetime.fromisoformat(vehicle['created_at'])
+    return vehicles
+
+@api_router.post("/vehicles", response_model=Vehicle)
+async def create_vehicle(vehicle_data: VehicleCreate, user: dict = Depends(get_current_user)):
+    vehicle = Vehicle(**vehicle_data.model_dump())
+    vehicle_dict = vehicle.model_dump()
+    vehicle_dict['created_at'] = vehicle_dict['created_at'].isoformat()
+    
+    await db.vehicles.insert_one(vehicle_dict)
+    return vehicle
+
+@api_router.put("/vehicles/{vehicle_id}")
+async def update_vehicle(vehicle_id: str, vehicle_data: VehicleUpdate, user: dict = Depends(get_current_user)):
+    update_data = {k: v for k, v in vehicle_data.model_dump().items() if v is not None}
+    result = await db.vehicles.update_one({"id": vehicle_id}, {"$set": update_data})
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    
+    return {"message": "Vehicle updated successfully"}
+
+@api_router.delete("/vehicles/{vehicle_id}")
+async def delete_vehicle(vehicle_id: str, user: dict = Depends(get_current_user)):
+    result = await db.vehicles.delete_one({"id": vehicle_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    return {"message": "Vehicle deleted successfully"}
+
+# Service Entries
+@api_router.get("/vehicles/{vehicle_id}/services")
+async def get_service_entries(vehicle_id: str, user: dict = Depends(get_current_user)):
+    services = await db.service_entries.find({"vehicle_id": vehicle_id}, {"_id": 0}).sort("date", -1).to_list(1000)
+    for service in services:
+        if isinstance(service.get('created_at'), str):
+            service['created_at'] = datetime.fromisoformat(service['created_at'])
+    return services
+
+@api_router.post("/services", response_model=ServiceEntry)
+async def create_service_entry(service_data: ServiceEntryCreate, user: dict = Depends(get_current_user)):
+    service = ServiceEntry(**service_data.model_dump())
+    service_dict = service.model_dump()
+    service_dict['created_at'] = service_dict['created_at'].isoformat()
+    
+    await db.service_entries.insert_one(service_dict)
+    return service
+
+@api_router.post("/services/{service_id}/upload")
+async def upload_service_file(service_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"service_{service_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.service_entries.update_one({"id": service_id}, {"$set": {"file_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.delete("/services/{service_id}")
+async def delete_service(service_id: str, user: dict = Depends(get_current_user)):
+    result = await db.service_entries.delete_one({"id": service_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Service entry not found")
+    return {"message": "Service entry deleted successfully"}
+
+# Customer Management
+@api_router.get("/customers", response_model=List[Customer])
+async def get_customers(user: dict = Depends(get_current_user)):
+    customers = await db.customers.find({}, {"_id": 0}).sort("name", 1).to_list(1000)
+    for customer in customers:
+        if isinstance(customer.get('created_at'), str):
+            customer['created_at'] = datetime.fromisoformat(customer['created_at'])
+    return customers
+
+@api_router.post("/customers", response_model=Customer)
+async def create_customer(customer_data: CustomerCreate, user: dict = Depends(get_current_user)):
+    customer = Customer(**customer_data.model_dump())
+    customer_dict = customer.model_dump()
+    customer_dict['created_at'] = customer_dict['created_at'].isoformat()
+    
+    await db.customers.insert_one(customer_dict)
+    return customer
+
+@api_router.put("/customers/{customer_id}")
+async def update_customer(customer_id: str, customer_data: CustomerCreate, user: dict = Depends(get_current_user)):
+    update_data = customer_data.model_dump()
+    result = await db.customers.update_one({"id": customer_id}, {"$set": update_data})
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    return {"message": "Customer updated successfully"}
+
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str, user: dict = Depends(get_current_user)):
+    result = await db.customers.delete_one({"id": customer_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return {"message": "Customer deleted successfully"}
+
+# Customer Remarks
+@api_router.get("/customers/{customer_id}/remarks")
+async def get_customer_remarks(customer_id: str, user: dict = Depends(get_current_user)):
+    remarks = await db.customer_remarks.find({"customer_id": customer_id}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for remark in remarks:
+        if isinstance(remark.get('created_at'), str):
+            remark['created_at'] = datetime.fromisoformat(remark['created_at'])
+    return remarks
+
+@api_router.post("/customer-remarks", response_model=CustomerRemark)
+async def create_customer_remark(remark_data: CustomerRemarkCreate, user: dict = Depends(get_current_user)):
+    remark = CustomerRemark(**remark_data.model_dump())
+    remark_dict = remark.model_dump()
+    remark_dict['created_at'] = remark_dict['created_at'].isoformat()
+    
+    await db.customer_remarks.insert_one(remark_dict)
+    return remark
+
+@api_router.post("/customer-remarks/{remark_id}/upload")
+async def upload_customer_remark_file(remark_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"customer_{remark_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.customer_remarks.update_one({"id": remark_id}, {"$set": {"file_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.delete("/customer-remarks/{remark_id}")
+async def delete_customer_remark(remark_id: str, user: dict = Depends(get_current_user)):
+    result = await db.customer_remarks.delete_one({"id": remark_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Remark not found")
+    return {"message": "Remark deleted successfully"}
+
 app.include_router(api_router)
 
 app.add_middleware(
