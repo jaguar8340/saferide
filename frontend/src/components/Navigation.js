@@ -15,6 +15,8 @@ export function Navigation() {
     { path: '/', icon: FileText, label: 'Monatsansicht' },
     { path: '/yearly', icon: BarChart3, label: 'Jahresübersicht' },
     { path: '/accounting', icon: BarChart3, label: 'Buchhaltung/Abschluss' },
+    { path: '/vehicles', icon: Car, label: 'Fahrzeugübersicht' },
+    { path: '/customers', icon: UsersIcon, label: 'Kundenverwaltung' },
   ];
 
   const adminItems = [
@@ -23,29 +25,38 @@ export function Navigation() {
   ];
 
   return (
-    <div className="bg-white border-b">
+    <div className="bg-white border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo/Title */}
-          <div className="flex-shrink-0">
-            <h2 className="text-lg sm:text-xl font-bold" style={{ color: '#d63031' }}>
-              <span className="hidden sm:inline">Fahrschule saferide by Nadine Stäubli</span>
-              <span className="sm:hidden">Saferide</span>
-            </h2>
-            <p className="text-xs text-gray-600">{user?.username}</p>
+        {/* Title Row */}
+        <div className="py-3 border-b">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>
+                Fahrschule saferide by Nadine Stäubli
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600">{user?.username} ({user?.role})</p>
+            </div>
+            <Button variant="ghost" onClick={logout} className="hidden sm:flex items-center gap-2" size="sm">
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm">Abmelden</span>
+            </Button>
           </div>
+        </div>
 
+        {/* Navigation Row */}
+        <div className="py-2">
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-1 overflow-x-auto">
             {navItems.map((item) => (
               <Button
                 key={item.path}
                 variant="ghost"
                 onClick={() => navigate(item.path)}
-                className={`flex items-center gap-2 ${
+                className={`flex items-center gap-2 whitespace-nowrap ${
                   isActive(item.path) ? 'bg-red-50' : ''
                 }`}
-                style={isActive(item.path) ? { color: '#d63031' } : {}}
+                style={isActive(item.path) ? { color: '#d63031', fontWeight: '600' } : {}}
+                size="sm"
               >
                 <item.icon className="h-4 w-4" />
                 <span className="text-sm">{item.label}</span>
@@ -57,26 +68,22 @@ export function Navigation() {
                 key={item.path}
                 variant="ghost"
                 onClick={() => navigate(item.path)}
-                className={`flex items-center gap-2 ${
+                className={`flex items-center gap-2 whitespace-nowrap ${
                   isActive(item.path) ? 'bg-red-50' : ''
                 }`}
-                style={isActive(item.path) ? { color: '#d63031' } : {}}
+                style={isActive(item.path) ? { color: '#d63031', fontWeight: '600' } : {}}
+                size="sm"
               >
                 <item.icon className="h-4 w-4" />
                 <span className="text-sm">{item.label}</span>
               </Button>
             ))}
-
-            <Button variant="ghost" onClick={logout} className="flex items-center gap-2">
-              <LogOut className="h-4 w-4" />
-              <span className="text-sm">Abmelden</span>
-            </Button>
           </div>
 
-          {/* Mobile Navigation - Dropdown */}
+          {/* Mobile Navigation */}
           <div className="lg:hidden">
             <select 
-              className="px-3 py-2 border rounded-md text-sm"
+              className="w-full px-3 py-2 border rounded-md text-sm"
               onChange={(e) => {
                 if (e.target.value === 'logout') {
                   logout();
@@ -86,7 +93,7 @@ export function Navigation() {
               }}
               value={location.pathname}
             >
-              <option value="">Menü</option>
+              <option value="">Menü wählen</option>
               {navItems.map((item) => (
                 <option key={item.path} value={item.path}>{item.label}</option>
               ))}
