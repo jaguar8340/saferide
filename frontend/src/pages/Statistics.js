@@ -41,12 +41,12 @@ function Statistics() {
     const incomeAccounts = accounts.filter(acc => acc.type === 'income');
     const incomeData = incomeAccounts.map(acc => [acc.name, `CHF ${acc.income.toFixed(2)}`]);
     incomeData.push(['Total Einnahmen', `CHF ${totalIncome.toFixed(2)}`]);
-    doc.autoTable({ head: [['Einnahmen-Konten', 'Betrag']], body: incomeData, startY: 25, theme: 'grid' });
+    autoTable(doc, { head: [['Einnahmen-Konten', 'Betrag']], body: incomeData, startY: 25, theme: 'grid' });
     
     const expenseAccounts = accounts.filter(acc => acc.type === 'expense');
     const expenseData = expenseAccounts.map(acc => [acc.name, `CHF ${acc.expense.toFixed(2)}`]);
     expenseData.push(['Total Ausgaben', `CHF ${totalExpense.toFixed(2)}`]);
-    doc.autoTable({ head: [['Ausgaben-Konten', 'Betrag']], body: expenseData, startY: doc.lastAutoTable.finalY + 10, theme: 'grid' });
+    autoTable(doc, { head: [['Ausgaben-Konten', 'Betrag']], body: expenseData, startY: doc.lastAutoTable.finalY + 10, theme: 'grid' });
     
     doc.save(`statistik_${currentYear}.pdf`);
     toast.success('PDF exportiert');
