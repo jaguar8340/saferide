@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Download } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 function YearlyView() {
   const { token } = useContext(AuthContext);
