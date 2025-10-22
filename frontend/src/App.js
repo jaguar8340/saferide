@@ -8,8 +8,6 @@ import YearlyView from './pages/YearlyView';
 import AccountingReport from './pages/AccountingReport';
 import AccountManagement from './pages/AccountManagement';
 import UserManagement from './pages/UserManagement';
-import VehicleManagement from './pages/VehicleManagement';
-import CustomerManagement from './pages/CustomerManagement';
 import { Toaster } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
