@@ -45,6 +45,11 @@ function FilesOverview() {
         } catch (e) { console.error(e); }
       }
       
+      try {
+        const impRes = await axios.get(`${API}/important-uploads`, { headers: { Authorization: token } });
+        impRes.data.forEach(item => { if (item.file_url) files.push({ date: item.date, type: 'Wichtig', description: item.description, file_url: item.file_url }); });
+      } catch (e) { console.error(e); }
+      
       files.sort((a, b) => b.date.localeCompare(a.date));
       setAllFiles(files);
     } catch (error) {
