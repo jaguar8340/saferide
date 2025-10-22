@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import '@/App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Sidebar } from './components/Sidebar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import YearlyView from './pages/YearlyView';
 import Statistics from './pages/Statistics';
-import AccountManagement from './pages/AccountManagement';
-import UserManagement from './pages/UserManagement';
 import VehicleManagement from './pages/VehicleManagement';
 import CustomerManagement from './pages/CustomerManagement';
 import FilesOverview from './pages/FilesOverview';
+import AccountManagement from './pages/AccountManagement';
+import UserManagement from './pages/UserManagement';
 import { Toaster } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
-
 export const AuthContext = React.createContext();
 
 function App() {
@@ -44,22 +44,29 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
-      <div className="App">
-        <BrowserRouter>
+      <BrowserRouter>
+        {token ? (
+          <Sidebar>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/yearly" element={<YearlyView />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/vehicles" element={<VehicleManagement />} />
+              <Route path="/customers" element={<CustomerManagement />} />
+              <Route path="/files" element={<FilesOverview />} />
+              <Route path="/accounts" element={user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
+              <Route path="/users" element={user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Sidebar>
+        ) : (
           <Routes>
-            <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
-            <Route path="/" element={token ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/yearly" element={token ? <YearlyView /> : <Navigate to="/login" />} />
-            <Route path="/statistics" element={token ? <Statistics /> : <Navigate to="/login" />} />
-            <Route path="/vehicles" element={token ? <VehicleManagement /> : <Navigate to="/login" />} />
-            <Route path="/customers" element={token ? <CustomerManagement /> : <Navigate to="/login" />} />
-            <Route path="/files" element={token ? <FilesOverview /> : <Navigate to="/login" />} />
-            <Route path="/accounts" element={token && user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
-            <Route path="/users" element={token && user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
-        </BrowserRouter>
+        )}
         <Toaster position="top-right" richColors />
-      </div>
+      </BrowserRouter>
     </AuthContext.Provider>
   );
 }
