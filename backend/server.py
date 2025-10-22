@@ -75,6 +75,7 @@ class Transaction(BaseModel):
     amount: float
     account_id: str
     account_name: Optional[str] = None
+    customer_id: Optional[str] = None
     payment_method: Optional[str] = None  # 'bar', 'kreditkarte', 'twint', 'bank'
     remarks: Optional[str] = None
     file_url: Optional[str] = None
@@ -87,6 +88,7 @@ class TransactionCreate(BaseModel):
     type: str
     amount: float
     account_id: str
+    customer_id: Optional[str] = None
     payment_method: Optional[str] = None
     remarks: Optional[str] = None
 
