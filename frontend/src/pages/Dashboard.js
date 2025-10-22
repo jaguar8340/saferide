@@ -20,13 +20,16 @@ function Dashboard() {
   const [bankDocuments, setBankDocuments] = useState([]);
   const [miscItems, setMiscItems] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [useCustomer, setUseCustomer] = useState(false);
   const [formData, setFormData] = useState({
     date: getCurrentDateISO(),
     description: '',
+    customer_id: '',
     type: 'income',
     amount: '',
     account_id: '',
