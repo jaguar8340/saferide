@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
 import { useNavigate } from 'react-router-dom';
-import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -72,7 +71,7 @@ function UserManagement() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
@@ -91,7 +90,7 @@ function UserManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Navigation />
+      
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: '#d63031' }}>Benutzer verwalten</h1>
@@ -120,7 +119,7 @@ function UserManagement() {
                         required
                         data-testid="user-username-input"
                       />
-                    </div>
+                    </>
                     <div>
                       <Label>Passwort</Label>
                       <Input
@@ -130,7 +129,7 @@ function UserManagement() {
                         required
                         data-testid="user-password-input"
                       />
-                    </div>
+                    </>
                     <div>
                       <Label>Rolle</Label>
                       <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
@@ -142,14 +141,14 @@ function UserManagement() {
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
+                    </>
                     <Button type="submit" className="w-full" disabled={loading} data-testid="submit-user-btn">
                       {loading ? 'Erstellen...' : 'Erstellen'}
                     </Button>
                   </form>
                 </DialogContent>
               </Dialog>
-            </div>
+            </>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -196,11 +195,11 @@ function UserManagement() {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </>
           </CardContent>
         </Card>
       </main>
-    </div>
+    </>
   );
 }
 

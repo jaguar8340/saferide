@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
 import { useNavigate } from 'react-router-dom';
-import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -44,8 +43,8 @@ function YearlyView() {
   const yearTotalBalance = yearTotalIncome - yearTotalExpense;
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
-      <Navigation />
+    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8\">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6\" style={{ color: '#d63031' }}>Jahres\u00fcbersicht {currentYear}</h1>
@@ -61,7 +60,7 @@ function YearlyView() {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </>
 
         {/* Year totals */}
         <Card className="mb-6 border-0 shadow-lg">
@@ -75,20 +74,20 @@ function YearlyView() {
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: '#27ae60' }} data-testid="year-total-income">
                   CHF {yearTotalIncome.toFixed(2)}
                 </p>
-              </div>
+              </>
               <div className="p-4 rounded-lg" style={{ background: '#fef5e7' }}>
                 <p className="text-sm text-gray-600">Total Ausgaben</p>
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: '#e67e22' }} data-testid="year-total-expense">
                   CHF {yearTotalExpense.toFixed(2)}
                 </p>
-              </div>
+              </>
               <div className="p-4 rounded-lg" style={{ background: yearTotalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}>
                 <p className="text-sm text-gray-600">Total Einkommen</p>
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: yearTotalBalance >= 0 ? '#27ae60' : '#c0392b' }} data-testid="year-total-balance">
                   CHF {yearTotalBalance.toFixed(2)}
                 </p>
-              </div>
-            </div>
+              </>
+            </>
           </CardContent>
         </Card>
 
@@ -130,11 +129,11 @@ function YearlyView() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </>
           </CardContent>
         </Card>
       </main>
-    </div>
+    </>
   );
 }
 

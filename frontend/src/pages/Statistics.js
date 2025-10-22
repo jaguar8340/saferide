@@ -87,7 +87,7 @@ function Statistics() {
   if (!yearlyData || !statistics) return (
     <div className="min-h-screen flex items-center justify-center">
       <p>Laden...</p>
-    </div>
+    </>
   );
 
   const accounts = Object.entries(yearlyData.account_totals).map(([name, data]) => ({
@@ -122,7 +122,7 @@ function Statistics() {
           <Download className="mr-2 h-4 w-4" />
           PDF Export
         </Button>
-      </div>
+      </>
       
       {/* Year selector */}
       <div className="mb-6">
@@ -136,7 +136,7 @@ function Statistics() {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </>
 
       {/* Summary Cards - Only Income and Expense */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -161,7 +161,7 @@ function Statistics() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </>
 
       {/* Key Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -176,14 +176,14 @@ function Statistics() {
                 <p className="text-2xl font-bold" style={{ color: '#d63031' }}>
                   {statistics.fahrstunden_count}
                 </p>
-              </div>
+              </>
               <div>
                 <p className="text-sm text-gray-600">Umsatz Fahrstunden</p>
                 <p className="text-2xl font-bold" style={{ color: '#27ae60' }}>
                   CHF {statistics.fahrstunden_revenue.toFixed(2)}
                 </p>
-              </div>
-            </div>
+              </>
+            </>
           </CardContent>
         </Card>
 
@@ -198,17 +198,17 @@ function Statistics() {
                 <p className="text-2xl font-bold" style={{ color: '#27ae60' }}>
                   CHF {(totalIncome / 12).toFixed(2)}
                 </p>
-              </div>
+              </>
               <div>
                 <p className="text-sm text-gray-600">Ø Ausgaben pro Monat</p>
                 <p className="text-2xl font-bold" style={{ color: '#e67e22' }}>
                   CHF {(totalExpense / 12).toFixed(2)}
                 </p>
-              </div>
-            </div>
+              </>
+            </>
           </CardContent>
         </Card>
-      </div>
+      </>
 
       {/* Monthly Chart */}
       <Card className="border-0 shadow-lg mb-6">
@@ -266,7 +266,7 @@ function Statistics() {
                   </TableRow>
                 </TableBody>
               </Table>
-            </div>
+            </>
           </CardContent>
         </Card>
 
@@ -304,10 +304,10 @@ function Statistics() {
                   </TableRow>
                 </TableBody>
               </Table>
-            </div>
+            </>
           </CardContent>
         </Card>
-      </div>
+      </>
     </main>
   );
 }

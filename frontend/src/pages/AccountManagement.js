@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
 import { useNavigate } from 'react-router-dom';
-import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -87,7 +86,7 @@ function AccountManagement() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
@@ -106,7 +105,7 @@ function AccountManagement() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Navigation />
+      
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: '#d63031' }}>Konten verwalten</h1>
@@ -142,7 +141,7 @@ function AccountManagement() {
                         required
                         data-testid="account-name-input"
                       />
-                    </div>
+                    </>
                     <div>
                       <Label>Typ</Label>
                       <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
@@ -154,14 +153,14 @@ function AccountManagement() {
                           <SelectItem value="expense">Ausgaben</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
+                    </>
                     <Button type="submit" className="w-full" disabled={loading} data-testid="submit-account-btn">
                       {loading ? 'Speichern...' : (editingAccount ? 'Aktualisieren' : 'Erstellen')}
                     </Button>
                   </form>
                 </DialogContent>
               </Dialog>
-            </div>
+            </>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -203,7 +202,7 @@ function AccountManagement() {
                           >
                             <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
                           </Button>
-                        </div>
+                        </>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -216,11 +215,11 @@ function AccountManagement() {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </>
           </CardContent>
         </Card>
       </main>
-    </div>
+    </>
   );
 }
 

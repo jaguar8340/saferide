@@ -1,6 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
-import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -144,8 +143,8 @@ function VehicleManagement() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
-      <Navigation />
+    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
@@ -188,30 +187,30 @@ function VehicleManagement() {
                 <div>
                   <Label>Marke</Label>
                   <Input value={vehicleForm.marke} onChange={(e) => setVehicleForm({ ...vehicleForm, marke: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>Modell</Label>
                   <Input value={vehicleForm.modell} onChange={(e) => setVehicleForm({ ...vehicleForm, modell: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>Chassis Nr.</Label>
                   <Input value={vehicleForm.chassis_nr} onChange={(e) => setVehicleForm({ ...vehicleForm, chassis_nr: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>1. Inv.</Label>
                   <Input value={vehicleForm.first_inv} onChange={(e) => setVehicleForm({ ...vehicleForm, first_inv: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>KM Stand</Label>
                   <Input type="number" value={vehicleForm.km_stand} onChange={(e) => setVehicleForm({ ...vehicleForm, km_stand: e.target.value })} required />
-                </div>
+                </>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Speichern...' : (editingVehicle ? 'Aktualisieren' : 'Hinzufuegen')}
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+        </>
 
         <div className="space-y-4">
           {vehicles.map((vehicle) => (
@@ -224,8 +223,8 @@ function VehicleManagement() {
                       <p>Chassis: {vehicle.chassis_nr}</p>
                       <p>1. Inv.: {vehicle.first_inv}</p>
                       <p>KM Stand: {vehicle.km_stand.toLocaleString()}</p>
-                    </div>
-                  </div>
+                    </>
+                  </>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => {
                       setEditingVehicle(vehicle);
@@ -237,8 +236,8 @@ function VehicleManagement() {
                     <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(vehicle.id)}>
                       <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
                     </Button>
-                  </div>
-                </div>
+                  </>
+                </>
               </CardHeader>
               <CardContent>
                 <div className="flex justify-between items-center mb-4">
@@ -250,7 +249,7 @@ function VehicleManagement() {
                     <Plus className="mr-2 h-3 w-3" />
                     Service
                   </Button>
-                </div>
+                </>
 
                 {services[vehicle.id] && services[vehicle.id].length > 0 ? (
                   <div className="space-y-2">
@@ -264,10 +263,10 @@ function VehicleManagement() {
                               Beleg ansehen
                             </a>
                           )}
-                        </div>
-                      </div>
+                        </>
+                      </>
                     ))}
-                  </div>
+                  </>
                 ) : (
                   <p className="text-gray-500 text-sm">Noch keine Service-Eintraege</p>
                 )}
@@ -282,7 +281,7 @@ function VehicleManagement() {
               </CardContent>
             </Card>
           )}
-        </div>
+        </>
       </main>
 
       <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
@@ -294,26 +293,26 @@ function VehicleManagement() {
             <div>
               <Label>Datum</Label>
               <Input type="date" value={serviceForm.date} onChange={(e) => setServiceForm({ ...serviceForm, date: e.target.value })} required />
-            </div>
+            </>
             <div>
               <Label>Beschreibung</Label>
               <Textarea value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} required />
-            </div>
+            </>
             <div>
               <Label>KM Stand</Label>
               <Input type="number" value={serviceForm.km_stand} onChange={(e) => setServiceForm({ ...serviceForm, km_stand: e.target.value })} required />
-            </div>
+            </>
             <div>
               <Label>Beleg (optional)</Label>
               <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setServiceFile(e.target.files[0])} />
-            </div>
+            </>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Speichern...' : 'Hinzufuegen'}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

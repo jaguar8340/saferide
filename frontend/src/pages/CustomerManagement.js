@@ -1,6 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext, API } from '../App';
-import { Navigation } from '../components/Navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -142,8 +141,8 @@ function CustomerManagement() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
-      <Navigation />
+    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+      
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
@@ -186,40 +185,40 @@ function CustomerManagement() {
                 <div>
                   <Label>Name</Label>
                   <Input value={customerForm.name} onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>Vorname</Label>
                   <Input value={customerForm.vorname} onChange={(e) => setCustomerForm({ ...customerForm, vorname: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>Strasse</Label>
                   <Input value={customerForm.strasse} onChange={(e) => setCustomerForm({ ...customerForm, strasse: e.target.value })} required />
-                </div>
+                </>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>PLZ</Label>
                     <Input value={customerForm.plz} onChange={(e) => setCustomerForm({ ...customerForm, plz: e.target.value })} required />
-                  </div>
+                  </>
                   <div>
                     <Label>Ort</Label>
                     <Input value={customerForm.ort} onChange={(e) => setCustomerForm({ ...customerForm, ort: e.target.value })} required />
-                  </div>
-                </div>
+                  </>
+                </>
                 <div>
                   <Label>Telefon</Label>
                   <Input value={customerForm.telefon} onChange={(e) => setCustomerForm({ ...customerForm, telefon: e.target.value })} required />
-                </div>
+                </>
                 <div>
                   <Label>E-Mail</Label>
                   <Input type="email" value={customerForm.email} onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} required />
-                </div>
+                </>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Speichern...' : (editingCustomer ? 'Aktualisieren' : 'Hinzufuegen')}
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+        </>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {customers.map((customer) => (
@@ -233,8 +232,8 @@ function CustomerManagement() {
                       <p>{customer.plz} {customer.ort}</p>
                       <p>Tel: {customer.telefon}</p>
                       <p>Email: {customer.email}</p>
-                    </div>
-                  </div>
+                    </>
+                  </>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => {
                       setEditingCustomer(customer);
@@ -246,8 +245,8 @@ function CustomerManagement() {
                     <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(customer.id)}>
                       <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
                     </Button>
-                  </div>
-                </div>
+                  </>
+                </>
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
@@ -280,9 +279,9 @@ function CustomerManagement() {
                         <Plus className="mr-2 h-4 w-4" />
                         Speichern
                       </Button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  </>
+                </>
 
                 {remarks[customer.id] && remarks[customer.id].length > 0 ? (
                   <div className="space-y-2 mt-4">
@@ -295,9 +294,9 @@ function CustomerManagement() {
                             Foto ansehen
                           </a>
                         )}
-                      </div>
+                      </>
                     ))}
-                  </div>
+                  </>
                 ) : (
                   <p className="text-gray-500 text-sm mt-4">Noch keine Bemerkungen</p>
                 )}
@@ -312,9 +311,9 @@ function CustomerManagement() {
               </CardContent>
             </Card>
           )}
-        </div>
+        </>
       </main>
-    </div>
+    </>
   );
 }
 

@@ -5,7 +5,6 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { TransactionTabs } from '../components/TransactionTabs';
 import { ModernMonthYearPicker } from '../components/ModernMonthYearPicker';
-import { Navigation } from '../components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -388,7 +387,7 @@ function Dashboard() {
                           required
                           data-testid="transaction-date-input"
                         />
-                      </div>
+                      </>
                       <div>
                         <Label>Bezeichnung</Label>
                         <Input
@@ -397,7 +396,7 @@ function Dashboard() {
                           required
                           data-testid="transaction-description-input"
                         />
-                      </div>
+                      </>
                       <div>
                         <Label>Typ</Label>
                         <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
@@ -409,7 +408,7 @@ function Dashboard() {
                             <SelectItem value="expense">Ausgaben</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
+                      </>
                       <div>
                         <Label>Betrag (CHF)</Label>
                         <Input
@@ -420,7 +419,7 @@ function Dashboard() {
                           required
                           data-testid="transaction-amount-input"
                         />
-                      </div>
+                      </>
                       <div>
                         <Label>Konto</Label>
                         <Select value={formData.account_id} onValueChange={(value) => setFormData({ ...formData, account_id: value })}>
@@ -435,7 +434,7 @@ function Dashboard() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
+                      </>
                       <div>
                         <Label>Bezahlung</Label>
                         <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
@@ -449,7 +448,7 @@ function Dashboard() {
                             <SelectItem value="bank">Bank</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
+                      </>
                       <div>
                         <Label>Bemerkungen</Label>
                         <Textarea
@@ -457,7 +456,7 @@ function Dashboard() {
                           onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                           data-testid="transaction-remarks-input"
                         />
-                      </div>
+                      </>
                       <div>
                         <Label>Datei (optional)</Label>
                         <Input
@@ -469,15 +468,15 @@ function Dashboard() {
                         {uploadFile && (
                           <p className="text-sm text-gray-600 mt-1">{uploadFile.name}</p>
                         )}
-                      </div>
+                      </>
                       <Button type="submit" className="w-full" disabled={loading} data-testid="submit-transaction-btn">
                         {loading ? 'Speichern...' : (editingTransaction ? 'Aktualisieren' : 'Hinzufügen')}
                       </Button>
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div>
-            </div>
+              </>
+            </>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -486,20 +485,20 @@ function Dashboard() {
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: '#27ae60' }} data-testid="total-income">
                   CHF {totalIncome.toFixed(2)}
                 </p>
-              </div>
+              </>
               <div className="p-4 rounded-lg" style={{ background: '#fef5e7' }}>
                 <p className="text-sm text-gray-600">Total Ausgaben</p>
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: '#e67e22' }} data-testid="total-expense">
                   CHF {totalExpense.toFixed(2)}
                 </p>
-              </div>
+              </>
               <div className="p-4 rounded-lg" style={{ background: totalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}>
                 <p className="text-sm text-gray-600">Total Einkommen</p>
                 <p className="text-xl sm:text-2xl font-bold" style={{ color: totalBalance >= 0 ? '#27ae60' : '#c0392b' }} data-testid="total-balance">
                   CHF {totalBalance.toFixed(2)}
                 </p>
-              </div>
-            </div>
+              </>
+            </>
           </CardContent>
         </Card>
 
