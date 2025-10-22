@@ -331,64 +331,12 @@ function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold" style={{ color: '#d63031' }}>
-                <span className="hidden sm:inline">Fahrschule Saferide by Nadine Stäubli</span>
-                <span className="sm:hidden">Saferide</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600">Willkommen, {user?.username}</p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" data-testid="menu-btn">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => navigate('/')} data-testid="nav-dashboard">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Monatsansicht
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/yearly')} data-testid="nav-yearly">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Jahresübersicht
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/accounting')} data-testid="nav-accounting">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Buchhaltung/Abschluss
-                  </DropdownMenuItem>
-                  {user?.role === 'admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/accounts')} data-testid="nav-accounts">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Konten verwalten
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/users')} data-testid="nav-users">
-                        <Users className="mr-2 h-4 w-4" />
-                        Benutzer verwalten
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={logout} data-testid="logout-btn">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Abmelden
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Navigation */}
+      <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Month selector */}
-        <MonthYearPicker 
+        <ModernMonthYearPicker 
           currentDate={currentDate} 
           onDateChange={setCurrentDate}
         />
