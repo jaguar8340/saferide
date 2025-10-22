@@ -43,24 +43,22 @@ function YearlyView() {
   const yearTotalBalance = yearTotalIncome - yearTotalExpense;
 
   return (
-    <> style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: '#d63031' }}>Jahresübersicht {currentYear}</h1>
       
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8\">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6\" style={{ color: '#d63031' }}>Jahres\u00fcbersicht {currentYear}</h1>
-        {/* Year selector */}
-        <div className="flex items-center gap-4 mb-6">
-          <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </>
+      {/* Year selector */}
+      <div className="flex items-center gap-4 mb-6">
+        <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
+              <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
         {/* Year totals */}
         <Card className="mb-6 border-0 shadow-lg">
