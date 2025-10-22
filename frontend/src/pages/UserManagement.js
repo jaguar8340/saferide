@@ -15,13 +15,45 @@ function UserManagement() {
   const { token, user: currentUser } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({ username: '', password: '', role: 'user' });
+  const [passwordData, setPasswordData] = useState({ old_password: '', new_password: '', confirm_password: '' });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => { try { const response = await axios.get(`${API}/users`, { headers: { Authorization: token } }); setUsers(response.data); } catch (error) { toast.error('Fehler'); } };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      toast.error('Neue Passwoerter stimmen nicht ueberein');
+      return;
+    }
+
+    if (passwordData.new_password.length < 6) {
+      toast.error('Passwort muss mindestens 6 Zeichen lang sein');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post(`${API}/users/change-password`, {
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password
+      }, { headers: { Authorization: token } });
+      
+      toast.success('Passwort erfolgreich geaendert');
+      setShowPasswordDialog(false);
+      setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Fehler beim Aendern');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setLoading(true);
