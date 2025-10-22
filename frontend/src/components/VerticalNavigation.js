@@ -4,7 +4,7 @@ import { AuthContext } from '../App';
 import { Button } from '@/components/ui/button';
 import { FileText, BarChart3, Car, Users as UsersIcon, Settings, LogOut, FolderOpen } from 'lucide-react';
 
-export function VerticalNavigation() {
+export function VerticalNavigation({ children }) {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +28,7 @@ export function VerticalNavigation() {
   return (
     <div className="flex min-h-screen" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       {/* Sidebar */}
-      <div className="hidden lg:block w-64 bg-white border-r shadow-lg">
+      <div className="hidden lg:block w-64 bg-white border-r shadow-lg fixed h-full overflow-y-auto">
         <div className="p-6 border-b">
           <h1 className="text-xl font-bold leading-tight" style={{ color: '#d63031' }}>
             Fahrschule saferide<br/>by Nadine Stäubli
@@ -112,9 +112,10 @@ export function VerticalNavigation() {
         </div>
       </div>
 
-      {/* Content wrapper */}
-      <div className="flex-1 lg:mt-0 mt-24">
-        {/* This will be filled by the page content */}
+      {/* Content area */}
+      <div className="flex-1 lg:ml-64 mt-0 lg:mt-0">
+        <div className="lg:hidden h-24"></div>
+        {children}
       </div>
     </div>
   );
