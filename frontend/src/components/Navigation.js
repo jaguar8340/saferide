@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../App';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Car, Users as UsersIcon, Settings, LogOut } from 'lucide-react';
+import { FileText, BarChart3, Car, Users as UsersIcon, Settings, LogOut, FolderOpen } from 'lucide-react';
 
 export function Navigation() {
   const { user, logout } = useContext(AuthContext);
