@@ -379,7 +379,14 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
       toast.success('Hinzugefügt'); setRemarks(''); setFile(null); fetchMiscItems();
     } catch (e) { toast.error('Fehler'); }
   };
-  return (<div><div className="space-y-3 mb-6"><Textarea placeholder="Bemerkungen..." value={remarks} onChange={(e) => setRemarks(e.target.value)} /><div className="flex gap-2"><Input type="file" onChange={(e) => setFile(e.target.files[0])} className="flex-1" /><Button onClick={handleAdd} disabled={!remarks.trim()} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Hinzufügen</Button></div></div><div className="space-y-2">{miscItems.map(item => (<div key={item.id} className="p-3 border rounded"><p className="text-xs text-gray-500">{formatDate(item.date)}</p><p className="mt-1">{item.remarks}</p>{item.file_url && <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Datei</a>}</div>))}{miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}</div></div>);
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`${API}/misc-items/${itemId}`, { headers: { Authorization: token } });
+      toast.success('Gelöscht');
+      fetchMiscItems();
+    } catch (e) { toast.error('Fehler beim Löschen'); }
+  };
+  return (<div><div className="space-y-3 mb-6"><Textarea placeholder="Bemerkungen..." value={remarks} onChange={(e) => setRemarks(e.target.value)} /><div className="flex gap-2"><Input type="file" onChange={(e) => setFile(e.target.files[0])} className="flex-1" /><Button onClick={handleAdd} disabled={!remarks.trim()} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Hinzufügen</Button></div></div><div className="space-y-2">{miscItems.map(item => (<div key={item.id} className="flex justify-between items-center p-3 border rounded"><div><p className="text-xs text-gray-500">{formatDate(item.date)}</p><p className="mt-1">{item.remarks}</p>{item.file_url && <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Datei</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}</div></div>);
 }
 
 export default Dashboard;
