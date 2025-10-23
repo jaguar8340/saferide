@@ -166,45 +166,43 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      // Backup emergent functions to bypass interference
-      const originalFetch = window.fetch;
+      // Client-side PDF generation to avoid emergent-main.js interference
+      const jsPDF = (await import('jspdf')).default;
+      const autoTable = (await import('jspdf-autotable')).default;
       
-      // Temporarily restore original fetch
-      window.fetch = originalFetch.bind(window);
+      const doc = new jsPDF({ orientation: 'landscape' });
       
-      const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
-        method: 'GET',
-        headers: { 
-          'Authorization': token
-        }
+      doc.setFontSize(14);
+      doc.text(`Fahrschule saferide by Nadine Staeubli - ${months[month - 1]} ${year}`, 14, 15);
+      
+      // Prepare table data
+      const tableData = transactions.map(t => [
+        formatDate(t.date),
+        t.description,
+        t.account_name || '',
+        t.payment_method || '-',
+        t.type === 'income' ? `CHF ${t.amount.toFixed(2)}` : '',
+        t.type === 'expense' ? `CHF ${t.amount.toFixed(2)}` : '',
+        (t.remarks || '').substring(0, 30)
+      ]);
+      
+      tableData.push(['', '', 'Total:', '', `CHF ${totalIncome.toFixed(2)}`, `CHF ${totalExpense.toFixed(2)}`, '']);
+      tableData.push(['', '', 'Einkommen:', '', '', `CHF ${totalBalance.toFixed(2)}`, '']);
+      
+      autoTable(doc, {
+        head: [['Datum', 'Bezeichnung', 'Konto', 'Bezahlung', 'Einnahmen', 'Ausgaben', 'Bemerkungen']],
+        body: tableData,
+        startY: 25,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fontSize: 9, fillColor: [128, 128, 128] }
       });
       
-      if (!response.ok) {
-        throw new Error('PDF Export fehlgeschlagen');
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      
-      // Create download link
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `saferide_${year}_${month}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        if (a.parentNode) a.parentNode.removeChild(a);
-      }, 100);
-      
+      doc.save(`saferide_${year}_${month}.pdf`);
       toast.success('PDF exportiert');
     } catch (error) {
       console.error('PDF Export Error:', error);
-      toast.error('Fehler beim Export: ' + error.message);
+      toast.error('Fehler beim Export');
     }
   };
 
