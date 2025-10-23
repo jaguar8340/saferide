@@ -534,15 +534,16 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
     total_balance = total_income - total_expense
     table_data.append(['', '', 'Einkommen:', '', f"{total_balance:.2f}", ''])
     
-    # Create table
-    table = Table(table_data, colWidths=[2.5*cm, 4*cm, 3.5*cm, 2.5*cm, 2.5*cm, 3*cm])
+    # Create table - Adjusted for landscape
+    table = Table(table_data, colWidths=[3*cm, 5*cm, 4*cm, 3*cm, 3*cm, 4*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('ALIGN', (3, 1), (4, -1), 'RIGHT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, -2), (-1, -1), colors.lightgrey),
