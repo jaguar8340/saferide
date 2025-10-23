@@ -166,30 +166,35 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      // Direct download using axios with proper configuration
-      const response = await axios({
-        url: `${API}/reports/export-pdf?year=${year}&month=${month}`,
+      // Use standard fetch without emergent interference by converting to base64
+      const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
         method: 'GET',
-        responseType: 'blob',
         headers: { 
           'Authorization': token,
           'Accept': 'application/pdf'
         }
       });
       
-      // Create blob and download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      if (!response.ok) {
+        throw new Error('PDF Export fehlgeschlagen');
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      
+      // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `saferide_${year}_${month}.pdf`;
-      document.body.appendChild(link);
-      link.click();
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `saferide_${year}_${month}.pdf`;
+      document.body.appendChild(a);
+      a.click();
       
       // Cleanup
       setTimeout(() => {
-        document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }, 100);
       
       toast.success('PDF exportiert');
