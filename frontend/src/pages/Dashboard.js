@@ -166,27 +166,37 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
-        headers: { Authorization: token }
-      });
+      // Use XMLHttpRequest to avoid emergent-main.js interference
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', `${API}/reports/export-pdf?year=${year}&month=${month}`, true);
+      xhr.setRequestHeader('Authorization', token);
+      xhr.responseType = 'blob';
       
-      if (!response.ok) {
-        throw new Error('PDF Export fehlgeschlagen');
-      }
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          const blob = xhr.response;
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `saferide_${year}_${month}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          toast.success('PDF exportiert');
+        } else {
+          toast.error('Fehler beim Export');
+        }
+      };
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `saferide_${year}_${month}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('PDF exportiert');
+      xhr.onerror = function() {
+        toast.error('Fehler beim Export');
+      };
+      
+      xhr.send();
     } catch (error) {
       console.error('PDF Export Error:', error);
-      toast.error('Fehler beim Export: ' + error.message);
+      toast.error('Fehler beim Export');
     }
   };
 
