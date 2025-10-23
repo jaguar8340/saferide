@@ -96,7 +96,7 @@ function CustomerManagement() {
               
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded">
                 <Switch checked={c.active !== false} onCheckedChange={() => handleToggleActive(c.id, c.active !== false)} />
-                <span className="text-sm font-medium">{c.active !== false ? 'Aktiver Schueler' : 'Inaktiver Schueler'}</span>
+                <span className="text-sm font-medium">{c.active !== false ? 'Aktiver Kunde' : 'Inaktiver Kunde'}</span>
               </div>
               
               <div className="flex justify-end gap-2">
@@ -141,7 +141,7 @@ function CustomerManagement() {
               <div><Label>E-Mail</Label><Input type="email" value={customerForm.email} onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} required /></div>
               <div className="flex items-center gap-2">
                 <Switch checked={customerForm.active} onCheckedChange={(checked) => setCustomerForm({ ...customerForm, active: checked })} />
-                <Label>Aktiver Schueler</Label>
+                <Label>Aktiver Kunde</Label>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Speichern...' : 'Hinzufuegen'}</Button>
             </form>
@@ -151,8 +151,8 @@ function CustomerManagement() {
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="active">Aktive Schueler ({activeCustomers.length})</TabsTrigger>
-          <TabsTrigger value="inactive">Inaktive Schueler ({inactiveCustomers.length})</TabsTrigger>
+          <TabsTrigger value="active">Aktive Kunde ({activeCustomers.length})</TabsTrigger>
+          <TabsTrigger value="inactive">Inaktive Kunde ({inactiveCustomers.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">
