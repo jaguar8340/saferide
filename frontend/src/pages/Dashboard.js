@@ -136,7 +136,7 @@ function Dashboard() {
       setShowAddDialog(false);
       setEditingTransaction(null);
       setUploadFile(null);
-      setFormData({ date: getCurrentDateISO(), description: '', customer_id: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' });
+      setFormData({ date: getCurrentDateISO(), description: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' });
       fetchTransactions();
     } catch (error) {
       toast.error('Fehler beim Speichern');
@@ -160,25 +160,19 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
-        headers: { Authorization: token }
+      const response = await axios.get(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
+        headers: { Authorization: token }, responseType: 'blob'
       });
-      
-      if (!response.ok) throw new Error('Export failed');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `saferide_${year}_${month}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
       toast.success('PDF exportiert');
     } catch (error) {
       toast.error('Fehler beim Export');
-      console.error(error);
     }
   };
 
@@ -240,7 +234,7 @@ function Dashboard() {
               <Button onClick={handleExportPDF} variant="outline"><Download className="mr-2 h-4 w-4" />PDF Export</Button>
               <Dialog open={showAddDialog} onOpenChange={(open) => {
                 setShowAddDialog(open);
-                if (!open) { setEditingTransaction(null); setUploadFile(null); setUseCustomer(false); setFormData({ date: getCurrentDateISO(), description: '', customer_id: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
+                if (!open) { setEditingTransaction(null); setUploadFile(null); setFormData({ date: getCurrentDateISO(), description: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
               }}>
                 <DialogTrigger asChild>
                   <Button style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Eintrag</Button>
@@ -365,14 +359,7 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
       toast.success('Hochgeladen'); setFile(null); fetchBankDocuments();
     } catch (e) { toast.error('Fehler'); }
   };
-  const handleDelete = async (docId) => {
-    try {
-      await axios.delete(`${API}/bank-documents/${docId}`, { headers: { Authorization: token } });
-      toast.success('Gelöscht');
-      fetchBankDocuments();
-    } catch (e) { toast.error('Fehler beim Löschen'); }
-  };
-  return (<div><div className="flex gap-2 mb-4"><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} /><Button onClick={handleUpload} disabled={!file} style={{ background: '#d63031', color: 'white' }}><Upload className="mr-2 h-4 w-4" />Hochladen</Button></div><div className="space-y-2">{bankDocuments.map(d => (<div key={d.id} className="flex justify-between items-center p-3 border rounded"><div><p className="font-medium">{formatDate(d.date)}</p>{d.file_url && <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Ansehen</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}</div></div>);
+  return (<div><div className="flex gap-2 mb-4"><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} /><Button onClick={handleUpload} disabled={!file} style={{ background: '#d63031', color: 'white' }}><Upload className="mr-2 h-4 w-4" />Hochladen</Button></div><div className="space-y-2">{bankDocuments.map(d => (<div key={d.id} className="flex justify-between p-3 border rounded"><div><p className="font-medium">{formatDate(d.date)}</p>{d.file_url && <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Ansehen</a>}</div></div>))}{bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}</div></div>);
 }
 
 function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
@@ -385,14 +372,7 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
       toast.success('Hinzugefügt'); setRemarks(''); setFile(null); fetchMiscItems();
     } catch (e) { toast.error('Fehler'); }
   };
-  const handleDelete = async (itemId) => {
-    try {
-      await axios.delete(`${API}/misc-items/${itemId}`, { headers: { Authorization: token } });
-      toast.success('Gelöscht');
-      fetchMiscItems();
-    } catch (e) { toast.error('Fehler beim Löschen'); }
-  };
-  return (<div><div className="space-y-3 mb-6"><Textarea placeholder="Bemerkungen..." value={remarks} onChange={(e) => setRemarks(e.target.value)} /><div className="flex gap-2"><Input type="file" onChange={(e) => setFile(e.target.files[0])} className="flex-1" /><Button onClick={handleAdd} disabled={!remarks.trim()} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Hinzufügen</Button></div></div><div className="space-y-2">{miscItems.map(item => (<div key={item.id} className="flex justify-between items-center p-3 border rounded"><div><p className="text-xs text-gray-500">{formatDate(item.date)}</p><p className="mt-1">{item.remarks}</p>{item.file_url && <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Datei</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}</div></div>);
+  return (<div><div className="space-y-3 mb-6"><Textarea placeholder="Bemerkungen..." value={remarks} onChange={(e) => setRemarks(e.target.value)} /><div className="flex gap-2"><Input type="file" onChange={(e) => setFile(e.target.files[0])} className="flex-1" /><Button onClick={handleAdd} disabled={!remarks.trim()} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Hinzufügen</Button></div></div><div className="space-y-2">{miscItems.map(item => (<div key={item.id} className="p-3 border rounded"><p className="text-xs text-gray-500">{formatDate(item.date)}</p><p className="mt-1">{item.remarks}</p>{item.file_url && <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Datei</a>}</div>))}{miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}</div></div>);
 }
 
 export default Dashboard;

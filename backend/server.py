@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timezone
 import bcrypt
 import jwt
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
@@ -495,7 +495,7 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
     
     # Create PDF
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4))
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
     elements = []
     
     styles = getSampleStyleSheet()
@@ -523,10 +523,10 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
         table_data.append([
             trans['date'],
             trans['description'][:30],
-            (trans.get('account_name') or '')[:20],
+            trans.get('account_name', '')[:20],
             income,
             expense,
-            (trans.get('remarks') or '')[:30]
+            trans.get('remarks', '')[:30]
         ])
     
     # Totals
