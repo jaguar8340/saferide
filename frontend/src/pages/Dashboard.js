@@ -164,47 +164,35 @@ function Dashboard() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
-      // Create hidden link and trigger download
-      const downloadUrl = `${API}/reports/export-pdf?year=${year}&month=${month}`;
+      // Direct download using axios with proper configuration
+      const response = await axios({
+        url: `${API}/reports/export-pdf?year=${year}&month=${month}`,
+        method: 'GET',
+        responseType: 'blob',
+        headers: { 
+          'Authorization': token,
+          'Accept': 'application/pdf'
+        }
+      });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = url;
       link.download = `saferide_${year}_${month}.pdf`;
-      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
       
-      // Add authorization via iframe approach
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      
-      // Navigate iframe to download URL with auth token in URL
-      const urlWithToken = `${downloadUrl}&_auth=${encodeURIComponent(token)}`;
-      
-      // Alternative: Use form post
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = downloadUrl;
-      form.target = '_blank';
-      form.style.display = 'none';
-      
-      const authInput = document.createElement('input');
-      authInput.type = 'hidden';
-      authInput.name = 'Authorization';
-      authInput.value = token;
-      form.appendChild(authInput);
-      
-      document.body.appendChild(form);
-      
-      // Simple window.open approach
-      window.open(downloadUrl, '_blank');
-      
-      toast.success('PDF wird heruntergeladen...');
-      
+      // Cleanup
       setTimeout(() => {
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        if (form.parentNode) form.parentNode.removeChild(form);
-      }, 1000);
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success('PDF exportiert');
     } catch (error) {
       console.error('PDF Export Error:', error);
       toast.error('Fehler beim Export');
