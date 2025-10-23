@@ -128,9 +128,15 @@ function Dashboard() {
       if (uploadFile && transactionId) {
         const fileFormData = new FormData();
         fileFormData.append('file', uploadFile);
-        await axios.post(`${API}/upload/${transactionId}`, fileFormData, {
-          headers: { Authorization: token }
-        });
+        try {
+          await axios.post(`${API}/upload/${transactionId}`, fileFormData, {
+            headers: { Authorization: token }
+          });
+          toast.success('Datei hochgeladen');
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error('Fehler beim Datei-Upload: ' + (uploadError.response?.data?.detail || uploadError.message));
+        }
       }
       
       setShowAddDialog(false);
