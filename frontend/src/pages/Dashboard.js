@@ -160,19 +160,25 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      const response = await axios.get(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
-        headers: { Authorization: token }, responseType: 'blob'
+      const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
+        headers: { Authorization: token }
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `saferide_${year}_${month}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
       toast.success('PDF exportiert');
     } catch (error) {
       toast.error('Fehler beim Export');
+      console.error(error);
     }
   };
 
