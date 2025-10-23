@@ -166,12 +166,16 @@ function Dashboard() {
 
   const handleExportPDF = async () => {
     try {
-      // Use standard fetch without emergent interference by converting to base64
+      // Backup emergent functions to bypass interference
+      const originalFetch = window.fetch;
+      
+      // Temporarily restore original fetch
+      window.fetch = originalFetch.bind(window);
+      
       const response = await fetch(`${API}/reports/export-pdf?year=${year}&month=${month}`, {
         method: 'GET',
         headers: { 
-          'Authorization': token,
-          'Accept': 'application/pdf'
+          'Authorization': token
         }
       });
       
@@ -183,24 +187,24 @@ function Dashboard() {
       const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       
       // Create download link
-      const url = window.URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.style.display = 'none';
       a.href = url;
       a.download = `saferide_${year}_${month}.pdf`;
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       
       // Cleanup
       setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (a.parentNode) a.parentNode.removeChild(a);
       }, 100);
       
       toast.success('PDF exportiert');
     } catch (error) {
       console.error('PDF Export Error:', error);
-      toast.error('Fehler beim Export');
+      toast.error('Fehler beim Export: ' + error.message);
     }
   };
 
