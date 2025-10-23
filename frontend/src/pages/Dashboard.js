@@ -164,36 +164,47 @@ function Dashboard() {
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     try {
-      // Use XMLHttpRequest to avoid emergent-main.js interference
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', `${API}/reports/export-pdf?year=${year}&month=${month}`, true);
-      xhr.setRequestHeader('Authorization', token);
-      xhr.responseType = 'blob';
+      // Create hidden link and trigger download
+      const downloadUrl = `${API}/reports/export-pdf?year=${year}&month=${month}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `saferide_${year}_${month}.pdf`;
+      link.style.display = 'none';
       
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          const blob = xhr.response;
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `saferide_${year}_${month}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          toast.success('PDF exportiert');
-        } else {
-          toast.error('Fehler beim Export');
-        }
-      };
+      // Add authorization via iframe approach
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
       
-      xhr.onerror = function() {
-        toast.error('Fehler beim Export');
-      };
+      // Navigate iframe to download URL with auth token in URL
+      const urlWithToken = `${downloadUrl}&_auth=${encodeURIComponent(token)}`;
       
-      xhr.send();
+      // Alternative: Use form post
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = downloadUrl;
+      form.target = '_blank';
+      form.style.display = 'none';
+      
+      const authInput = document.createElement('input');
+      authInput.type = 'hidden';
+      authInput.name = 'Authorization';
+      authInput.value = token;
+      form.appendChild(authInput);
+      
+      document.body.appendChild(form);
+      
+      // Simple window.open approach
+      window.open(downloadUrl, '_blank');
+      
+      toast.success('PDF wird heruntergeladen...');
+      
+      setTimeout(() => {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (form.parentNode) form.parentNode.removeChild(form);
+      }, 1000);
     } catch (error) {
       console.error('PDF Export Error:', error);
       toast.error('Fehler beim Export');
