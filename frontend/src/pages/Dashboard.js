@@ -315,7 +315,7 @@ function Dashboard() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead><tr className="border-b bg-gray-50"><th className="p-3 text-left text-sm">Datum</th><th className="p-3 text-left text-sm">Bezeichnung</th><th className="p-3 text-left text-sm">Konto</th><th className="p-3 text-left text-sm">Bezahlung</th><th className="p-3 text-right text-sm">Einnahmen</th><th className="p-3 text-right text-sm">Ausgaben</th><th className="p-3 text-left text-sm">Bemerkungen</th><th className="p-3 text-center text-sm">Aktionen</th></tr></thead>
+                  <thead><tr className="border-b bg-gray-50"><th className="p-3 text-left text-sm">Datum</th><th className="p-3 text-left text-sm">Bezeichnung</th><th className="p-3 text-left text-sm">Konto</th><th className="p-3 text-left text-sm">Bezahlung</th><th className="p-3 text-right text-sm">Einnahmen</th><th className="p-3 text-right text-sm">Ausgaben</th><th className="p-3 text-left text-sm">Bemerkungen</th><th className="p-3 text-center text-sm">Datei</th><th className="p-3 text-center text-sm">Aktionen</th></tr></thead>
                   <tbody>
                     {transactions.map((t) => (
                       <tr key={t.id} className="border-b hover:bg-gray-50">
@@ -326,6 +326,13 @@ function Dashboard() {
                         <td className="p-3 text-right font-semibold" style={{ color: '#27ae60' }}>{t.type === 'income' ? `CHF ${t.amount.toFixed(2)}` : ''}</td>
                         <td className="p-3 text-right font-semibold" style={{ color: '#e67e22' }}>{t.type === 'expense' ? `CHF ${t.amount.toFixed(2)}` : ''}</td>
                         <td className="p-3 text-sm text-gray-600">{t.remarks || '-'}</td>
+                        <td className="p-3 text-center">
+                          {t.file_url ? (
+                            <a href={`${API.replace('/api', '')}${t.file_url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">Ansehen</a>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </td>
                         <td className="p-3">
                           <div className="flex justify-center gap-1">
                             <Button variant="ghost" size="sm" onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}><Edit2 className="h-4 w-4" /></Button>
