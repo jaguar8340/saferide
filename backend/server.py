@@ -495,7 +495,7 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
     
     # Create PDF
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4))
     elements = []
     
     styles = getSampleStyleSheet()
