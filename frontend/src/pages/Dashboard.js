@@ -234,7 +234,7 @@ function Dashboard() {
               <Button onClick={handleExportPDF} variant="outline"><Download className="mr-2 h-4 w-4" />PDF Export</Button>
               <Dialog open={showAddDialog} onOpenChange={(open) => {
                 setShowAddDialog(open);
-                if (!open) { setEditingTransaction(null); setUploadFile(null); setFormData({ date: getCurrentDateISO(), description: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
+                if (!open) { setEditingTransaction(null); setUploadFile(null); setUseCustomer(false); setFormData({ date: getCurrentDateISO(), description: '', customer_id: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
               }}>
                 <DialogTrigger asChild>
                   <Button style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Eintrag</Button>
