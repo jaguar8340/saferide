@@ -136,7 +136,7 @@ function Dashboard() {
       setShowAddDialog(false);
       setEditingTransaction(null);
       setUploadFile(null);
-      setFormData({ date: getCurrentDateISO(), description: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' });
+      setFormData({ date: getCurrentDateISO(), description: '', customer_id: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' });
       fetchTransactions();
     } catch (error) {
       toast.error('Fehler beim Speichern');
