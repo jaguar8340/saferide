@@ -523,10 +523,10 @@ async def export_pdf(year: int, month: int, user: dict = Depends(get_current_use
         table_data.append([
             trans['date'],
             trans['description'][:30],
-            trans.get('account_name', '')[:20],
+            (trans.get('account_name') or '')[:20],
             income,
             expense,
-            trans.get('remarks', '')[:30]
+            (trans.get('remarks') or '')[:30]
         ])
     
     # Totals
