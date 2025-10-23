@@ -359,7 +359,14 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
       toast.success('Hochgeladen'); setFile(null); fetchBankDocuments();
     } catch (e) { toast.error('Fehler'); }
   };
-  return (<div><div className="flex gap-2 mb-4"><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} /><Button onClick={handleUpload} disabled={!file} style={{ background: '#d63031', color: 'white' }}><Upload className="mr-2 h-4 w-4" />Hochladen</Button></div><div className="space-y-2">{bankDocuments.map(d => (<div key={d.id} className="flex justify-between p-3 border rounded"><div><p className="font-medium">{formatDate(d.date)}</p>{d.file_url && <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Ansehen</a>}</div></div>))}{bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}</div></div>);
+  const handleDelete = async (docId) => {
+    try {
+      await axios.delete(`${API}/bank-documents/${docId}`, { headers: { Authorization: token } });
+      toast.success('Gelöscht');
+      fetchBankDocuments();
+    } catch (e) { toast.error('Fehler beim Löschen'); }
+  };
+  return (<div><div className="flex gap-2 mb-4"><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} /><Button onClick={handleUpload} disabled={!file} style={{ background: '#d63031', color: 'white' }}><Upload className="mr-2 h-4 w-4" />Hochladen</Button></div><div className="space-y-2">{bankDocuments.map(d => (<div key={d.id} className="flex justify-between items-center p-3 border rounded"><div><p className="font-medium">{formatDate(d.date)}</p>{d.file_url && <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Ansehen</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}</div></div>);
 }
 
 function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
