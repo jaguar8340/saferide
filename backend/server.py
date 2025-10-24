@@ -789,6 +789,41 @@ async def delete_vehicle(vehicle_id: str, user: dict = Depends(get_current_user)
         raise HTTPException(status_code=404, detail="Vehicle not found")
     return {"message": "Vehicle deleted successfully"}
 
+
+@api_router.post("/vehicles/{vehicle_id}/fahrzeugausweis")
+async def upload_fahrzeugausweis(vehicle_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"fahrzeugausweis_{vehicle_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    await db.vehicles.update_one({"id": vehicle_id}, {"$set": {"fahrzeugausweis_url": file_url}})
+    
+    return {"file_url": file_url}
+
+@api_router.post("/vehicles/{vehicle_id}/images")
+async def upload_vehicle_image(vehicle_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    file_extension = file.filename.split('.')[-1]
+    file_name = f"vehicle_img_{vehicle_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / file_name
+    
+    with open(file_path, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    
+    file_url = f"/api/files/{file_name}"
+    
+    # Add to images array
+    vehicle = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0})
+    if vehicle:
+        images = vehicle.get('images', [])
+        images.append(file_url)
+        await db.vehicles.update_one({"id": vehicle_id}, {"$set": {"images": images}})
+    
+    return {"file_url": file_url}
+
 # Service Entries
 @api_router.get("/vehicles/{vehicle_id}/services")
 async def get_service_entries(vehicle_id: str, user: dict = Depends(get_current_user)):
