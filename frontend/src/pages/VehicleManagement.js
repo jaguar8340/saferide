@@ -346,15 +346,22 @@ function VehicleManagement() {
         )}
       </div>
 
-      <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
+      <Dialog open={showServiceDialog} onOpenChange={(open) => {
+        setShowServiceDialog(open);
+        if (!open) {
+          setEditingService(null);
+          setServiceForm({ date: getCurrentDateISO(), description: '', km_stand: '' });
+          setServiceFile(null);
+        }
+      }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Service hinzufuegen</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingService ? 'Service bearbeiten' : 'Service hinzufuegen'}</DialogTitle></DialogHeader>
           <form onSubmit={handleServiceSubmit} className="space-y-4">
             <div><Label>Datum</Label><Input type="date" value={serviceForm.date} onChange={(e) => setServiceForm({ ...serviceForm, date: e.target.value })} required /></div>
             <div><Label>Beschreibung</Label><Textarea value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} required /></div>
             <div><Label>KM Stand</Label><Input type="number" value={serviceForm.km_stand} onChange={(e) => setServiceForm({ ...serviceForm, km_stand: e.target.value })} required /></div>
             <div><Label>Beleg (optional)</Label><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setServiceFile(e.target.files[0])} /></div>
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Speichern...' : 'Hinzufuegen'}</Button>
+            <Button type="submit" className="w-full" disabled={loading} style={{ background: '#d63031', color: 'white' }}>{loading ? 'Speichern...' : (editingService ? 'Aktualisieren' : 'Hinzufuegen')}</Button>
           </form>
         </DialogContent>
       </Dialog>
