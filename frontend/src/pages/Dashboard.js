@@ -591,8 +591,9 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
             <div className="flex-1">
               <p className="text-xs text-gray-500">{formatDate(item.date)}</p>
               <p className="mt-1">{item.remarks}</p>
+              {item.filename && <p className="text-sm font-medium text-gray-700 mt-1">📎 {item.filename}</p>}
               {item.file_url && (
-                <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">
+                <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
                   Datei ansehen
                 </a>
               )}
