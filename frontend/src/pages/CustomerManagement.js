@@ -300,7 +300,7 @@ function CustomerManagement() {
                   <h4 className="font-semibold mb-3 text-lg">Bemerkungen</h4>
                   
                   {/* Add Remark Form */}
-                  <div className="space-y-3 mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="space-y-3 mb-4">
                     <Textarea
                       placeholder="Neue Bemerkung eingeben..."
                       value={remarkText}
@@ -308,18 +308,31 @@ function CustomerManagement() {
                       rows={3}
                     />
                     <div className="flex gap-2">
-                      <Input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setRemarkFile(e.target.files[0])}
-                        className="flex-1"
-                      />
+                      <label className="flex-1 cursor-pointer">
+                        <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 transition-colors" style={{ borderColor: '#e67e22' }}>
+                          <Upload className="h-6 w-6 mx-auto mb-1" style={{ color: '#e67e22' }} />
+                          <p className="text-sm font-medium" style={{ color: '#e67e22' }}>
+                            Foto hochladen (optional)
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG</p>
+                          {remarkFile && (
+                            <p className="text-sm font-semibold mt-2 text-green-600">{remarkFile.name}</p>
+                          )}
+                        </div>
+                        <Input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => setRemarkFile(e.target.files[0])}
+                          className="hidden"
+                        />
+                      </label>
                       <Button
                         onClick={() => handleAddRemark(selectedCustomerDetails.id)}
                         disabled={!remarkText.trim()}
-                        style={{ background: '#d63031', color: 'white' }}
+                        size="lg"
+                        style={{ background: '#d63031', color: 'white', minWidth: '130px' }}
                       >
-                        <Plus className="mr-2 h-4 w-4" />Speichern
+                        <Plus className="mr-2 h-5 w-5" />Speichern
                       </Button>
                     </div>
                   </div>
