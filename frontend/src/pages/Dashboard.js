@@ -573,13 +573,6 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
             {files.length} Datei(en) ausgewählt: {files.map(f => f.name).join(', ')}
           </p>
         )}
-      </div> 
-            style={{ background: '#d63031', color: 'white' }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {uploading ? 'Hochladen...' : `Hinzufügen${files.length > 0 ? ` (${files.length})` : ''}`}
-          </Button>
-        </div>
       </div>
       <div className="space-y-2">
         {miscItems.map(item => (
