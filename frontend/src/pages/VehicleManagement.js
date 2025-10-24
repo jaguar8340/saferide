@@ -100,16 +100,38 @@ function VehicleManagement() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${API}/services`, { ...serviceForm, vehicle_id: selectedVehicle }, { headers: { Authorization: token } });
-      
-      if (serviceFile) {
-        const fd = new FormData();
-        fd.append('file', serviceFile);
-        await axios.post(`${API}/services/${res.data.id}/upload`, fd, { headers: { Authorization: token } });
+      if (editingService) {
+        // Update existing service
+        await axios.put(`${API}/services/${editingService.id}`, {
+          vehicle_id: selectedVehicle,
+          date: serviceForm.date,
+          description: serviceForm.description,
+          km_stand: parseInt(serviceForm.km_stand)
+        }, { headers: { Authorization: token } });
+        
+        // Upload new file if selected
+        if (serviceFile) {
+          const fd = new FormData();
+          fd.append('file', serviceFile);
+          await axios.post(`${API}/services/${editingService.id}/upload`, fd, { headers: { Authorization: token } });
+        }
+        
+        toast.success('Service aktualisiert');
+      } else {
+        // Create new service
+        const res = await axios.post(`${API}/services`, { ...serviceForm, vehicle_id: selectedVehicle }, { headers: { Authorization: token } });
+        
+        if (serviceFile) {
+          const fd = new FormData();
+          fd.append('file', serviceFile);
+          await axios.post(`${API}/services/${res.data.id}/upload`, fd, { headers: { Authorization: token } });
+        }
+        
+        toast.success('Service hinzugefuegt');
       }
       
-      toast.success('Service hinzugefuegt');
       setShowServiceDialog(false);
+      setEditingService(null);
       setServiceForm({ date: getCurrentDateISO(), description: '', km_stand: '' });
       setServiceFile(null);
       fetchServices(selectedVehicle);
