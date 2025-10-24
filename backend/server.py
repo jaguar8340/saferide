@@ -168,6 +168,9 @@ class VehicleUpdate(BaseModel):
     chassis_nr: Optional[str] = None
     first_inv: Optional[str] = None
     km_stand: Optional[int] = None
+    sommerreifen: Optional[str] = None
+    winterreifen: Optional[str] = None
+    notes: Optional[str] = None
 
 class ServiceEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
