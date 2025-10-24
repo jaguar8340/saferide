@@ -143,6 +143,11 @@ class Vehicle(BaseModel):
     chassis_nr: str
     first_inv: str
     km_stand: int
+    sommerreifen: Optional[str] = None
+    winterreifen: Optional[str] = None
+    notes: Optional[str] = None
+    fahrzeugausweis_url: Optional[str] = None
+    images: Optional[list] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class VehicleCreate(BaseModel):
@@ -151,6 +156,9 @@ class VehicleCreate(BaseModel):
     chassis_nr: str
     first_inv: str
     km_stand: int
+    sommerreifen: Optional[str] = None
+    winterreifen: Optional[str] = None
+    notes: Optional[str] = None
 
 class VehicleUpdate(BaseModel):
     marke: Optional[str] = None
