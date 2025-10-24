@@ -469,23 +469,109 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
 }
 
 function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
-  const [remarks, setRemarks] = useState(''); const [file, setFile] = useState(null);
+  const [remarks, setRemarks] = useState('');
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  
   const handleAdd = async () => {
-    if (!remarks.trim()) return;
+    if (!remarks.trim()) {
+      toast.error('Bitte Bemerkung eingeben');
+      return;
+    }
+    
+    setUploading(true);
+    
     try {
-      const res = await axios.post(`${API}/misc-items`, { date: getCurrentDateISO(), month: monthKey, remarks }, { headers: { Authorization: token } });
-      if (file) { const fd = new FormData(); fd.append('file', file); await axios.post(`${API}/misc-items/${res.data.id}/upload`, fd, { headers: { Authorization: token } }); }
-      toast.success('Hinzugefügt'); setRemarks(''); setFile(null); fetchMiscItems();
-    } catch (e) { toast.error('Fehler'); }
+      if (files.length === 0) {
+        // No files - just create remark
+        await axios.post(`${API}/misc-items`, { date: getCurrentDateISO(), month: monthKey, remarks }, { headers: { Authorization: token } });
+        toast.success('Hinzugefuegt');
+      } else {
+        // Create one misc item per file
+        let successCount = 0;
+        
+        for (const file of files) {
+          try {
+            const res = await axios.post(`${API}/misc-items`, { date: getCurrentDateISO(), month: monthKey, remarks }, { headers: { Authorization: token } });
+            const fd = new FormData();
+            fd.append('file', file);
+            await axios.post(`${API}/misc-items/${res.data.id}/upload`, fd, { headers: { Authorization: token } });
+            successCount++;
+          } catch (e) {
+            console.error('Upload error:', e);
+          }
+        }
+        
+        toast.success(`${successCount} Eintrag/Eintraege hinzugefuegt`);
+      }
+      
+      setRemarks('');
+      setFiles([]);
+      fetchMiscItems();
+    } catch (e) {
+      toast.error('Fehler');
+    } finally {
+      setUploading(false);
+    }
   };
+  
   const handleDelete = async (itemId) => {
     try {
       await axios.delete(`${API}/misc-items/${itemId}`, { headers: { Authorization: token } });
       toast.success('Geloescht');
       fetchMiscItems();
-    } catch (e) { toast.error('Fehler beim Loeschen'); }
+    } catch (e) {
+      toast.error('Fehler beim Loeschen');
+    }
   };
-  return (<div><div className="space-y-3 mb-6"><Textarea placeholder="Bemerkungen..." value={remarks} onChange={(e) => setRemarks(e.target.value)} /><div className="flex gap-2"><Input type="file" onChange={(e) => setFile(e.target.files[0])} className="flex-1" /><Button onClick={handleAdd} disabled={!remarks.trim()} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Hinzufügen</Button></div></div><div className="space-y-2">{miscItems.map(item => (<div key={item.id} className="flex justify-between items-center p-3 border rounded"><div className="flex-1"><p className="text-xs text-gray-500">{formatDate(item.date)}</p><p className="mt-1">{item.remarks}</p>{item.file_url && <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Datei</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}</div></div>);
+  
+  return (
+    <div>
+      <div className="space-y-3 mb-6">
+        <Textarea 
+          placeholder="Bemerkungen..." 
+          value={remarks} 
+          onChange={(e) => setRemarks(e.target.value)} 
+        />
+        <div className="flex gap-2">
+          <Input 
+            type="file" 
+            multiple 
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => setFiles(Array.from(e.target.files))} 
+            className="flex-1" 
+          />
+          <Button 
+            onClick={handleAdd} 
+            disabled={!remarks.trim() || uploading} 
+            style={{ background: '#d63031', color: 'white' }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {uploading ? 'Hochladen...' : `Hinzufügen${files.length > 0 ? ` (${files.length})` : ''}`}
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {miscItems.map(item => (
+          <div key={item.id} className="flex justify-between items-center p-3 border rounded">
+            <div className="flex-1">
+              <p className="text-xs text-gray-500">{formatDate(item.date)}</p>
+              <p className="mt-1">{item.remarks}</p>
+              {item.file_url && (
+                <a href={`${API.replace('/api', '')}${item.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">
+                  Datei ansehen
+                </a>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+              <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+            </Button>
+          </div>
+        ))}
+        {miscItems.length === 0 && <p className="text-center py-8 text-gray-500">Keine Einträge</p>}
+      </div>
+    </div>
+  );
 }
 
 export default Dashboard;
