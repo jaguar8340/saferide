@@ -30,7 +30,15 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)' }}>
       <Card className="w-full max-w-md shadow-2xl border-0" style={{ background: 'rgba(255, 255, 255, 0.95)' }}>
-        <CardHeader className="space-y-1 text-center">
+        <CardHeader className="space-y-3 text-center">
+          {/* Saferide Titelbild */}
+          <div className="mb-4">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_cd6733fa-6475-4c93-a83e-2dc8bfa3299f/artifacts/avnemou3_saferide%20Titelbild.jpeg" 
+              alt="Saferide"
+              className="w-full h-40 object-cover rounded-lg shadow-md"
+            />
+          </div>
           <CardTitle className="text-3xl sm:text-4xl font-bold" style={{ color: '#d63031' }}>
             Fahrschule <span style={{ textTransform: 'lowercase' }}>saferide</span>
           </CardTitle>
