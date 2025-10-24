@@ -180,7 +180,9 @@ function VehicleManagement() {
           setShowVehicleDialog(open);
           if (!open) {
             setEditingVehicle(null);
-            setVehicleForm({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '' });
+            setFahrzeugausweisFile(null);
+            setVehicleImages([]);
+            setVehicleForm({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '', sommerreifen: '', winterreifen: '', notes: '' });
           }
         }}>
           <DialogTrigger asChild>
