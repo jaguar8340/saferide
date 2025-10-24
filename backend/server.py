@@ -654,7 +654,8 @@ async def upload_bank_document(doc_id: str, file: UploadFile = File(...), user: 
         shutil.copyfileobj(file.file, f)
     
     file_url = f"/api/files/{file_name}"
-    await db.bank_documents.update_one({"id": doc_id}, {"$set": {"file_url": file_url}})
+    # Save original filename
+    await db.bank_documents.update_one({"id": doc_id}, {"$set": {"file_url": file_url, "filename": file.filename}})
     
     return {"file_url": file_url}
 
