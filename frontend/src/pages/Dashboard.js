@@ -430,16 +430,28 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
   
   return (
     <div>
-      <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg mb-4 border-2 border-dashed" style={{ borderColor: '#d63031' }}>
-        <Label className="block mb-2 font-semibold" style={{ color: '#d63031' }}>Bankbelege hochladen</Label>
+      <div className="mb-4">
+        <Label className="block mb-2 font-semibold">Bankbelege hochladen</Label>
         <div className="flex gap-2">
-          <Input 
-            type="file" 
-            accept=".pdf,.jpg,.jpeg,.png" 
-            multiple 
-            onChange={(e) => setFiles(Array.from(e.target.files))}
-            className="flex-1"
-          />
+          <label className="flex-1 cursor-pointer">
+            <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 transition-colors" style={{ borderColor: '#d63031' }}>
+              <Upload className="h-8 w-8 mx-auto mb-2" style={{ color: '#d63031' }} />
+              <p className="text-sm font-medium" style={{ color: '#d63031' }}>
+                Klicken oder Dateien hierher ziehen
+              </p>
+              <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (mehrere möglich)</p>
+              {files.length > 0 && (
+                <p className="text-sm font-semibold mt-2 text-green-600">{files.length} Datei(en) ausgewählt</p>
+              )}
+            </div>
+            <Input 
+              type="file" 
+              accept=".pdf,.jpg,.jpeg,.png" 
+              multiple 
+              onChange={(e) => setFiles(Array.from(e.target.files))}
+              className="hidden"
+            />
+          </label>
           <Button 
             onClick={handleUpload} 
             disabled={files.length === 0 || uploading}
@@ -447,14 +459,9 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
             style={{ background: '#d63031', color: 'white', minWidth: '150px' }}
           >
             <Upload className="mr-2 h-5 w-5" />
-            {uploading ? 'Hochladen...' : files.length > 0 ? `${files.length} hochladen` : 'Hochladen'}
+            {uploading ? 'Wird hochgeladen...' : files.length > 0 ? `${files.length} hochladen` : 'Hochladen'}
           </Button>
         </div>
-        {files.length > 0 && (
-          <p className="text-sm text-gray-600 mt-2">
-            {files.length} Datei(en) ausgewählt: {files.map(f => f.name).join(', ')}
-          </p>
-        )}
       </div>
       <div className="space-y-2">
         {bankDocuments.map(d => {
