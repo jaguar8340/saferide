@@ -849,6 +849,17 @@ async def create_service_entry(service_data: ServiceEntryCreate, user: dict = De
     await db.service_entries.insert_one(service_dict)
     return service
 
+
+@api_router.put("/services/{service_id}")
+async def update_service_entry(service_id: str, service_data: ServiceEntryCreate, user: dict = Depends(get_current_user)):
+    update_data = service_data.model_dump()
+    result = await db.service_entries.update_one({"id": service_id}, {"$set": update_data})
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    return {"message": "Service updated successfully"}
+
 @api_router.post("/services/{service_id}/upload")
 async def upload_service_file(service_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
     file_extension = file.filename.split('.')[-1]
