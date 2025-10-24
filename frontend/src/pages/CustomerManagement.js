@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Edit2, User, Eye } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Eye, Upload } from 'lucide-react';
 import { formatDate, getCurrentDateISO } from '../utils/dateUtils';
 
 function CustomerManagement() {
