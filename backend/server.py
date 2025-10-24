@@ -700,7 +700,8 @@ async def upload_misc_file(item_id: str, file: UploadFile = File(...), user: dic
         shutil.copyfileobj(file.file, f)
     
     file_url = f"/api/files/{file_name}"
-    await db.misc_items.update_one({"id": item_id}, {"$set": {"file_url": file_url}})
+    # Save original filename
+    await db.misc_items.update_one({"id": item_id}, {"$set": {"file_url": file_url, "filename": file.filename}})
     
     return {"file_url": file_url}
 
