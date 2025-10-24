@@ -19,6 +19,7 @@ function VehicleManagement() {
   const [showVehicleDialog, setShowVehicleDialog] = useState(false);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [editingService, setEditingService] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteServiceConfirm, setDeleteServiceConfirm] = useState(null);
