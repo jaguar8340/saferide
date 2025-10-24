@@ -55,6 +55,7 @@ function App() {
               <Route path="/vehicles" element={<VehicleManagement />} />
               <Route path="/customers" element={<CustomerManagement />} />
               <Route path="/files" element={<FilesOverview />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/accounts" element={user?.role === 'admin' ? <AccountManagement /> : <Navigate to="/" />} />
               <Route path="/users" element={user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
               <Route path="*" element={<Navigate to="/" />} />
