@@ -163,15 +163,38 @@ function VehicleManagement() {
           <DialogTrigger asChild>
             <Button style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Fahrzeug</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingVehicle ? 'Fahrzeug bearbeiten' : 'Neues Fahrzeug'}</DialogTitle></DialogHeader>
             <form onSubmit={handleVehicleSubmit} className="space-y-4">
-              <div><Label>Marke</Label><Input value={vehicleForm.marke} onChange={(e) => setVehicleForm({ ...vehicleForm, marke: e.target.value })} required /></div>
-              <div><Label>Modell</Label><Input value={vehicleForm.modell} onChange={(e) => setVehicleForm({ ...vehicleForm, modell: e.target.value })} required /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Marke</Label><Input value={vehicleForm.marke} onChange={(e) => setVehicleForm({ ...vehicleForm, marke: e.target.value })} required /></div>
+                <div><Label>Modell</Label><Input value={vehicleForm.modell} onChange={(e) => setVehicleForm({ ...vehicleForm, modell: e.target.value })} required /></div>
+              </div>
               <div><Label>Chassis Nr.</Label><Input value={vehicleForm.chassis_nr} onChange={(e) => setVehicleForm({ ...vehicleForm, chassis_nr: e.target.value })} required /></div>
-              <div><Label>1. Inv.</Label><Input value={vehicleForm.first_inv} onChange={(e) => setVehicleForm({ ...vehicleForm, first_inv: e.target.value })} required /></div>
-              <div><Label>KM Stand</Label><Input type="number" value={vehicleForm.km_stand} onChange={(e) => setVehicleForm({ ...vehicleForm, km_stand: e.target.value })} required /></div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Speichern...' : (editingVehicle ? 'Aktualisieren' : 'Hinzufuegen')}</Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>1. Inv.</Label><Input value={vehicleForm.first_inv} onChange={(e) => setVehicleForm({ ...vehicleForm, first_inv: e.target.value })} required /></div>
+                <div><Label>KM Stand</Label><Input type="number" value={vehicleForm.km_stand} onChange={(e) => setVehicleForm({ ...vehicleForm, km_stand: e.target.value })} required /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Sommerreifen</Label><Input value={vehicleForm.sommerreifen} onChange={(e) => setVehicleForm({ ...vehicleForm, sommerreifen: e.target.value })} placeholder="z.B. 225/45 R17" /></div>
+                <div><Label>Winterreifen</Label><Input value={vehicleForm.winterreifen} onChange={(e) => setVehicleForm({ ...vehicleForm, winterreifen: e.target.value })} placeholder="z.B. 225/45 R17" /></div>
+              </div>
+              <div><Label>Bemerkungen</Label><Textarea value={vehicleForm.notes} onChange={(e) => setVehicleForm({ ...vehicleForm, notes: e.target.value })} rows={3} placeholder="Wichtige Infos zum Fahrzeug..." /></div>
+              
+              <div className="space-y-3">
+                <div className="border-2 border-dashed rounded-lg p-3" style={{ borderColor: '#3498db' }}>
+                  <Label className="block mb-2 font-semibold" style={{ color: '#3498db' }}>Fahrzeugausweis (PDF)</Label>
+                  <Input type="file" accept=".pdf" onChange={(e) => setFahrzeugausweisFile(e.target.files[0])} />
+                </div>
+                
+                <div className="border-2 border-dashed rounded-lg p-3" style={{ borderColor: '#27ae60' }}>
+                  <Label className="block mb-2 font-semibold" style={{ color: '#27ae60' }}>Fahrzeugbilder (mehrere möglich)</Label>
+                  <Input type="file" accept=".jpg,.jpeg,.png" multiple onChange={(e) => setVehicleImages(Array.from(e.target.files))} />
+                  {vehicleImages.length > 0 && <p className="text-sm text-green-600 mt-1">{vehicleImages.length} Bild(er) ausgewählt</p>}
+                </div>
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={loading} style={{ background: '#d63031', color: 'white' }}>{loading ? 'Speichern...' : (editingVehicle ? 'Aktualisieren' : 'Hinzufuegen')}</Button>
             </form>
           </DialogContent>
         </Dialog>
