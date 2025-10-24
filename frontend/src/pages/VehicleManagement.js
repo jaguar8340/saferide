@@ -293,9 +293,19 @@ function VehicleManagement() {
                           </a>
                         )}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteServiceConfirm(s.id)}>
-                        <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          setEditingService(s);
+                          setSelectedVehicle(v.id);
+                          setServiceForm({ date: s.date, description: s.description, km_stand: s.km_stand.toString() });
+                          setShowServiceDialog(true);
+                        }}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteServiceConfirm(s.id)}>
+                          <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
