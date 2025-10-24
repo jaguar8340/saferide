@@ -22,9 +22,11 @@ function VehicleManagement() {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteServiceConfirm, setDeleteServiceConfirm] = useState(null);
-  const [vehicleForm, setVehicleForm] = useState({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '' });
+  const [vehicleForm, setVehicleForm] = useState({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '', sommerreifen: '', winterreifen: '', notes: '' });
   const [serviceForm, setServiceForm] = useState({ date: getCurrentDateISO(), description: '', km_stand: '' });
   const [serviceFile, setServiceFile] = useState(null);
+  const [fahrzeugausweisFile, setFahrzeugausweisFile] = useState(null);
+  const [vehicleImages, setVehicleImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { fetchVehicles(); }, []);
