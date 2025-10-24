@@ -386,24 +386,86 @@ function Dashboard() {
 }
 
 function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  
   const handleUpload = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
+    setUploading(true);
+    
     try {
-      const res = await axios.post(`${API}/bank-documents`, { date: getCurrentDateISO(), month: monthKey }, { headers: { Authorization: token } });
-      const fd = new FormData(); fd.append('file', file);
-      await axios.post(`${API}/bank-documents/${res.data.id}/upload`, fd, { headers: { Authorization: token } });
-      toast.success('Hochgeladen'); setFile(null); fetchBankDocuments();
-    } catch (e) { toast.error('Fehler'); }
+      let successCount = 0;
+      
+      for (const file of files) {
+        try {
+          const res = await axios.post(`${API}/bank-documents`, { date: getCurrentDateISO(), month: monthKey }, { headers: { Authorization: token } });
+          const fd = new FormData();
+          fd.append('file', file);
+          await axios.post(`${API}/bank-documents/${res.data.id}/upload`, fd, { headers: { Authorization: token } });
+          successCount++;
+        } catch (e) {
+          console.error('Upload error:', e);
+        }
+      }
+      
+      toast.success(`${successCount} Datei(en) hochgeladen`);
+      setFiles([]);
+      fetchBankDocuments();
+    } catch (e) {
+      toast.error('Fehler beim Upload');
+    } finally {
+      setUploading(false);
+    }
   };
+  
   const handleDelete = async (docId) => {
     try {
       await axios.delete(`${API}/bank-documents/${docId}`, { headers: { Authorization: token } });
       toast.success('Geloescht');
       fetchBankDocuments();
-    } catch (e) { toast.error('Fehler beim Loeschen'); }
+    } catch (e) {
+      toast.error('Fehler beim Loeschen');
+    }
   };
-  return (<div><div className="flex gap-2 mb-4"><Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} /><Button onClick={handleUpload} disabled={!file} style={{ background: '#d63031', color: 'white' }}><Upload className="mr-2 h-4 w-4" />Hochladen</Button></div><div className="space-y-2">{bankDocuments.map(d => (<div key={d.id} className="flex justify-between items-center p-3 border rounded"><div><p className="font-medium">{formatDate(d.date)}</p>{d.file_url && <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">Ansehen</a>}</div><Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button></div>))}{bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}</div></div>);
+  
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <Input 
+          type="file" 
+          accept=".pdf,.jpg,.jpeg,.png" 
+          multiple 
+          onChange={(e) => setFiles(Array.from(e.target.files))} 
+        />
+        <Button 
+          onClick={handleUpload} 
+          disabled={files.length === 0 || uploading} 
+          style={{ background: '#d63031', color: 'white' }}
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {uploading ? 'Hochladen...' : `Hochladen (${files.length})`}
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {bankDocuments.map(d => (
+          <div key={d.id} className="flex justify-between items-center p-3 border rounded">
+            <div>
+              <p className="font-medium">{formatDate(d.date)}</p>
+              {d.file_url && (
+                <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600">
+                  Ansehen
+                </a>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}>
+              <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+            </Button>
+          </div>
+        ))}
+        {bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}
+      </div>
+    </div>
+  );
 }
 
 function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
