@@ -464,25 +464,22 @@ function BankTab({ monthKey, bankDocuments, fetchBankDocuments, token, API }) {
         </div>
       </div>
       <div className="space-y-2">
-        {bankDocuments.map(d => {
-          const fileName = d.file_url ? d.file_url.split('/').pop().split('_').slice(1).join('_') : 'Bankbeleg';
-          return (
-            <div key={d.id} className="flex justify-between items-center p-3 border rounded">
-              <div>
-                <p className="text-xs text-gray-500">{formatDate(d.date)}</p>
-                <p className="font-medium mt-1">{fileName}</p>
-                {d.file_url && (
-                  <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                    Ansehen
-                  </a>
-                )}
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}>
-                <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
-              </Button>
+        {bankDocuments.map(d => (
+          <div key={d.id} className="flex justify-between items-center p-3 border rounded">
+            <div>
+              <p className="text-xs text-gray-500">{formatDate(d.date)}</p>
+              <p className="font-medium mt-1">{d.filename || 'Bankbeleg'}</p>
+              {d.file_url && (
+                <a href={`${API.replace('/api', '')}${d.file_url}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  Ansehen
+                </a>
+              )}
             </div>
-          );
-        })}
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}>
+              <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+            </Button>
+          </div>
+        ))}
         {bankDocuments.length === 0 && <p className="text-center py-8 text-gray-500">Keine Bankbelege</p>}
       </div>
     </div>
