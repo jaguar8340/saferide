@@ -54,16 +54,39 @@ function VehicleManagement() {
     e.preventDefault();
     setLoading(true);
     try {
+      let vehicleId;
+      
       if (editingVehicle) {
         await axios.put(`${API}/vehicles/${editingVehicle.id}`, vehicleForm, { headers: { Authorization: token } });
         toast.success('Fahrzeug aktualisiert');
+        vehicleId = editingVehicle.id;
       } else {
-        await axios.post(`${API}/vehicles`, vehicleForm, { headers: { Authorization: token } });
+        const res = await axios.post(`${API}/vehicles`, vehicleForm, { headers: { Authorization: token } });
         toast.success('Fahrzeug hinzugefuegt');
+        vehicleId = res.data.id;
       }
+
+      // Upload Fahrzeugausweis
+      if (fahrzeugausweisFile && vehicleId) {
+        const fd = new FormData();
+        fd.append('file', fahrzeugausweisFile);
+        await axios.post(`${API}/vehicles/${vehicleId}/fahrzeugausweis`, fd, { headers: { Authorization: token } });
+      }
+
+      // Upload images
+      if (vehicleImages.length > 0 && vehicleId) {
+        for (const img of vehicleImages) {
+          const fd = new FormData();
+          fd.append('file', img);
+          await axios.post(`${API}/vehicles/${vehicleId}/images`, fd, { headers: { Authorization: token } });
+        }
+      }
+
       setShowVehicleDialog(false);
       setEditingVehicle(null);
-      setVehicleForm({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '' });
+      setFahrzeugausweisFile(null);
+      setVehicleImages([]);
+      setVehicleForm({ marke: '', modell: '', chassis_nr: '', first_inv: '', km_stand: '', sommerreifen: '', winterreifen: '', notes: '' });
       fetchVehicles();
     } catch (error) {
       toast.error('Fehler beim Speichern');
