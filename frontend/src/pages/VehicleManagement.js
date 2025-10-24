@@ -234,8 +234,10 @@ function VehicleManagement() {
                   <CardTitle className="text-lg sm:text-xl">{v.marke} {v.modell}</CardTitle>
                   <div className="text-sm text-gray-600 mt-2 space-y-1">
                     <p>Chassis: {v.chassis_nr}</p>
-                    <p>1. Inv.: {v.first_inv}</p>
-                    <p>KM: {v.km_stand.toLocaleString()}</p>
+                    <p>1. Inv.: {v.first_inv} | KM: {v.km_stand.toLocaleString()}</p>
+                    {v.sommerreifen && <p>Sommerreifen: {v.sommerreifen}</p>}
+                    {v.winterreifen && <p>Winterreifen: {v.winterreifen}</p>}
+                    {v.notes && <p className="text-xs italic mt-1">"{v.notes.substring(0, 50)}..."</p>}
                   </div>
                 </div>
                 <div className="flex gap-1">
