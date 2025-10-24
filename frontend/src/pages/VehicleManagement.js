@@ -208,8 +208,8 @@ function VehicleManagement() {
               
               <div className="space-y-3">
                 <div className="border-2 border-dashed rounded-lg p-3" style={{ borderColor: '#3498db' }}>
-                  <Label className="block mb-2 font-semibold" style={{ color: '#3498db' }}>Fahrzeugausweis (PDF)</Label>
-                  <Input type="file" accept=".pdf" onChange={(e) => setFahrzeugausweisFile(e.target.files[0])} />
+                  <Label className="block mb-2 font-semibold" style={{ color: '#3498db' }}>Fahrzeugausweis (PDF oder Bild)</Label>
+                  <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFahrzeugausweisFile(e.target.files[0])} />
                 </div>
                 
                 <div className="border-2 border-dashed rounded-lg p-3" style={{ borderColor: '#27ae60' }}>
