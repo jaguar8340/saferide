@@ -98,6 +98,7 @@ class BankDocument(BaseModel):
     date: str
     month: str  # Format: YYYY-MM
     file_url: str
+    filename: Optional[str] = None
     user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -112,6 +113,7 @@ class MiscItem(BaseModel):
     month: str  # Format: YYYY-MM
     remarks: str
     file_url: Optional[str] = None
+    filename: Optional[str] = None
     user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
