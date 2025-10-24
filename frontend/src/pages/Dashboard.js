@@ -548,8 +548,8 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
   
   return (
     <div>
-      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg mb-6 border-2 border-dashed" style={{ borderColor: '#9b59b6' }}>
-        <Label className="block mb-2 font-semibold" style={{ color: '#9b59b6' }}>Diverses hochladen</Label>
+      <div className="mb-6">
+        <Label className="block mb-2 font-semibold">Diverses hochladen</Label>
         <Textarea 
           placeholder="Bemerkungen eingeben..." 
           value={remarks} 
@@ -558,13 +558,25 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
           rows={3}
         />
         <div className="flex gap-2">
-          <Input 
-            type="file" 
-            multiple 
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={(e) => setFiles(Array.from(e.target.files))} 
-            className="flex-1" 
-          />
+          <label className="flex-1 cursor-pointer">
+            <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 transition-colors" style={{ borderColor: '#9b59b6' }}>
+              <Upload className="h-8 w-8 mx-auto mb-2" style={{ color: '#9b59b6' }} />
+              <p className="text-sm font-medium" style={{ color: '#9b59b6' }}>
+                Klicken oder Dateien hierher ziehen
+              </p>
+              <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (mehrere möglich)</p>
+              {files.length > 0 && (
+                <p className="text-sm font-semibold mt-2 text-green-600">{files.length} Datei(en) ausgewählt</p>
+              )}
+            </div>
+            <Input 
+              type="file" 
+              multiple 
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setFiles(Array.from(e.target.files))}
+              className="hidden"
+            />
+          </label>
           <Button 
             onClick={handleAdd} 
             disabled={!remarks.trim() || uploading}
@@ -572,14 +584,9 @@ function MiscTab({ monthKey, miscItems, fetchMiscItems, token, API }) {
             style={{ background: '#9b59b6', color: 'white', minWidth: '150px' }}
           >
             <Plus className="mr-2 h-5 w-5" />
-            {uploading ? 'Hochladen...' : files.length > 0 ? `${files.length} hinzufügen` : 'Hinzufügen'}
+            {uploading ? 'Wird hochgeladen...' : files.length > 0 ? `${files.length} hinzufügen` : 'Hinzufügen'}
           </Button>
         </div>
-        {files.length > 0 && (
-          <p className="text-sm text-gray-600 mt-2">
-            {files.length} Datei(en) ausgewählt: {files.map(f => f.name).join(', ')}
-          </p>
-        )}
       </div>
       <div className="space-y-2">
         {miscItems.map(item => (
