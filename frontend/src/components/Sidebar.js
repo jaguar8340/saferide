@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../App';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Car, Users, Settings, LogOut, FolderOpen } from 'lucide-react';
+import { FileText, BarChart3, Car, Users, Settings, LogOut, FolderOpen, Key } from 'lucide-react';
 
 export function Sidebar({ children }) {
   const { user, logout } = useContext(AuthContext);
@@ -18,6 +18,7 @@ export function Sidebar({ children }) {
     { path: '/vehicles', icon: Car, label: 'Fahrzeugübersicht' },
     { path: '/customers', icon: Users, label: 'Kundenverwaltung' },
     { path: '/files', icon: FolderOpen, label: 'Dateien' },
+    { path: '/profile', icon: Key, label: 'Passwort ändern' },
   ];
 
   const adminItems = [
