@@ -279,6 +279,30 @@ function VehicleManagement() {
               ) : (
                 <p className="text-gray-500 text-sm">Noch keine Service-Eintraege</p>
               )}
+              
+              {/* Fahrzeugausweis */}
+              {v.fahrzeugausweis_url && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm font-semibold mb-2">Fahrzeugausweis</p>
+                  <a href={`${API.replace('/api', '')}${v.fahrzeugausweis_url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                    Fahrzeugausweis ansehen
+                  </a>
+                </div>
+              )}
+              
+              {/* Fahrzeugbilder */}
+              {v.images && v.images.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm font-semibold mb-2">Fahrzeugbilder ({v.images.length})</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {v.images.map((img, idx) => (
+                      <a key={idx} href={`${API.replace('/api', '')}${img}`} target="_blank" rel="noopener noreferrer">
+                        <img src={`${API.replace('/api', '')}${img}`} alt="Fahrzeug" className="w-full h-20 object-cover rounded border hover:opacity-80" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
