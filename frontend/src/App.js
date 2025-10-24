@@ -11,6 +11,7 @@ import CustomerManagement from './pages/CustomerManagement';
 import FilesOverview from './pages/FilesOverview';
 import AccountManagement from './pages/AccountManagement';
 import UserManagement from './pages/UserManagement';
+import Profile from './pages/Profile';
 import { Toaster } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
