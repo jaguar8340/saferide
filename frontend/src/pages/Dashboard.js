@@ -366,9 +366,44 @@ function Dashboard() {
                         </td>
                       </tr>
                     ))}
-                    {transactions.length === 0 && <tr><td colSpan="8" className="p-8 text-center text-gray-500">Keine Einträge</td></tr>}
+                    {transactions.length === 0 && <tr><td colSpan="9" className="p-8 text-center text-gray-500">Keine Einträge</td></tr>}
                   </tbody>
                 </table>
+              </div>
+              
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y">
+                {transactions.map((t) => (
+                  <div key={t.id} className="p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <p className="font-semibold">{t.description}</p>
+                        <p className="text-xs text-gray-500">{formatDate(t.date)}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, customer_id: t.customer_id || '', type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(t.id)}>
+                          <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="px-2 py-1 rounded text-xs" style={{ background: t.type === 'income' ? '#e8f8f5' : '#fef5e7', color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>{t.account_name}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold" style={{ color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>
+                          CHF {t.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    {t.payment_method && <p className="text-xs text-gray-600 mt-1">💳 {t.payment_method}</p>}
+                    {t.file_url && <a href={`${API.replace('/api', '')}${t.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">📎 Datei ansehen</a>}
+                  </div>
+                ))}
+                {transactions.length === 0 && <div className="p-8 text-center text-gray-500">Keine Einträge</div>}
               </div>
             </CardContent>
           </Card>
