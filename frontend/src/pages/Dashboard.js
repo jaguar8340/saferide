@@ -418,33 +418,32 @@ function Dashboard() {
               {/* Mobile & Tablet Card View */}
               <div className="lg:hidden divide-y">
                 {transactions.map((t) => (
-                  <div key={t.id} className="p-4 hover:bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <p className="font-semibold">{t.description}</p>
+                  <div key={t.id} className="p-3 hover:bg-gray-50">
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{t.description}</p>
                         <p className="text-xs text-gray-500">{formatDate(t.date)}</p>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-shrink-0">
                         <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, customer_id: t.customer_id || '', type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}>
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-3 w-3" />
                         </Button>
                         <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => setDeleteConfirm(t.id)}>
-                          <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
+                          <Trash2 className="h-3 w-3" style={{ color: '#d63031' }} />
                         </Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
                         <span className="px-2 py-1 rounded text-xs" style={{ background: t.type === 'income' ? '#e8f8f5' : '#fef5e7', color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>{t.account_name}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold" style={{ color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>
+                        <span className="font-bold text-sm" style={{ color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>
                           CHF {formatCurrency(t.amount)}
                         </span>
                       </div>
+                      {t.payment_method && <p className="text-xs text-gray-600">💳 {t.payment_method}</p>}
+                      {t.remarks && <p className="text-xs text-gray-600 truncate">💬 {t.remarks}</p>}
+                      {t.file_url && <a href={`${API.replace('/api', '')}${t.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline inline-block">📎 Datei</a>}
                     </div>
-                    {t.payment_method && <p className="text-xs text-gray-600 mt-1">💳 {t.payment_method}</p>}
-                    {t.file_url && <a href={`${API.replace('/api', '')}${t.file_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">📎 Datei ansehen</a>}
                   </div>
                 ))}
                 {transactions.length === 0 && <div className="p-8 text-center text-gray-500">Keine Einträge</div>}
