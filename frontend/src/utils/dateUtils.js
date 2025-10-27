@@ -43,6 +43,12 @@ export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('de-CH', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
+
+
+export const getMonthKey = (year, month) => {
+  return `${year}-${String(month).padStart(2, '0')}`;
+};
+
   }).format(amount);
 };
 
