@@ -395,7 +395,7 @@ function Dashboard() {
                       </div>
                       <div className="text-right">
                         <span className="font-bold" style={{ color: t.type === 'income' ? '#27ae60' : '#e67e22' }}>
-                          CHF {t.amount.toFixed(2)}
+                          CHF {formatCurrency(t.amount)}
                         </span>
                       </div>
                     </div>
