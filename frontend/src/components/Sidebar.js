@@ -106,7 +106,7 @@ export function Sidebar({ children }) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-64" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)', minHeight: '100vh' }}>
+      <div className="flex-1 lg:ml-56" style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff 100%)', minHeight: '100vh' }}>
         <div className="lg:pt-0 pt-24">
           {children}
         </div>
