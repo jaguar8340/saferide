@@ -405,8 +405,8 @@ function Dashboard() {
                         </td>
                         <td className="p-3">
                           <div className="flex justify-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}><Edit2 className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(t.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button>
+                            <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}><Edit2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => setDeleteConfirm(t.id)}><Trash2 className="h-4 w-4" style={{ color: '#d63031' }} /></Button>
                           </div>
                         </td>
                       </tr>
