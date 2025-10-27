@@ -1014,6 +1014,39 @@ async def delete_important_upload(upload_id: str, user: dict = Depends(get_curre
         raise HTTPException(status_code=404, detail="Upload not found")
     return {"message": "Upload deleted successfully"}
 
+
+# Month Lock Management
+@api_router.get("/month-lock/{month_key}")
+async def get_month_lock(month_key: str):
+    lock = await db.month_locks.find_one({"month_key": month_key}, {"_id": 0})
+    if not lock:
+        return {"locked": False, "month_key": month_key}
+    return lock
+
+@api_router.post("/month-lock")
+async def toggle_month_lock(lock_data: MonthLockToggle, user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Only admins can lock/unlock months")
+    
+    existing = await db.month_locks.find_one({"month_key": lock_data.month_key})
+    
+    if existing:
+        await db.month_locks.update_one(
+            {"month_key": lock_data.month_key}, 
+            {"$set": {"locked": lock_data.locked, "locked_by": user['id'], "locked_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    else:
+        lock = MonthLock(
+            month_key=lock_data.month_key,
+            locked=lock_data.locked,
+            locked_by=user['id']
+        )
+        lock_dict = lock.model_dump()
+        lock_dict['locked_at'] = lock_dict['locked_at'].isoformat()
+        await db.month_locks.insert_one(lock_dict)
+    
+    return {"message": f"Monat {'gesperrt' if lock_data.locked else 'entsperrt'}", "locked": lock_data.locked}
+
 app.include_router(api_router)
 
 app.add_middleware(
