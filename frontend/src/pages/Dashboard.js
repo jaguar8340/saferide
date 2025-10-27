@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Upload, Download, Edit2, FileText, Calendar } from 'lucide-react';
-import { formatDate, getCurrentDateISO, getMonthKey } from '../utils/dateUtils';
+import { formatDate, getCurrentDateISO, getMonthKey, formatCurrency } from '../utils/dateUtils';
 
 function Dashboard() {
   const { token } = useContext(AuthContext);
