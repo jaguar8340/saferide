@@ -48,7 +48,6 @@ function Dashboard() {
   
   const isAdmin = user?.role === 'admin';
   const canEdit = isAdmin || !monthLocked;
-  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
   useEffect(() => {
     fetchAccounts();
