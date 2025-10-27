@@ -74,9 +74,64 @@ function YearlyView() {
         </div>
       </div>
 
-      <Card className="mb-6 border-0 shadow-lg"><CardHeader><CardTitle>Jahres-Total</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><div className="p-4 rounded-lg" style={{ background: '#e8f8f5' }}><p className="text-sm text-gray-600">Total Einnahmen</p><p className="text-2xl font-bold" style={{ color: '#27ae60' }}>CHF {yearTotalIncome.toFixed(2)}</p></div><div className="p-4 rounded-lg" style={{ background: '#fef5e7' }}><p className="text-sm text-gray-600">Total Ausgaben</p><p className="text-2xl font-bold" style={{ color: '#e67e22' }}>CHF {yearTotalExpense.toFixed(2)}</p></div><div className="p-4 rounded-lg" style={{ background: yearTotalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}><p className="text-sm text-gray-600">Total Einkommen</p><p className="text-2xl font-bold" style={{ color: yearTotalBalance >= 0 ? '#27ae60' : '#c0392b' }}>CHF {yearTotalBalance.toFixed(2)}</p></div></div></CardContent></Card>
+      <Card className="mb-6 border-0 shadow-lg">
+        <CardHeader><CardTitle className="text-lg sm:text-xl">Jahres-Total</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 rounded-lg" style={{ background: '#e8f8f5' }}><p className="text-xs sm:text-sm text-gray-600">Total Einnahmen</p><p className="text-xl sm:text-2xl font-bold" style={{ color: '#27ae60' }}>CHF {formatCurrency(yearTotalIncome)}</p></div>
+            <div className="p-3 sm:p-4 rounded-lg" style={{ background: '#fef5e7' }}><p className="text-xs sm:text-sm text-gray-600">Total Ausgaben</p><p className="text-xl sm:text-2xl font-bold" style={{ color: '#e67e22' }}>CHF {formatCurrency(yearTotalExpense)}</p></div>
+            <div className="p-3 sm:p-4 rounded-lg" style={{ background: yearTotalBalance >= 0 ? '#e8f8f5' : '#fadbd8' }}><p className="text-xs sm:text-sm text-gray-600">Total Einkommen</p><p className="text-xl sm:text-2xl font-bold" style={{ color: yearTotalBalance >= 0 ? '#27ae60' : '#c0392b' }}>CHF {formatCurrency(yearTotalBalance)}</p></div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Card className="border-0 shadow-lg"><CardHeader><CardTitle>Monatliche Übersicht</CardTitle></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full"><thead><tr className="border-b bg-gray-50"><th className="p-3 text-left">Monat</th><th className="p-3 text-right">Einnahmen</th><th className="p-3 text-right">Ausgaben</th><th className="p-3 text-right">Einkommen</th></tr></thead><tbody>{months.map((m, idx) => { const mk = `${currentYear}-${String(idx + 1).padStart(2, '0')}`; const d = yearlyData.monthly_totals[mk] || { income: 0, expense: 0, total: 0 }; return (<tr key={mk} className="border-b"><td className="p-3 font-medium">{m}</td><td className="p-3 text-right font-semibold" style={{ color: '#27ae60' }}>CHF {d.income.toFixed(2)}</td><td className="p-3 text-right font-semibold" style={{ color: '#e67e22' }}>CHF {d.expense.toFixed(2)}</td><td className="p-3 text-right font-bold" style={{ color: d.total >= 0 ? '#27ae60' : '#c0392b' }}>CHF {d.total.toFixed(2)}</td></tr>); })}</tbody></table></div></CardContent></Card>
+      <Card className="border-0 shadow-lg">
+        <CardHeader><CardTitle className="text-lg sm:text-xl">Monatliche Übersicht</CardTitle></CardHeader>
+        <CardContent>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead><tr className="border-b bg-gray-50"><th className="p-3 text-left">Monat</th><th className="p-3 text-right">Einnahmen</th><th className="p-3 text-right">Ausgaben</th><th className="p-3 text-right">Einkommen</th></tr></thead>
+              <tbody>
+                {months.map((m, idx) => {
+                  const mk = `${currentYear}-${String(idx + 1).padStart(2, '0')}`;
+                  const d = yearlyData.monthly_totals[mk] || { income: 0, expense: 0, total: 0 };
+                  return (
+                    <tr key={mk} className="border-b">
+                      <td className="p-3 font-medium">{m}</td>
+                      <td className="p-3 text-right font-semibold" style={{ color: '#27ae60' }}>CHF {formatCurrency(d.income)}</td>
+                      <td className="p-3 text-right font-semibold" style={{ color: '#e67e22' }}>CHF {formatCurrency(d.expense)}</td>
+                      <td className="p-3 text-right font-bold" style={{ color: d.total >= 0 ? '#27ae60' : '#c0392b' }}>CHF {formatCurrency(d.total)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y">
+            {months.map((m, idx) => {
+              const mk = `${currentYear}-${String(idx + 1).padStart(2, '0')}`;
+              const d = yearlyData.monthly_totals[mk] || { income: 0, expense: 0, total: 0 };
+              if (d.income === 0 && d.expense === 0) return null;
+              return (
+                <div key={mk} className="p-4">
+                  <p className="font-semibold text-lg mb-2">{m}</p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-600">Einnahmen:</span><br/><span className="font-bold" style={{ color: '#27ae60' }}>CHF {formatCurrency(d.income)}</span></div>
+                    <div><span className="text-gray-600">Ausgaben:</span><br/><span className="font-bold" style={{ color: '#e67e22' }}>CHF {formatCurrency(d.expense)}</span></div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t">
+                    <span className="text-gray-600 text-sm">Einkommen:</span><br/>
+                    <span className="font-bold text-lg" style={{ color: d.total >= 0 ? '#27ae60' : '#c0392b' }}>CHF {formatCurrency(d.total)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }
