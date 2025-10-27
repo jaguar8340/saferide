@@ -338,7 +338,7 @@ function Dashboard() {
           <Card className="border-0 shadow-lg">
             <CardContent className="p-0">
               {/* Desktop Table */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full">
                   <thead><tr className="border-b bg-gray-50"><th className="p-3 text-left text-sm">Datum</th><th className="p-3 text-left text-sm">Bezeichnung</th><th className="p-3 text-left text-sm">Konto</th><th className="p-3 text-left text-sm">Bezahlung</th><th className="p-3 text-right text-sm">Einnahmen</th><th className="p-3 text-right text-sm">Ausgaben</th><th className="p-3 text-left text-sm">Bemerkungen</th><th className="p-3 text-center text-sm">Datei</th><th className="p-3 text-center text-sm">Aktionen</th></tr></thead>
                   <tbody>
