@@ -29,7 +29,7 @@ export function Sidebar({ children }) {
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 bg-white border-r shadow-lg fixed h-full overflow-y-auto">
+      <div className="hidden lg:block w-56 bg-white border-r shadow-lg fixed h-full overflow-y-auto">
         <div className="p-6 border-b">
           <h1 className="text-xl font-bold leading-tight" style={{ color: '#d63031' }}>
             Fahrschule saferide<br/>by Nadine Stäubli
