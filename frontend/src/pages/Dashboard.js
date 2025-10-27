@@ -371,8 +371,8 @@ function Dashboard() {
                 </table>
               </div>
               
-              {/* Mobile Card View */}
-              <div className="md:hidden divide-y">
+              {/* Mobile & Tablet Card View */}
+              <div className="lg:hidden divide-y">
                 {transactions.map((t) => (
                   <div key={t.id} className="p-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start mb-2">
