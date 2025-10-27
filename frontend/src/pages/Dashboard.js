@@ -426,10 +426,10 @@ function Dashboard() {
                         <p className="text-xs text-gray-500">{formatDate(t.date)}</p>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, customer_id: t.customer_id || '', type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}>
+                        <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => { setEditingTransaction(t); setFormData({ date: t.date, description: t.description, customer_id: t.customer_id || '', type: t.type, amount: t.amount.toString(), account_id: t.account_id, payment_method: t.payment_method || '', remarks: t.remarks || '' }); setShowAddDialog(true); }}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(t.id)}>
+                        <Button variant="ghost" size="sm" disabled={!canEdit} onClick={() => setDeleteConfirm(t.id)}>
                           <Trash2 className="h-4 w-4" style={{ color: '#d63031' }} />
                         </Button>
                       </div>
