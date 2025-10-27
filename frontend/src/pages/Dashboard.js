@@ -53,10 +53,34 @@ function Dashboard() {
   useEffect(() => {
     fetchAccounts();
     fetchCustomers();
+    fetchMonthLock();
     fetchTransactions();
     fetchBankDocuments();
     fetchMiscItems();
   }, [currentDate]);
+
+  const fetchMonthLock = async () => {
+    try {
+      const response = await axios.get(`${API}/month-lock/${monthKey}`);
+      setMonthLocked(response.data.locked || false);
+    } catch (error) {
+      console.error('Error fetching lock status:', error);
+    }
+  };
+
+  const toggleMonthLock = async () => {
+    try {
+      const response = await axios.post(`${API}/month-lock`, {
+        month_key: monthKey,
+        locked: !monthLocked
+      }, { headers: { Authorization: token } });
+      
+      setMonthLocked(response.data.locked);
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error('Fehler beim Sperren/Entsperren');
+    }
+  };
 
   const fetchAccounts = async () => {
     try {
