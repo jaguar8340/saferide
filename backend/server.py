@@ -131,6 +131,20 @@ class ImportantUpload(BaseModel):
     user_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+class MonthLock(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    month_key: str  # Format: YYYY-MM
+    locked: bool = True
+    locked_by: str
+    locked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MonthLockToggle(BaseModel):
+    month_key: str
+    locked: bool
+
+
 class ImportantUploadCreate(BaseModel):
     date: str
     description: str
