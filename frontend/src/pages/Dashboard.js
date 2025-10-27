@@ -15,13 +15,14 @@ import { Plus, Trash2, Upload, Download, Edit2, FileText, Calendar } from 'lucid
 import { formatDate, getCurrentDateISO, getMonthKey, formatCurrency } from '../utils/dateUtils';
 
 function Dashboard() {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const [transactions, setTransactions] = useState([]);
   const [bankDocuments, setBankDocuments] = useState([]);
   const [miscItems, setMiscItems] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [monthLocked, setMonthLocked] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -43,6 +44,10 @@ function Dashboard() {
   const month = currentDate.getMonth() + 1;
   const monthKey = getMonthKey(year, month);
   const months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  
+  const isAdmin = user?.role === 'admin';
+  const canEdit = isAdmin || !monthLocked;
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
   useEffect(() => {
