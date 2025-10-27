@@ -288,15 +288,31 @@ function Dashboard() {
       <Card className="mb-6 border-0 shadow-lg">
         <CardHeader>
           <div className="flex justify-between items-center flex-wrap gap-4">
-            <CardTitle className="text-xl sm:text-2xl">{months[month - 1]} {year}</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
+              <CardTitle className="text-xl sm:text-2xl">{months[month - 1]} {year}</CardTitle>
+              {monthLocked && (
+                <span className="px-3 py-1 rounded text-sm font-semibold" style={{ background: '#fef5e7', color: '#e67e22' }}>
+                  🔒 Gesperrt
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {isAdmin && (
+                <Button 
+                  onClick={toggleMonthLock} 
+                  variant="outline"
+                  style={{ borderColor: monthLocked ? '#27ae60' : '#e67e22', color: monthLocked ? '#27ae60' : '#e67e22' }}
+                >
+                  {monthLocked ? '🔓 Monat entsperren' : '🔒 Monat sperren'}
+                </Button>
+              )}
               <Button onClick={handleExportPDF} variant="outline"><Download className="mr-2 h-4 w-4" />PDF Export</Button>
               <Dialog open={showAddDialog} onOpenChange={(open) => {
                 setShowAddDialog(open);
-                if (!open) { setEditingTransaction(null); setUploadFile(null); setFormData({ date: getCurrentDateISO(), description: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
+                if (!open) { setEditingTransaction(null); setUploadFile(null); setUseCustomer(false); setFormData({ date: getCurrentDateISO(), description: '', customer_id: '', type: 'income', amount: '', account_id: '', payment_method: '', remarks: '' }); }
               }}>
                 <DialogTrigger asChild>
-                  <Button style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Eintrag</Button>
+                  <Button disabled={!canEdit} style={{ background: '#d63031', color: 'white' }}><Plus className="mr-2 h-4 w-4" />Eintrag</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>{editingTransaction ? 'Bearbeiten' : 'Neuer Eintrag'}</DialogTitle></DialogHeader>
