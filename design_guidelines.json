@@ -1,0 +1,118 @@
+{
+  "identity": {
+    "project": "Fahrschule Safe Ride",
+    "theme": "Dark",
+    "archetype": "Performance Pro (Archetype 2) infused with Luxury (Archetype 5)",
+    "vibe": "Sporty, Premium, Automotive, Edgy yet Professional, Trustworthy",
+    "keywords": ["ANDERS", "BESSER", "MUTIGER", "Speed", "Safety", "Premium"]
+  },
+  "typography": {
+    "heading_font": "Cabinet Grotesk",
+    "body_font": "Manrope",
+    "rules": {
+      "h1": "text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase leading-none",
+      "h2": "text-3xl md:text-5xl font-bold tracking-tight uppercase",
+      "h3": "text-xl md:text-2xl font-semibold tracking-tight",
+      "body": "text-base font-medium leading-relaxed text-neutral-300",
+      "overline": "text-xs font-bold tracking-[0.2em] uppercase text-[#FF2E00]"
+    }
+  },
+  "colors": {
+    "background_base": "#0A0A0A",
+    "surface_primary": "#141414",
+    "surface_secondary": "#1C1C1E",
+    "accent_primary": "#FF2E00",
+    "accent_hover": "#CC2500",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "border_subtle": "rgba(255, 255, 255, 0.1)",
+    "glassmorphism": "bg-black/60 backdrop-blur-2xl border border-white/10"
+  },
+  "layout_and_spacing": {
+    "marketing_pages": "Bento Grid Mode A (Tetris). Asymmetrical, generous negative space. Use p-12, py-24, py-32 for sections. Full-bleed images. High-contrast typography-led discovery.",
+    "admin_dashboard": "Control Room Grid Mode B. Dense, 1px solid borders, Shadcn UI components. Functional, compact, strictly utilitarian.",
+    "alignment": "Left-aligned typography for modern, cinematic feel. Center alignment only for specific call-outs or marquee."
+  },
+  "component_strategy": {
+    "marketing_ui": "Raw HTML/Tailwind for creative layouts. No generic Shadcn cards for marketing. Use react-fast-marquee for kinetic 'ANDERS - BESSER - MUTIGER' ticker.",
+    "admin_ui": "Heavily use Shadcn UI (Tables, Dialogs, Forms, Inputs, Tabs). Override default radii to rounded-sm for a sharper, sporty look.",
+    "buttons": "Sharp corners (rounded-none or rounded-sm). Primary: Solid Adrenaline Red with white text. Secondary: Transparent with 1px border. Hover states must increase brightness/shift to red.",
+    "navigation": "Crystal Glass header over hero section. Must include Logo, Links, DE/EN toggle, and CTA. Sticky on scroll with z-50.",
+    "testing": "All interactive elements, buttons, links, and forms MUST include a 'data-testid' attribute (e.g., 'data-testid=\"hero-cta-button\"')."
+  },
+  "page_sections": [
+    {
+      "name": "Hero Section",
+      "style": "Full viewport height. Background image of black sports car driving. Gradient overlay (bg-black/60 to transparent) to ensure text contrast. Massive left-aligned typography.",
+      "components": ["Header Nav", "Hero Copy", "Primary CTA", "DE/EN Switcher"]
+    },
+    {
+      "name": "Kinetic Marquee",
+      "style": "react-fast-marquee spanning full width. Text outline style: text-transparent, text-stroke-white (using custom CSS or webkit-text-stroke), text-6xl, uppercase."
+    },
+    {
+      "name": "About Instructor (Nadine Stäubli)",
+      "style": "Split layout. Right: Confident woman driving image. Left: Text focusing on modern, professional lessons with heart.",
+      "components": ["Image", "Typography block", "Trust indicators"]
+    },
+    {
+      "name": "Vehicle Fleet & Services",
+      "style": "Asymmetric Bento Grid highlighting Audi S3, Opel OPC, Range Rover Sport. Dark surfaces with 1px border. Hover effects: image slight zoom, border turns red.",
+      "components": ["Bento Cards", "Service List"]
+    },
+    {
+      "name": "Pricing & Reviews",
+      "style": "Brutalist pricing tables. Google-style testimonials in a sleek horizontal scroll or grid. High contrast text.",
+      "components": ["Pricing Cards", "Review Carousel/Grid"]
+    },
+    {
+      "name": "Contact & Footer",
+      "style": "Darkest background (#050505). Shadcn form inputs modified to dark theme (bg-transparent, border-white/20, focus:border-red-500).",
+      "components": ["Contact Form", "Footer Links", "Socials"]
+    }
+  ],
+  "motion_and_interactions": {
+    "philosophy": "Cinematic and deliberate. No bounce. Speed and precision.",
+    "libraries": ["framer-motion", "react-fast-marquee"],
+    "scroll": "Fade in and slight upward translation (y: 20px) on scroll using framer-motion.",
+    "hover": "Buttons and cards should use slight brightness increase or border color shift (e.g., border-transparent to border-[#FF2E00])."
+  },
+  "media_urls": {
+    "hero": [
+      {
+        "url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
+        "description": "Black sports car driving fast on suburban road",
+        "usage": "Main hero background image (requires black/60 overlay for text legibility)"
+      }
+    ],
+    "about": [
+      {
+        "url": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxjb25maWRlbnQlMjB3b21hbiUyMGRyaXZpbmclMjBjYXJ8ZW58MHx8fHwxNzgyNzUwNDQ2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Confident woman driving car",
+        "usage": "About section representing Nadine"
+      }
+    ],
+    "fleet": [
+      {
+        "url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg",
+        "description": "Black luxury sports car parked",
+        "usage": "Representing the premium fleet (Audi S3 / Range Rover vibe)"
+      }
+    ],
+    "atmosphere": [
+      {
+        "url": "https://images.unsplash.com/photo-1678191255790-7a1f0af3f6ef?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxzd2lzcyUyMG1vdW50YWluJTIwcm9hZCUyMGN1cnZ5fGVufDB8fHx8MTc4Mjc1MDQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Swiss mountain road curvy",
+        "usage": "Background for Testimonials or Pricing to establish Swiss location"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Follow the JSON guidelines strictly to implement the UI.",
+    "Use raw HTML/Tailwind for marketing layout. Do not over-rely on Shadcn Card for landing page aesthetics.",
+    "Build a dedicated Admin CMS at '/admin' route (use Shadcn extensively here for tables/forms/dashboard).",
+    "Ensure all interactive elements have 'data-testid' matching their function (e.g., data-testid='submit-contact-form').",
+    "Do NOT use TypeScript (.tsx), use standard JavaScript (.js / .jsx).",
+    "Implement language toggling (DE/EN) structure via context or simple state, defaulting to DE."
+  ]
+}
