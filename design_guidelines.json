@@ -1,118 +1,118 @@
 {
-  "identity": {
-    "project": "Fahrschule Safe Ride",
-    "theme": "Dark",
-    "archetype": "Performance Pro (Archetype 2) infused with Luxury (Archetype 5)",
-    "vibe": "Sporty, Premium, Automotive, Edgy yet Professional, Trustworthy",
-    "keywords": ["ANDERS", "BESSER", "MUTIGER", "Speed", "Safety", "Premium"]
-  },
+  "theme": "light",
+  "archetype": "High-Energy Dopamine (Bold & Dynamic)",
   "typography": {
-    "heading_font": "Cabinet Grotesk",
-    "body_font": "Manrope",
-    "rules": {
-      "h1": "text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase leading-none",
-      "h2": "text-3xl md:text-5xl font-bold tracking-tight uppercase",
-      "h3": "text-xl md:text-2xl font-semibold tracking-tight",
-      "body": "text-base font-medium leading-relaxed text-neutral-300",
-      "overline": "text-xs font-bold tracking-[0.2em] uppercase text-[#FF2E00]"
+    "fonts": {
+      "heading": "Clash Display",
+      "body": "Outfit",
+      "accent": "Unbounded"
+    },
+    "scales": {
+      "h1": "text-5xl sm:text-7xl lg:text-[8vw] leading-none tracking-tighter uppercase font-black",
+      "h2": "text-4xl sm:text-5xl lg:text-7xl leading-tight tracking-tighter font-bold",
+      "h3": "text-2xl sm:text-3xl lg:text-4xl leading-snug tracking-tight",
+      "body": "text-lg sm:text-xl leading-relaxed font-medium"
     }
   },
   "colors": {
-    "background_base": "#0A0A0A",
-    "surface_primary": "#141414",
-    "surface_secondary": "#1C1C1E",
-    "accent_primary": "#FF2E00",
-    "accent_hover": "#CC2500",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#A1A1AA",
-    "border_subtle": "rgba(255, 255, 255, 0.1)",
-    "glassmorphism": "bg-black/60 backdrop-blur-2xl border border-white/10"
+    "background": {
+      "base": "#F4F5F0",
+      "alt": "#FFFFFF",
+      "accent_container": "#0033FF"
+    },
+    "text": {
+      "primary": "#0A0A0A",
+      "secondary": "#4B5563",
+      "inverse": "#FFFFFF",
+      "accent": "#CCFF00"
+    },
+    "brand": {
+      "primary": "#0033FF",
+      "accent": "#CCFF00",
+      "secondary": "#FF0055"
+    },
+    "ui": {
+      "border": "#E5E7EB",
+      "card_bg": "#FFFFFF",
+      "hover": "#0022CC"
+    }
   },
   "layout_and_spacing": {
-    "marketing_pages": "Bento Grid Mode A (Tetris). Asymmetrical, generous negative space. Use p-12, py-24, py-32 for sections. Full-bleed images. High-contrast typography-led discovery.",
-    "admin_dashboard": "Control Room Grid Mode B. Dense, 1px solid borders, Shadcn UI components. Functional, compact, strictly utilitarian.",
-    "alignment": "Left-aligned typography for modern, cinematic feel. Center alignment only for specific call-outs or marquee."
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_padding": "py-24 sm:py-32 lg:py-40",
+    "border_radius": "rounded-3xl",
+    "bento_gap": "gap-4 sm:gap-6",
+    "grid_strategy": "Asymmetric layouts, overlap elements to break rigid grids, generous negative space."
   },
-  "component_strategy": {
-    "marketing_ui": "Raw HTML/Tailwind for creative layouts. No generic Shadcn cards for marketing. Use react-fast-marquee for kinetic 'ANDERS - BESSER - MUTIGER' ticker.",
-    "admin_ui": "Heavily use Shadcn UI (Tables, Dialogs, Forms, Inputs, Tabs). Override default radii to rounded-sm for a sharper, sporty look.",
-    "buttons": "Sharp corners (rounded-none or rounded-sm). Primary: Solid Adrenaline Red with white text. Secondary: Transparent with 1px border. Hover states must increase brightness/shift to red.",
-    "navigation": "Crystal Glass header over hero section. Must include Logo, Links, DE/EN toggle, and CTA. Sticky on scroll with z-50.",
-    "testing": "All interactive elements, buttons, links, and forms MUST include a 'data-testid' attribute (e.g., 'data-testid=\"hero-cta-button\"')."
+  "motion_and_interactions": {
+    "scroll_reveal": "Staggered fade-up with slight rotation using framer-motion.",
+    "hover_states": "Scale up slightly, shadow deepens, border color shifts to primary.",
+    "marquee": "Fast-moving, text-8xl outline text in background, mix of filled and outlined typography.",
+    "buttons": "Pill-shaped, high-contrast, kinetic hover effect.",
+    "parallax": "Images in bento boxes have slow scale effect on scroll."
   },
-  "page_sections": [
+  "components": {
+    "navigation": {
+      "style": "Floating glassmorphism pill",
+      "classes": "fixed top-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-xl border border-white/40 rounded-full px-8 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.05)] z-50 flex items-center justify-between w-[95%] max-w-5xl"
+    },
+    "hero": {
+      "style": "Kinetic typography dominant",
+      "layout": "Massive text taking up 70% of viewport, overlapping a vibrant image or video loop with a pill-shaped CTA floating near the bottom."
+    },
+    "cards": {
+      "style": "Neo-brutalist lite",
+      "classes": "bg-white rounded-3xl p-8 border-2 border-transparent hover:border-[#0033FF] transition-colors duration-300 shadow-sm hover:shadow-xl"
+    },
+    "buttons": {
+      "primary": "bg-[#0033FF] text-[#CCFF00] rounded-full px-8 py-4 font-bold uppercase tracking-wide hover:bg-[#0022CC] transition-all",
+      "secondary": "bg-white text-[#0A0A0A] border-2 border-[#0A0A0A] rounded-full px-8 py-4 font-bold uppercase tracking-wide hover:bg-[#0A0A0A] hover:text-white transition-all"
+    }
+  },
+  "sections": [
     {
-      "name": "Hero Section",
-      "style": "Full viewport height. Background image of black sports car driving. Gradient overlay (bg-black/60 to transparent) to ensure text contrast. Massive left-aligned typography.",
-      "components": ["Header Nav", "Hero Copy", "Primary CTA", "DE/EN Switcher"]
+      "name": "Hero",
+      "design_notes": "Massive H1 'SAFE RIDE' in Clash Display. A fast marquee behind the text reading 'DRIVING SCHOOL ZÜRICH & SCHWYZ'. Vibrant Cobalt blue primary CTA."
     },
     {
-      "name": "Kinetic Marquee",
-      "style": "react-fast-marquee spanning full width. Text outline style: text-transparent, text-stroke-white (using custom CSS or webkit-text-stroke), text-6xl, uppercase."
+      "name": "Über mich (Nadine Stäubli)",
+      "design_notes": "Asymmetric layout. Large portrait image (rounded-3xl) offset with a big typography block 'Your Instructor'. Vibrant pink or lime accent blob behind the image."
     },
     {
-      "name": "About Instructor (Nadine Stäubli)",
-      "style": "Split layout. Right: Confident woman driving image. Left: Text focusing on modern, professional lessons with heart.",
-      "components": ["Image", "Typography block", "Trust indicators"]
+      "name": "Services / Angebote",
+      "design_notes": "Bento grid of 6 cards. Background is a soft cream #F4F5F0. Cards are white with large colorful icons and bold titles."
     },
     {
-      "name": "Vehicle Fleet & Services",
-      "style": "Asymmetric Bento Grid highlighting Audi S3, Opel OPC, Range Rover Sport. Dark surfaces with 1px border. Hover effects: image slight zoom, border turns red.",
-      "components": ["Bento Cards", "Service List"]
+      "name": "Fahrzeugflotte",
+      "design_notes": "Horizontal scrolling section or large staggered cards. High-contrast imagery of Audi S3, Opel OPC, Range Rover Sport. Overlay with thick typography."
     },
     {
-      "name": "Pricing & Reviews",
-      "style": "Brutalist pricing tables. Google-style testimonials in a sleek horizontal scroll or grid. High contrast text.",
-      "components": ["Pricing Cards", "Review Carousel/Grid"]
+      "name": "Preise",
+      "design_notes": "Split layout: ZH/SZ vs GR. Use big bold price numbers (e.g., 'CHF 90'). High contrast boxes (one blue with lime text, one white with dark text)."
     },
     {
-      "name": "Contact & Footer",
-      "style": "Darkest background (#050505). Shadcn form inputs modified to dark theme (bg-transparent, border-white/20, focus:border-red-500).",
-      "components": ["Contact Form", "Footer Links", "Socials"]
+      "name": "Bildergalerie",
+      "design_notes": "Masonry grid with hover-to-reveal color or hover-to-zoom (parallax) effect."
+    },
+    {
+      "name": "Bewertungen",
+      "design_notes": "Marquee slider with review cards. Cards have a vibrant top border and big quote marks."
+    },
+    {
+      "name": "Kontaktformular",
+      "design_notes": "Solid Cobalt Blue background section. White massive typography. The form uses thick bottom borders for inputs (no full box), placeholder text in neon lime."
+    },
+    {
+      "name": "Admin CMS",
+      "design_notes": "Functional but styled. Font family (Outfit). Restrained use of Cobalt Blue for primary actions. Lots of white space, dense tables. Apply data-testid to interactive elements."
     }
   ],
-  "motion_and_interactions": {
-    "philosophy": "Cinematic and deliberate. No bounce. Speed and precision.",
-    "libraries": ["framer-motion", "react-fast-marquee"],
-    "scroll": "Fade in and slight upward translation (y: 20px) on scroll using framer-motion.",
-    "hover": "Buttons and cards should use slight brightness increase or border color shift (e.g., border-transparent to border-[#FF2E00])."
+  "image_urls": {
+    "hero_background": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6",
+    "instructor_portrait": "https://images.pexels.com/photos/28038603/pexels-photo-28038603.jpeg",
+    "fleet_audi": "https://images.unsplash.com/photo-1550517636-ad7bac40dc28",
+    "fleet_generic": "https://images.unsplash.com/photo-1562877961-efcec8439f9d",
+    "decorative_driving": "https://images.pexels.com/photos/7843970/pexels-photo-7843970.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
   },
-  "media_urls": {
-    "hero": [
-      {
-        "url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
-        "description": "Black sports car driving fast on suburban road",
-        "usage": "Main hero background image (requires black/60 overlay for text legibility)"
-      }
-    ],
-    "about": [
-      {
-        "url": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxjb25maWRlbnQlMjB3b21hbiUyMGRyaXZpbmclMjBjYXJ8ZW58MHx8fHwxNzgyNzUwNDQ2fDA&ixlib=rb-4.1.0&q=85",
-        "description": "Confident woman driving car",
-        "usage": "About section representing Nadine"
-      }
-    ],
-    "fleet": [
-      {
-        "url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg",
-        "description": "Black luxury sports car parked",
-        "usage": "Representing the premium fleet (Audi S3 / Range Rover vibe)"
-      }
-    ],
-    "atmosphere": [
-      {
-        "url": "https://images.unsplash.com/photo-1678191255790-7a1f0af3f6ef?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxzd2lzcyUyMG1vdW50YWluJTIwcm9hZCUyMGN1cnZ5fGVufDB8fHx8MTc4Mjc1MDQ0Nnww&ixlib=rb-4.1.0&q=85",
-        "description": "Swiss mountain road curvy",
-        "usage": "Background for Testimonials or Pricing to establish Swiss location"
-      }
-    ]
-  },
-  "instructions_to_main_agent": [
-    "Follow the JSON guidelines strictly to implement the UI.",
-    "Use raw HTML/Tailwind for marketing layout. Do not over-rely on Shadcn Card for landing page aesthetics.",
-    "Build a dedicated Admin CMS at '/admin' route (use Shadcn extensively here for tables/forms/dashboard).",
-    "Ensure all interactive elements have 'data-testid' matching their function (e.g., data-testid='submit-contact-form').",
-    "Do NOT use TypeScript (.tsx), use standard JavaScript (.js / .jsx).",
-    "Implement language toggling (DE/EN) structure via context or simple state, defaulting to DE."
-  ]
+  "instructions_to_main_agent": "Use 'Clash Display' for all massive headings and 'Outfit' for body text. Apply framer-motion for scroll reveals and continuous marquees. Implement the floating pill nav. Ensure the contrast between #0033FF (Cobalt) and #CCFF00 (Lime) is used for high-impact CTAs. Ditch all previous dark-theme artifacts. Apply data-testid to all interactive elements. Generate .js and .jsx files, not .tsx. Implement a responsive DE/EN switcher in the nav."
 }
