@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function Gallery({ items }) {
@@ -8,37 +9,45 @@ export default function Gallery({ items }) {
     <section
       id="gallery"
       data-testid="gallery-section"
-      className="section bg-[#0a0a0a]"
+      className="section-pad bg-white"
     >
-      <div className="mb-12">
-        <div className="overline mb-4">{t.gallery.overline}</div>
-        <h2 className="font-display font-bold uppercase tracking-tight text-3xl md:text-5xl lg:text-6xl leading-[0.95]">
-          {t.gallery.title}
-        </h2>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-        {items.map((g, i) => (
-          <div
-            key={g.id || i}
-            data-testid={`gallery-item-${i}`}
-            className={`group relative overflow-hidden ${
-              i % 5 === 0 ? "col-span-2 row-span-2" : ""
-            }`}
-            style={{ borderRadius: 2 }}
+      <div className="container-x px-5 md:px-10 lg:px-14">
+        <div className="mb-12">
+          <div className="eyebrow text-[#0033ff] mb-4">{t.gallery.overline}</div>
+          <h2
+            className="font-display font-black uppercase tracking-tighter leading-[0.9]"
+            style={{ fontSize: "clamp(2.4rem, 5.5vw, 5rem)" }}
           >
-            <img
-              src={g.image_url}
-              alt={pick(g.caption_de, g.caption_en) || "gallery"}
-              className="w-full h-full min-h-[180px] md:min-h-[220px] object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            {(g.caption_de || g.caption_en) && (
-              <div className="absolute bottom-3 left-3 text-xs text-white/90 opacity-0 group-hover:opacity-100 transition-opacity tracking-wide">
-                {pick(g.caption_de, g.caption_en)}
-              </div>
-            )}
-          </div>
-        ))}
+            {t.gallery.title}
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {items.map((g, i) => (
+            <motion.div
+              key={g.id || i}
+              data-testid={`gallery-item-${i}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: (i % 4) * 0.06 }}
+              className={`group relative overflow-hidden rounded-3xl border-2 border-[#0a0a0a] ${
+                i % 5 === 0 ? "col-span-2 row-span-2" : ""
+              }`}
+            >
+              <img
+                src={g.image_url}
+                alt={pick(g.caption_de, g.caption_en) || "gallery"}
+                className="w-full h-full min-h-[200px] md:min-h-[240px] object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-[#0033ff] mix-blend-multiply opacity-0 group-hover:opacity-80 transition-opacity duration-500" />
+              {(g.caption_de || g.caption_en) && (
+                <div className="absolute bottom-4 left-4 right-4 text-[#ccff00] font-display font-black text-lg uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {pick(g.caption_de, g.caption_en)}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );

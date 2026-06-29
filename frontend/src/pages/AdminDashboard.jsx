@@ -23,39 +23,37 @@ export default function AdminDashboard() {
   return (
     <div
       data-testid="admin-dashboard"
-      className="min-h-screen bg-[#0a0a0a] text-white flex flex-col"
+      className="min-h-screen bg-[#f4f5f0] text-[#0a0a0a] flex flex-col"
     >
       <header
-        className="border-b border-white/10 px-6 md:px-10 py-4 flex items-center justify-between"
+        className="border-b-2 border-[#0a0a0a]/10 bg-white px-5 md:px-8 py-4 flex items-center justify-between"
         data-testid="admin-header"
       >
         <div className="flex items-center gap-3">
           <Link to="/" data-testid="admin-logo">
             <div className="font-display font-black tracking-tighter text-xl uppercase">
-              Safe<span className="text-[#FF2E00]">Ride</span>
+              Safe<span className="text-[#0033ff]">Ride</span>
             </div>
           </Link>
-          <span className="text-[10px] tracking-[0.3em] uppercase text-white/40 border-l border-white/15 pl-3 ml-1">
+          <span className="text-[10px] tracking-widest uppercase text-[#0a0a0a]/40 border-l-2 border-[#0a0a0a]/10 pl-3 ml-1 font-bold">
             CMS
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-xs text-white/55 mr-2">
+          <span className="hidden sm:inline text-xs text-[#0a0a0a]/55 mr-2 font-medium">
             {user?.email}
           </span>
           <Link
             to="/"
             data-testid="admin-view-site"
-            className="btn-ghost text-[10px] py-2 px-3"
-            style={{ borderRadius: 2 }}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-extrabold tracking-widest uppercase border-2 border-[#0a0a0a] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors"
           >
             <Home size={13} /> Website
           </Link>
           <button
             data-testid="admin-logout-btn"
             onClick={logout}
-            className="btn-primary text-[10px] py-2 px-3"
-            style={{ borderRadius: 2 }}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-extrabold tracking-widest uppercase bg-[#0033ff] text-[#ccff00] hover:bg-[#0022cc] transition-colors"
           >
             <LogOut size={13} /> {t.admin.logout}
           </button>
@@ -65,7 +63,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col lg:flex-row flex-1">
         <aside
           data-testid="admin-sidebar"
-          className="lg:w-64 border-b lg:border-b-0 lg:border-r border-white/10 px-3 md:px-5 py-5 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible"
+          className="lg:w-64 bg-white border-b-2 lg:border-b-0 lg:border-r-2 border-[#0a0a0a]/10 px-3 md:px-4 py-5 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible"
         >
           {TABS.map((tb) => {
             const Icon = tb.icon;
@@ -75,12 +73,11 @@ export default function AdminDashboard() {
                 key={tb.id}
                 onClick={() => setTab(tb.id)}
                 data-testid={`admin-tab-${tb.id}`}
-                className={`text-left flex items-center gap-3 px-3 py-3 text-xs tracking-widest uppercase font-bold transition-colors whitespace-nowrap ${
+                className={`text-left flex items-center gap-3 px-3 py-3 text-xs tracking-widest uppercase font-extrabold transition-colors whitespace-nowrap rounded-full ${
                   active
-                    ? "bg-[#FF2E00] text-white"
-                    : "text-white/55 hover:text-white hover:bg-white/5"
+                    ? "bg-[#0033ff] text-[#ccff00]"
+                    : "text-[#0a0a0a]/55 hover:text-[#0a0a0a] hover:bg-[#0a0a0a]/5"
                 }`}
-                style={{ borderRadius: 2 }}
               >
                 <Icon size={14} />
                 {t.admin.tabs[tb.key]}

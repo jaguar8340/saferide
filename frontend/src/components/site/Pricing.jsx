@@ -1,5 +1,13 @@
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+
+const CARD_COLORS = [
+  { bg: "bg-white", fg: "text-[#0a0a0a]", price: "text-[#0033ff]", border: "border-[#0a0a0a]" },
+  { bg: "bg-[#0033ff]", fg: "text-white", price: "text-[#ccff00]", border: "border-[#0a0a0a]" },
+  { bg: "bg-white", fg: "text-[#0a0a0a]", price: "text-[#0a0a0a]", border: "border-[#0a0a0a]" },
+  { bg: "bg-[#ccff00]", fg: "text-[#0a0a0a]", price: "text-[#0033ff]", border: "border-[#0a0a0a]" },
+];
 
 export default function Pricing({ data }) {
   const { pick, t } = useLang();
@@ -9,70 +17,78 @@ export default function Pricing({ data }) {
     <section
       id="pricing"
       data-testid="pricing-section"
-      className="section bg-[#0a0a0a] border-t border-white/5"
+      className="section-pad bg-[#f4f5f0]"
     >
-      <div className="text-center mb-14 max-w-2xl mx-auto">
-        <div className="overline mb-4">CHF · Preise</div>
-        <h2 className="font-display font-bold uppercase tracking-tight text-3xl md:text-5xl lg:text-6xl leading-[0.95]">
-          {pick(data.title_de, data.title_en)}
-        </h2>
-        <p className="mt-5 text-white/65 text-sm md:text-base">
-          {pick(data.subtitle_de, data.subtitle_en)}
+      <div className="container-x px-5 md:px-10 lg:px-14">
+        <div className="text-center mb-14 max-w-2xl mx-auto">
+          <div className="eyebrow text-[#ff0055] mb-4">CHF · Preise</div>
+          <h2
+            className="font-display font-black uppercase tracking-tighter leading-[0.9]"
+            style={{ fontSize: "clamp(2.4rem, 5.5vw, 5rem)" }}
+          >
+            {pick(data.title_de, data.title_en)}
+          </h2>
+          <p className="mt-5 text-[#4b5563] text-lg md:text-xl font-medium">
+            {pick(data.subtitle_de, data.subtitle_en)}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          {(data.plans || []).map((p, i) => {
+            const c = p.highlight
+              ? CARD_COLORS[1]
+              : CARD_COLORS[i % CARD_COLORS.length];
+            return (
+              <motion.div
+                key={p.id || i}
+                data-testid={`pricing-card-${i}`}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.55, delay: i * 0.08 }}
+                className={`relative ${c.bg} ${c.fg} border-2 ${c.border} rounded-3xl p-7 md:p-8 hover:-translate-y-1 transition-transform duration-300`}
+              >
+                {p.highlight && (
+                  <span className="absolute -top-3 right-6 bg-[#ccff00] text-[#0a0a0a] text-[10px] tracking-widest uppercase font-extrabold px-3 py-1 rounded-full border-2 border-[#0a0a0a]">
+                    Beliebt
+                  </span>
+                )}
+                <div className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-3">
+                  {pick(p.region_de, p.region_en)}
+                </div>
+                <div className="font-display font-extrabold text-xl mb-1 uppercase tracking-tight">
+                  {pick(p.name_de, p.name_en)}
+                </div>
+                <div className="text-xs opacity-70">
+                  {pick(p.duration_de, p.duration_en)}
+                </div>
+                <div
+                  className={`font-display font-black text-5xl md:text-6xl mt-7 ${c.price} leading-none tracking-tighter`}
+                >
+                  {p.price}
+                </div>
+                <a
+                  href="#contact"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document
+                      .getElementById("contact")
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  data-testid={`pricing-cta-${i}`}
+                  className="mt-7 inline-flex items-center gap-2 text-xs tracking-widest uppercase font-extrabold underline underline-offset-4 hover:no-underline"
+                >
+                  {t.pricing.ctaText} <ArrowRight size={14} />
+                </a>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <p className="mt-10 text-sm text-[#4b5563] max-w-3xl leading-relaxed font-medium">
+          {pick(data.note_de, data.note_en)}
         </p>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(data.plans || []).map((p, i) => (
-          <div
-            key={p.id || i}
-            data-testid={`pricing-card-${i}`}
-            className={`relative p-7 ${
-              p.highlight
-                ? "bg-[#FF2E00] text-white"
-                : "card-surface text-white"
-            }`}
-            style={{ borderRadius: 2 }}
-          >
-            {p.highlight && (
-              <span
-                className="absolute -top-3 left-7 bg-white text-black text-[10px] tracking-[0.3em] uppercase font-bold px-2 py-1"
-                style={{ borderRadius: 2 }}
-              >
-                Beliebt
-              </span>
-            )}
-            <div className={`text-[10px] tracking-[0.3em] uppercase font-bold mb-3 ${p.highlight ? "text-white/80" : "text-[#FF2E00]"}`}>
-              {pick(p.region_de, p.region_en)}
-            </div>
-            <div className="font-display font-bold text-xl mb-1">
-              {pick(p.name_de, p.name_en)}
-            </div>
-            <div className={`text-xs ${p.highlight ? "text-white/80" : "text-white/55"}`}>
-              {pick(p.duration_de, p.duration_en)}
-            </div>
-            <div className="font-display font-black text-4xl md:text-5xl mt-7">
-              {p.price}
-            </div>
-            <a
-              href="#contact"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              data-testid={`pricing-cta-${i}`}
-              className={`mt-7 inline-flex items-center gap-2 text-xs tracking-widest uppercase font-bold border-b ${
-                p.highlight ? "border-white" : "border-white/30 hover:border-[#FF2E00] hover:text-[#FF2E00]"
-              } pb-1 transition-colors`}
-            >
-              {t.pricing.ctaText} <ArrowRight size={14} />
-            </a>
-          </div>
-        ))}
-      </div>
-
-      <p className="mt-10 text-xs text-white/50 max-w-3xl leading-relaxed">
-        {pick(data.note_de, data.note_en)}
-      </p>
     </section>
   );
 }

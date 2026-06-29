@@ -11,8 +11,8 @@ function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
-        <span className="font-display tracking-widest text-sm uppercase opacity-60">
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f0] text-[#0a0a0a]">
+        <span className="font-accent tracking-widest text-sm uppercase opacity-60">
           Lade…
         </span>
       </div>
@@ -43,13 +43,14 @@ function App() {
             </Routes>
           </BrowserRouter>
           <Toaster
-            theme="dark"
+            theme="light"
             position="top-right"
             toastOptions={{
               style: {
-                background: "#141414",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "#ffffff",
+                color: "#0a0a0a",
+                border: "2px solid #0033ff",
+                borderRadius: "16px",
               },
             }}
           />
