@@ -1,88 +1,598 @@
-from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
-
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+import os
+import uuid
+import logging
+import bcrypt
+import jwt
+from datetime import datetime, timezone, timedelta
+from typing import List, Optional, Any, Dict
+
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
+
+
+# ---------- MongoDB ----------
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+# ---------- Auth helpers ----------
+JWT_ALGORITHM = "HS256"
+JWT_EXP_HOURS = 24
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
+
+
+def create_access_token(user_id: str, email: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXP_HOURS),
+        "type": "access",
+    }
+    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=JWT_ALGORITHM)
+
+
+bearer = HTTPBearer(auto_error=False)
+
+
+async def get_current_admin(
+    request: Request,
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
+) -> dict:
+    token = None
+    if creds and creds.scheme.lower() == "bearer":
+        token = creds.credentials
+    if not token:
+        token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0, "password_hash": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# ---------- Default content ----------
+DEFAULT_CONTENT: Dict[str, Any] = {
+    "hero": {
+        "overline_de": "Fahrschule · Schweiz",
+        "overline_en": "Driving School · Switzerland",
+        "title_de": "Fahren lernen.",
+        "title_en": "Learn to drive.",
+        "highlight_de": "Anders. Besser. Mutiger.",
+        "highlight_en": "Different. Better. Bolder.",
+        "subtitle_de": "Moderne und professionelle Fahrstunden mit Herz – in den Regionen Zürich, Schwyz, St. Gallen und Graubünden.",
+        "subtitle_en": "Modern and professional driving lessons with heart – in the regions of Zurich, Schwyz, St. Gallen and Graubünden.",
+        "cta_primary_de": "Jetzt Probelektion anfragen",
+        "cta_primary_en": "Request a trial lesson",
+        "cta_secondary_de": "Mehr erfahren",
+        "cta_secondary_en": "Learn more",
+        "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
+    },
+    "marquee_de": "ANDERS · BESSER · MUTIGER · SAFE RIDE · MIT HERZ AM STEUER",
+    "marquee_en": "DIFFERENT · BETTER · BOLDER · SAFE RIDE · DRIVEN BY HEART",
+    "about": {
+        "overline_de": "Über mich",
+        "overline_en": "About me",
+        "title_de": "Nadine Stäubli – deine Fahrlehrerin",
+        "title_en": "Nadine Stäubli – your driving instructor",
+        "body_de": "Ich freue mich, dich auf deinem Weg zur Führerprüfung zu begleiten. Bei mir gibt es keinen Platz für Druck oder Hektik – nur Wohlfühlatmosphäre, klare Erklärungen und volle Konzentration auf dich. Spezialisiert auf Mental Coaching sowie auf Schüler:innen mit ADHS oder Autismus, gehe ich individuell auf deine Bedürfnisse ein.",
+        "body_en": "I'm excited to guide you on your way to the driver's license. With me there's no room for pressure or rush – just a relaxed atmosphere, clear explanations and full focus on you. Specialised in mental coaching and in students with ADHD or autism, I tailor every lesson to your needs.",
+        "stat1_value": "98%",
+        "stat1_label_de": "Erfolgsquote",
+        "stat1_label_en": "Pass rate",
+        "stat2_value": "10+",
+        "stat2_label_de": "Jahre Erfahrung",
+        "stat2_label_en": "Years experience",
+        "stat3_value": "4 Kt.",
+        "stat3_label_de": "Kantone abgedeckt",
+        "stat3_label_en": "Cantons covered",
+        "image_url": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxjb25maWRlbnQlMjB3b21hbiUyMGRyaXZpbmclMjBjYXJ8ZW58MHx8fHwxNzgyNzUwNDQ2fDA&ixlib=rb-4.1.0&q=85",
+    },
+    "services": [
+        {
+            "id": "s1",
+            "title_de": "Fahrstunden PKW",
+            "title_en": "Car driving lessons",
+            "description_de": "Persönliche, lockere Fahrstunden mit Audi S3, Opel OPC oder Range Rover Sport.",
+            "description_en": "Personal, relaxed lessons in the Audi S3, Opel OPC or Range Rover Sport.",
+            "icon": "Car",
+        },
+        {
+            "id": "s2",
+            "title_de": "Anhänger / Pferdeanhänger",
+            "title_en": "Trailer / Horse trailer",
+            "description_de": "Sicher manövrieren und rangieren – auch mit Pferdeanhänger.",
+            "description_en": "Safe manoeuvring and reversing – including horse trailers.",
+            "icon": "Truck",
+        },
+        {
+            "id": "s3",
+            "title_de": "VKU – Verkehrskunde",
+            "title_en": "Traffic theory (VKU)",
+            "description_de": "Abwechslungsreich und realitätsnah – der VKU direkt bei deiner Fahrlehrerin.",
+            "description_en": "Varied and realistic – traffic theory directly with your instructor.",
+            "icon": "BookOpen",
+        },
+        {
+            "id": "s4",
+            "title_de": "Mental Coaching",
+            "title_en": "Mental coaching",
+            "description_de": "Prüfungsangst war gestern. Ruhig, fokussiert und mit Selbstvertrauen am Steuer.",
+            "description_en": "Goodbye exam anxiety – calm, focused and confident behind the wheel.",
+            "icon": "Brain",
+        },
+        {
+            "id": "s5",
+            "title_de": "ADHS & Autismus",
+            "title_en": "ADHD & Autism",
+            "description_de": "Spezialisierte Begleitung mit Geduld, Struktur und Verständnis.",
+            "description_en": "Specialised guidance with patience, structure and understanding.",
+            "icon": "Heart",
+        },
+        {
+            "id": "s6",
+            "title_de": "Probeprüfung",
+            "title_en": "Mock exam",
+            "description_de": "Simuliere die echte Prüfung und gehe mit gutem Gefühl in den Ernstfall.",
+            "description_en": "Simulate the real test and walk into exam day with confidence.",
+            "icon": "ShieldCheck",
+        },
+    ],
+    "fleet": [
+        {
+            "id": "f1",
+            "name": "Audi S3",
+            "spec": "310 PS · Automat",
+            "description_de": "Sportlich, dynamisch und sicher: Lerne fahren im souveränen S3.",
+            "description_en": "Sporty, dynamic and safe: learn to drive in the confident S3.",
+            "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg",
+        },
+        {
+            "id": "f2",
+            "name": "Opel OPC",
+            "spec": "280 PS · Handschaltung",
+            "description_de": "Pure Fahrfreude für alle, die die Handschaltung lernen wollen.",
+            "description_en": "Pure driving fun for everyone who wants to master the manual gearbox.",
+            "image_url": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1600&q=80",
+        },
+        {
+            "id": "f3",
+            "name": "Range Rover Sport",
+            "spec": "510 PS · Automat",
+            "description_de": "Premium-SUV für ein souveränes Gefühl auf jeder Strasse.",
+            "description_en": "Premium SUV for a confident feeling on every road.",
+            "image_url": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1600&q=80",
+        },
+    ],
+    "pricing": {
+        "title_de": "Transparente Preise",
+        "title_en": "Transparent pricing",
+        "subtitle_de": "Ehrlich, klar und ohne versteckte Kosten – je nach Kanton.",
+        "subtitle_en": "Honest, clear and without hidden costs – depending on the canton.",
+        "plans": [
+            {
+                "id": "p1",
+                "region_de": "Kanton ZH / SZ",
+                "region_en": "Canton ZH / SZ",
+                "name_de": "PKW · 45 Min.",
+                "name_en": "Car · 45 min.",
+                "price": "CHF 90",
+                "duration_de": "45 Minuten",
+                "duration_en": "45 minutes",
+                "highlight": False,
+            },
+            {
+                "id": "p2",
+                "region_de": "Kanton ZH / SZ",
+                "region_en": "Canton ZH / SZ",
+                "name_de": "PKW · 60 Min.",
+                "name_en": "Car · 60 min.",
+                "price": "CHF 120",
+                "duration_de": "60 Minuten",
+                "duration_en": "60 minutes",
+                "highlight": True,
+            },
+            {
+                "id": "p3",
+                "region_de": "Kanton ZH / SZ",
+                "region_en": "Canton ZH / SZ",
+                "name_de": "Anhänger · 45 Min.",
+                "name_en": "Trailer · 45 min.",
+                "price": "CHF 120",
+                "duration_de": "45 Minuten",
+                "duration_en": "45 minutes",
+                "highlight": False,
+            },
+            {
+                "id": "p4",
+                "region_de": "Kanton GR",
+                "region_en": "Canton GR",
+                "name_de": "PKW · 50 Min.",
+                "name_en": "Car · 50 min.",
+                "price": "CHF 110",
+                "duration_de": "50 Minuten",
+                "duration_en": "50 minutes",
+                "highlight": False,
+            },
+        ],
+        "note_de": "Für Neukund:innen fällt eine einmalige Versicherungspauschale von CHF 120 an (zahlbar bei der zweiten Lektion). Bei Bank- oder Kartenzahlungen verrechnen wir eine Administrationspauschale von CHF 10.",
+        "note_en": "For new customers a one-time insurance fee of CHF 120 applies (payable with the second lesson). Bank or card payments incur an administration fee of CHF 10.",
+    },
+    "contact": {
+        "phone": "+41 79 585 00 85",
+        "email": "info@fahrschule-saferide.ch",
+        "address_de": "Region Zürich · Schwyz · St. Gallen · Graubünden",
+        "address_en": "Region Zurich · Schwyz · St. Gallen · Graubünden",
+        "hours_de": "Mo – Fr · 07:00 – 20:00 · Sa nach Absprache",
+        "hours_en": "Mon – Fri · 7:00 – 20:00 · Sat by appointment",
+        "instagram": "https://www.instagram.com/",
+        "tiktok": "https://www.tiktok.com/@nadine_staeubli",
+    },
+}
+
+
+DEFAULT_TESTIMONIALS = [
+    {
+        "id": "t1",
+        "name": "Jael Thalmann",
+        "rating": 5,
+        "date": "Juni 2026",
+        "text_de": "D'Fahrstunde bi dir sind eifach immer mega gsi! Mir hend nöd nur viel glernt, sondern au immer wieder chönne lache. Locker, entspannt und trotzdem alles verständlich erklärt. Merci für dini Geduld und die viele lustige Momänt!",
+        "text_en": "Driving lessons with you were always amazing! We not only learned a lot but also laughed a lot. Relaxed and chilled atmosphere and everything explained clearly. Thanks for your patience and all the fun moments!",
+    },
+    {
+        "id": "t2",
+        "name": "Vanessa Jahn",
+        "rating": 5,
+        "date": "Juni 2026",
+        "text_de": "Dank Nadines Geduld, ruhiger Art und verständlichen Erklärungen habe ich die Fahrprüfung beim ersten Versuch bestanden. Sie hat mir geholfen, mehr an mich zu glauben und Selbstvertrauen aufzubauen.",
+        "text_en": "Thanks to Nadine's patience, calm manner and clear explanations I passed the driving test on the first attempt. She helped me believe in myself and build confidence.",
+    },
+    {
+        "id": "t3",
+        "name": "Luis Ellenberger",
+        "rating": 5,
+        "date": "März 2026",
+        "text_de": "Die Fahrstunden waren immer lustig, aber Nadine hat auch immer im richtigen Moment gesagt, wenn es ernst gilt. Ich habe mich jederzeit sicher gefühlt und war super vorbereitet.",
+        "text_en": "The lessons were always fun, but Nadine knew exactly when to get serious. I always felt safe and was perfectly prepared.",
+    },
+    {
+        "id": "t4",
+        "name": "Robi Steiner",
+        "rating": 5,
+        "date": "Februar 2026",
+        "text_de": "Tolle Fahrschule! Speziell das Angebot der Probeprüfung hat mir sehr geholfen. Eine sehr sympathische Fahrlehrerin – grosses Lob an Nadine!",
+        "text_en": "Great driving school! Especially the mock exam helped me a lot. A very likeable instructor – big thumbs up to Nadine!",
+    },
+    {
+        "id": "t5",
+        "name": "Leonie Waelti",
+        "rating": 5,
+        "date": "Februar 2026",
+        "text_de": "Sehr empathisch, geduldig und zuverlässig. Mit ihrer freundlichen Art schafft sie eine lockere Atmosphäre – perfekt zum Autofahren lernen. Man merkt, sie ist mit ganzem Herzen dabei.",
+        "text_en": "Very empathetic, patient and reliable. With her friendly attitude she creates a relaxed atmosphere – perfect for learning to drive. You can tell she's doing it with all her heart.",
+    },
+    {
+        "id": "t6",
+        "name": "Joël",
+        "rating": 5,
+        "date": "Juni 2025",
+        "text_de": "Wer eine Fahrschule mit topmotivierter Fahrlehrerin sucht, ist bei Safe Ride genau richtig. Hohes fachliches Wissen, super Atmosphäre und der Audi S3 als Bonus.",
+        "text_en": "If you're looking for a driving school with a top-motivated instructor, Safe Ride is the right place. High level of expertise, great atmosphere and the Audi S3 as a bonus.",
+    },
+]
+
+DEFAULT_GALLERY = [
+    {
+        "id": "g1",
+        "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
+        "caption_de": "Audi S3 auf der Strasse",
+        "caption_en": "Audi S3 on the road",
+    },
+    {
+        "id": "g2",
+        "image_url": "https://images.unsplash.com/photo-1678191255790-7a1f0af3f6ef?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxzd2lzcyUyMG1vdW50YWluJTIwcm9hZCUyMGN1cnZ5fGVufDB8fHx8MTc4Mjc1MDQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "caption_de": "Kurvige Schweizer Bergstrasse",
+        "caption_en": "Curvy Swiss mountain road",
+    },
+    {
+        "id": "g3",
+        "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg",
+        "caption_de": "Premium Fahrschulauto",
+        "caption_en": "Premium driving school car",
+    },
+    {
+        "id": "g4",
+        "image_url": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1600&q=80",
+        "caption_de": "Detail Cockpit",
+        "caption_en": "Cockpit detail",
+    },
+    {
+        "id": "g5",
+        "image_url": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80",
+        "caption_de": "Sportwagen Frontansicht",
+        "caption_en": "Sports car front view",
+    },
+    {
+        "id": "g6",
+        "image_url": "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1600&q=80",
+        "caption_de": "Steering Wheel Close-Up",
+        "caption_en": "Steering wheel close-up",
+    },
+]
+
+
+# ---------- Pydantic Models ----------
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class ContactSubmissionCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    phone: str = Field(min_length=3, max_length=40)
+    message: str = Field(default="", max_length=2000)
+
+
+class ContactSubmission(ContactSubmissionCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    read: bool = False
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
+class TestimonialCreate(BaseModel):
+    name: str
+    rating: int = Field(ge=1, le=5)
+    date: str
+    text_de: str
+    text_en: str = ""
+
+
+class Testimonial(TestimonialCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class GalleryItemCreate(BaseModel):
+    image_url: str
+    caption_de: str = ""
+    caption_en: str = ""
+
+
+class GalleryItem(GalleryItemCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+# ---------- App ----------
+app = FastAPI(title="Fahrschule Safe Ride API")
+api = APIRouter(prefix="/api")
+
+
+@app.on_event("startup")
+async def startup_event():
+    # Indexes
+    await db.users.create_index("email", unique=True)
+    await db.contact_submissions.create_index("created_at")
+
+    # Seed admin
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@saferide.ch").lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "SafeRide2026!")
+    existing = await db.users.find_one({"email": admin_email})
+    if not existing:
+        await db.users.insert_one({
+            "id": str(uuid.uuid4()),
+            "email": admin_email,
+            "password_hash": hash_password(admin_password),
+            "name": "Admin",
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        logging.info("Seeded admin user: %s", admin_email)
+    elif not verify_password(admin_password, existing.get("password_hash", "")):
+        await db.users.update_one(
+            {"email": admin_email},
+            {"$set": {"password_hash": hash_password(admin_password)}},
+        )
+        logging.info("Updated admin password for %s", admin_email)
+
+    # Seed content
+    content_doc = await db.site_content.find_one({"id": "main"})
+    if not content_doc:
+        await db.site_content.insert_one({"id": "main", **DEFAULT_CONTENT})
+
+    # Seed testimonials
+    if await db.testimonials.count_documents({}) == 0:
+        await db.testimonials.insert_many([dict(t) for t in DEFAULT_TESTIMONIALS])
+
+    # Seed gallery
+    if await db.gallery.count_documents({}) == 0:
+        await db.gallery.insert_many([dict(g) for g in DEFAULT_GALLERY])
+
+
+# ---------- Auth Routes ----------
+@api.post("/auth/login")
+async def login(payload: LoginRequest):
+    email = payload.email.lower()
+    user = await db.users.find_one({"email": email})
+    if not user or not verify_password(payload.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Ungültige Anmeldedaten")
+    token = create_access_token(user["id"], email)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {"id": user["id"], "email": user["email"], "name": user.get("name"), "role": user.get("role")},
+    }
+
+
+@api.get("/auth/me")
+async def auth_me(admin=Depends(get_current_admin)):
+    return admin
+
+
+# ---------- Public Content Routes ----------
+def _clean(doc: dict) -> dict:
+    if not doc:
+        return doc
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/content")
+async def get_content():
+    doc = await db.site_content.find_one({"id": "main"})
+    return _clean(doc) or {}
+
+
+@api.put("/content")
+async def update_content(body: Dict[str, Any], admin=Depends(get_current_admin)):
+    body.pop("_id", None)
+    body["id"] = "main"
+    await db.site_content.update_one({"id": "main"}, {"$set": body}, upsert=True)
+    doc = await db.site_content.find_one({"id": "main"})
+    return _clean(doc)
+
+
+# ---------- Testimonials ----------
+@api.get("/testimonials", response_model=List[Testimonial])
+async def list_testimonials():
+    items = await db.testimonials.find({}, {"_id": 0}).to_list(500)
+    return items
+
+
+@api.post("/testimonials", response_model=Testimonial)
+async def add_testimonial(payload: TestimonialCreate, admin=Depends(get_current_admin)):
+    item = Testimonial(**payload.model_dump())
+    await db.testimonials.insert_one(item.model_dump())
+    return item
+
+
+@api.put("/testimonials/{item_id}", response_model=Testimonial)
+async def update_testimonial(item_id: str, payload: TestimonialCreate, admin=Depends(get_current_admin)):
+    update_data = payload.model_dump()
+    res = await db.testimonials.update_one({"id": item_id}, {"$set": update_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial nicht gefunden")
+    doc = await db.testimonials.find_one({"id": item_id}, {"_id": 0})
+    return doc
+
+
+@api.delete("/testimonials/{item_id}")
+async def delete_testimonial(item_id: str, admin=Depends(get_current_admin)):
+    res = await db.testimonials.delete_one({"id": item_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Gallery ----------
+@api.get("/gallery", response_model=List[GalleryItem])
+async def list_gallery():
+    items = await db.gallery.find({}, {"_id": 0}).to_list(500)
+    return items
+
+
+@api.post("/gallery", response_model=GalleryItem)
+async def add_gallery(payload: GalleryItemCreate, admin=Depends(get_current_admin)):
+    item = GalleryItem(**payload.model_dump())
+    await db.gallery.insert_one(item.model_dump())
+    return item
+
+
+@api.put("/gallery/{item_id}", response_model=GalleryItem)
+async def update_gallery(item_id: str, payload: GalleryItemCreate, admin=Depends(get_current_admin)):
+    res = await db.gallery.update_one({"id": item_id}, {"$set": payload.model_dump()})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    doc = await db.gallery.find_one({"id": item_id}, {"_id": 0})
+    return doc
+
+
+@api.delete("/gallery/{item_id}")
+async def delete_gallery(item_id: str, admin=Depends(get_current_admin)):
+    res = await db.gallery.delete_one({"id": item_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Contact Submissions ----------
+@api.post("/contact", response_model=ContactSubmission)
+async def submit_contact(payload: ContactSubmissionCreate):
+    sub = ContactSubmission(**payload.model_dump())
+    await db.contact_submissions.insert_one(sub.model_dump())
+    return sub
+
+
+@api.get("/contact/submissions", response_model=List[ContactSubmission])
+async def list_submissions(admin=Depends(get_current_admin)):
+    items = await db.contact_submissions.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return items
+
+
+@api.delete("/contact/submissions/{sub_id}")
+async def delete_submission(sub_id: str, admin=Depends(get_current_admin)):
+    res = await db.contact_submissions.delete_one({"id": sub_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    return {"ok": True}
+
+
+@api.patch("/contact/submissions/{sub_id}/read")
+async def mark_read(sub_id: str, admin=Depends(get_current_admin)):
+    res = await db.contact_submissions.update_one({"id": sub_id}, {"$set": {"read": True}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Health ----------
+@api.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"status": "ok", "service": "Fahrschule Safe Ride"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
-app.include_router(api_router)
+app.include_router(api)
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s :: %(message)s")
+logger = logging.getLogger("saferide")
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
