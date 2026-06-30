@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Phone, MapPin, Calendar, AlertCircle, ArrowRight } from "lucide-react";
+import { useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
@@ -12,6 +13,12 @@ import AdminToolbar from "@/components/edit/AdminToolbar";
 export default function VkuPage() {
   const { lang, pick } = useLang();
   const { content } = useEdit();
+
+  useEffect(() => {
+    document.title = lang === "de"
+      ? "VKU · Verkehrskundeunterricht · Safe Ride"
+      : "VKU · Traffic Theory Course · Safe Ride";
+  }, [lang]);
 
   if (!content) {
     return (
@@ -43,8 +50,9 @@ export default function VkuPage() {
                 />
               </div>
               <h1
-                className="font-display leading-[0.95] tracking-tight break-words"
-                style={{ fontSize: "clamp(2.2rem, 5vw, 4.5rem)" }}
+                lang="de"
+                className="font-display leading-[0.95] tracking-tight"
+                style={{ fontSize: "clamp(2rem, 4vw, 3.6rem)", hyphens: "auto", overflowWrap: "anywhere" }}
               >
                 <Editable
                   path={`vku.title_${lang}`}

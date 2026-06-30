@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
@@ -12,6 +13,12 @@ import AdminToolbar from "@/components/edit/AdminToolbar";
 export default function AblaufPage() {
   const { lang, pick } = useLang();
   const { content } = useEdit();
+
+  useEffect(() => {
+    document.title = lang === "de"
+      ? "Ablauf zum Führerausweis · Safe Ride"
+      : "Process to your driving licence · Safe Ride";
+  }, [lang]);
 
   if (!content) {
     return (

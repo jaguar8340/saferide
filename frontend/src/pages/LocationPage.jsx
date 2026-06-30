@@ -685,36 +685,34 @@ export default function LocationPage() {
               const isOpen = openFaq === f.id;
               return (
                 <div key={f.id} data-testid={`loc-faq-${i}`} className="py-5">
-                  <button
-                    onClick={() => setOpenFaq(isOpen ? null : f.id)}
-                    className="w-full flex items-center justify-between gap-4 text-left"
-                  >
-                    <Editable
-                      path={`faqs.${i}.question_${lang}`}
-                      value={pick(f.question_de, f.question_en)}
-                      onUpdate={updateField}
-                      as="span"
-                      className="font-display text-lg md:text-xl tracking-tight text-[#0f172a] flex-1"
-                    />
-                    <span className="flex items-center gap-2">
-                      {editMode && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFaq(f.id)();
-                          }}
-                          data-testid={`loc-faq-remove-${i}`}
-                          className="text-[#94a3b8] hover:text-[#ff5a36]"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
+                  <div className="flex items-center justify-between gap-4">
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : f.id)}
+                      className="flex-1 flex items-center justify-between gap-4 text-left"
+                    >
+                      <Editable
+                        path={`faqs.${i}.question_${lang}`}
+                        value={pick(f.question_de, f.question_en)}
+                        onUpdate={updateField}
+                        as="span"
+                        className="font-display text-lg md:text-xl tracking-tight text-[#0f172a] flex-1"
+                      />
                       <ChevronDown
                         size={18}
-                        className={`text-[#475569] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                        className={`text-[#475569] transition-transform duration-300 shrink-0 ${isOpen ? "rotate-180" : ""}`}
                       />
-                    </span>
-                  </button>
+                    </button>
+                    {editMode && (
+                      <button
+                        onClick={removeFaq(f.id)}
+                        data-testid={`loc-faq-remove-${i}`}
+                        className="ml-2 text-[#94a3b8] hover:text-[#ff5a36] shrink-0"
+                        aria-label="FAQ löschen"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                   {(isOpen || editMode) && (
                     <Editable
                       path={`faqs.${i}.answer_${lang}`}

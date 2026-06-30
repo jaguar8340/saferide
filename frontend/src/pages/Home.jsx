@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useEdit } from "@/contexts/EditContext";
+import { useLang } from "@/contexts/LanguageContext";
 import Header from "@/components/site/Header";
 import Hero from "@/components/site/Hero";
 import Marquee from "@/components/site/Marquee";
@@ -14,6 +16,13 @@ import AdminToolbar from "@/components/edit/AdminToolbar";
 
 export default function Home() {
   const { content, testimonials, gallery } = useEdit();
+  const { lang } = useLang();
+
+  useEffect(() => {
+    document.title = lang === "de"
+      ? "Safe Ride · Fahrschule in ZH · SZ · SG · GR"
+      : "Safe Ride · Driving School in ZH · SZ · SG · GR";
+  }, [lang]);
 
   if (!content) {
     return (
