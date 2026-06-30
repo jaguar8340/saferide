@@ -1,10 +1,14 @@
 import { Instagram, Music2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
+import { useEdit } from "@/contexts/EditContext";
+import Editable from "@/components/edit/Editable";
 
 export default function Footer({ data }) {
-  const { t } = useLang();
+  const { t, lang, pick } = useLang();
+  const { content } = useEdit();
   const year = new Date().getFullYear();
+  const tagline = pick(content?.footer_tagline_de, content?.footer_tagline_en) || t.footer.tagline;
   return (
     <footer
       data-testid="site-footer"
@@ -16,9 +20,13 @@ export default function Footer({ data }) {
             <div className="font-display text-2xl tracking-tight">
               Safe<span className="font-serif-i text-[#ff5a36]">Ride</span>
             </div>
-            <p className="text-white/60 text-sm mt-3 max-w-xs leading-relaxed font-medium">
-              {t.footer.tagline}
-            </p>
+            <Editable
+              path={`footer_tagline_${lang}`}
+              value={tagline}
+              as="p"
+              multiline
+              className="text-white/60 text-sm mt-3 max-w-xs leading-relaxed font-medium block"
+            />
           </div>
           <div className="md:col-span-4 text-sm text-white/80 space-y-1.5 font-medium">
             {data?.phone && (

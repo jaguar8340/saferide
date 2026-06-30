@@ -21,8 +21,12 @@ export default function Editable({
   multiline = false,
   placeholder = "Klicken zum Bearbeiten",
   children,
+  onUpdate,
+  forceEditMode,
 }) {
-  const { editMode, updateField } = useEdit();
+  const ctx = useEdit();
+  const editMode = forceEditMode !== undefined ? forceEditMode : ctx.editMode;
+  const updateFn = onUpdate || ctx.updateField;
   const ref = useRef(null);
 
   // Keep DOM in sync when the value changes from outside (e.g. server reload),
@@ -43,7 +47,7 @@ export default function Editable({
   const onBlur = () => {
     const next = ref.current?.innerText ?? "";
     if (next !== (value ?? "")) {
-      updateField(path, next);
+      updateFn(path, next);
     }
   };
 

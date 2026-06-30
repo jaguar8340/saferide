@@ -18,8 +18,12 @@ export default function EditableImage({
   alt = "",
   className = "",
   imgClassName = "",
+  onUpdate,
+  forceEditMode,
 }) {
-  const { editMode, updateField } = useEdit();
+  const ctx = useEdit();
+  const editMode = forceEditMode !== undefined ? forceEditMode : ctx.editMode;
+  const updateFn = onUpdate || ctx.updateField;
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
@@ -38,7 +42,7 @@ export default function EditableImage({
       const r = await api.post("/upload", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      updateField(path, r.data.url);
+      updateFn(path, r.data.url);
       toast.success("Bild ersetzt");
     } catch (err) {
       toast.error(formatApiError(err, "Upload fehlgeschlagen"));

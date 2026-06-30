@@ -6,12 +6,18 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import SectionTitle from "@/components/site/SectionTitle";
 
 export default function Testimonials({ items }) {
   const { lang, pick, t } = useLang();
-  const { editMode, reloadTestimonials } = useEdit();
+  const { editMode, reloadTestimonials, content } = useEdit();
   const [busy, setBusy] = useState(null);
   const [adding, setAdding] = useState(false);
+
+  const overline = pick(content?.reviews_overline_de, content?.reviews_overline_en) || t.reviews.overline;
+  const title = pick(content?.reviews_title_de, content?.reviews_title_en) || t.reviews.title;
+  const ratingValue = content?.reviews_rating_value || "5.0";
+  const ratingLabel = pick(content?.reviews_rating_label_de, content?.reviews_rating_label_en) || t.reviews.rating;
 
   if (!items?.length && !editMode) return null;
 
@@ -69,22 +75,18 @@ export default function Testimonials({ items }) {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="dot-accent" />
-              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-                {t.reviews.overline}
-              </span>
+              <Editable
+                path={`reviews_overline_${lang}`}
+                value={overline}
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+              />
             </div>
-            <h2
-              className="font-display leading-[0.98] tracking-tight max-w-2xl"
+            <SectionTitle
+              path={`reviews_title_${lang}`}
+              value={title}
+              className="max-w-2xl"
               style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-            >
-              {t.reviews.title.split(" ").map((w, i, arr) =>
-                i === arr.length - 1 ? (
-                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
-                ) : (
-                  <span key={i}>{w} </span>
-                ),
-              )}
-            </h2>
+            />
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 bg-[#fbf9f6] rounded-full px-5 py-3 text-sm">
@@ -93,8 +95,14 @@ export default function Testimonials({ items }) {
                   <Star key={i} size={14} className="text-[#ff5a36]" fill="#ff5a36" />
                 ))}
               </div>
-              <span className="font-semibold text-[#0f172a]">5.0</span>
-              <span className="text-[#475569]">· {t.reviews.rating}</span>
+              <Editable
+                path="reviews_rating_value"
+                value={ratingValue}
+                className="font-semibold text-[#0f172a]"
+              />
+              <span className="text-[#475569]">
+                · <Editable path={`reviews_rating_label_${lang}`} value={ratingLabel} />
+              </span>
             </div>
             {editMode && (
               <button

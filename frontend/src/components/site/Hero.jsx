@@ -5,7 +5,7 @@ import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
 
 export default function Hero({ data }) {
-  const { lang, pick, t } = useLang();
+  const { lang, pick } = useLang();
   const { content } = useEdit();
   if (!data) return null;
 
@@ -94,12 +94,20 @@ export default function Hero({ data }) {
                     <Star key={i} size={13} className="text-[#ff5a36]" fill="#ff5a36" />
                   ))}
                 </div>
-                <span className="font-semibold text-[#0f172a]">5.0</span>
-                <span>· {t.reviews.rating}</span>
+                <Editable
+                  path="hero.rating_value"
+                  value={data.rating_value}
+                  className="font-semibold text-[#0f172a]"
+                />
+                <span>·</span>
+                <Editable
+                  path={`hero.rating_label_${lang}`}
+                  value={pick(data.rating_label_de, data.rating_label_en)}
+                />
               </div>
               <div className="flex items-center gap-2 font-medium">
                 <MapPin size={14} className="text-[#ff5a36]" />
-                ZH · SZ · SG · GR
+                <Editable path="hero.regions" value={data.regions} />
               </div>
             </div>
           </div>
@@ -113,8 +121,16 @@ export default function Hero({ data }) {
               imgClassName="w-full h-[440px] md:h-[540px] object-cover"
             />
             <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
-              <span className="tag tag-accent">Live</span>
-              <span className="tag tag-light">Saison 2026</span>
+              <Editable
+                path={`hero.tag1_${lang}`}
+                value={pick(data.tag1_de, data.tag1_en)}
+                className="tag tag-accent pointer-events-auto"
+              />
+              <Editable
+                path={`hero.tag2_${lang}`}
+                value={pick(data.tag2_de, data.tag2_en)}
+                className="tag tag-light pointer-events-auto"
+              />
             </div>
 
             <a
@@ -126,9 +142,11 @@ export default function Hero({ data }) {
                 <Phone size={17} />
               </span>
               <div className="flex flex-col leading-tight">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/60">
-                  Call Nadine
-                </span>
+                <Editable
+                  path={`hero.call_label_${lang}`}
+                  value={pick(data.call_label_de, data.call_label_en)}
+                  className="text-[10px] font-semibold uppercase tracking-widest text-white/60"
+                />
                 <span className="font-semibold tracking-tight">{phone}</span>
               </div>
             </a>

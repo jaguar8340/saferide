@@ -17,9 +17,11 @@ export default function Pricing({ data }) {
         <div className="max-w-2xl mb-12">
           <div className="flex items-center gap-2 mb-4">
             <span className="dot-accent" />
-            <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-              CHF · Preise
-            </span>
+            <Editable
+            path={`pricing.currency_overline_${lang}`}
+            value={pick(data.currency_overline_de, data.currency_overline_en) || "CHF · Preise"}
+            className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+          />
           </div>
           <Editable
             path={`pricing.title_${lang}`}
@@ -53,7 +55,11 @@ export default function Pricing({ data }) {
               }`}
             >
               {p.highlight && (
-                <span className="absolute -top-3 left-7 tag tag-accent">Beliebt</span>
+                <Editable
+                  path={`pricing.popular_label_${lang}`}
+                  value={pick(data.popular_label_de, data.popular_label_en) || "Beliebt"}
+                  className="absolute -top-3 left-7 tag tag-accent"
+                />
               )}
               <Editable
                 path={`pricing.plans.${i}.region_${lang}`}
@@ -88,7 +94,11 @@ export default function Pricing({ data }) {
                   p.highlight ? "text-[#ff5a36] hover:text-white" : "text-[#0f172a] hover:text-[#ff5a36]"
                 }`}
               >
-                {t.pricing.ctaText} <ArrowRight size={14} />
+                <Editable
+                  path={`pricing.cta_text_${lang}`}
+                  value={pick(data.cta_text_de, data.cta_text_en) || t.pricing.ctaText}
+                />
+                <ArrowRight size={14} />
               </a>
             </motion.div>
           ))}

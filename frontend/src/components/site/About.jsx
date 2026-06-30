@@ -47,7 +47,11 @@ export default function About({ data }) {
             />
             <div className="mt-6 inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full px-4 py-2 text-sm font-semibold">
               <span className="dot-accent" />
-              {t.about.trust}
+              <Editable
+                path={`about.trust_${lang}`}
+                value={pick(data.trust_de, data.trust_en)}
+                className="font-semibold"
+              />
             </div>
 
             <div className="mt-10 grid grid-cols-3 gap-3 md:gap-4">
@@ -94,10 +98,18 @@ export default function About({ data }) {
                 imgClassName="w-full h-[440px] md:h-[560px] object-cover"
               />
               <div className="absolute -bottom-5 -left-5 md:-left-8 bg-white border border-[#e2e8f0] rounded-2xl px-5 py-4 shadow-[0_12px_30px_-12px_rgba(15,23,42,0.18)]">
-                <div className="font-display text-xl text-[#0f172a]">Nadine Stäubli</div>
-                <div className="text-xs text-[#475569] mt-1 font-medium">
-                  Fahrlehrerin <span className="text-[#ff5a36]">·</span> seit 2014
-                </div>
+                <Editable
+                  path="about.badge_name"
+                  value={data.badge_name}
+                  as="div"
+                  className="font-display text-xl text-[#0f172a] block"
+                />
+                <Editable
+                  path={`about.badge_role_${lang}`}
+                  value={pick(data.badge_role_de, data.badge_role_en)}
+                  as="div"
+                  className="text-xs text-[#475569] mt-1 font-medium block"
+                />
               </div>
             </div>
           </motion.div>

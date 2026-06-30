@@ -6,14 +6,18 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError, resolveUrl } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import SectionTitle from "@/components/site/SectionTitle";
 
 export default function Gallery({ items }) {
   const { lang, pick, t } = useLang();
-  const { editMode, reloadGallery } = useEdit();
+  const { editMode, reloadGallery, content } = useEdit();
   const fileRef = useRef(null);
   const replaceTargetRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(null);
+
+  const overline = pick(content?.gallery_overline_de, content?.gallery_overline_en) || t.gallery.overline;
+  const title = pick(content?.gallery_title_de, content?.gallery_title_en) || t.gallery.title;
 
   if (!items?.length && !editMode) return null;
 
@@ -96,22 +100,17 @@ export default function Gallery({ items }) {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="dot-accent" />
-              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-                {t.gallery.overline}
-              </span>
+              <Editable
+                path={`gallery_overline_${lang}`}
+                value={overline}
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+              />
             </div>
-            <h2
-              className="font-display leading-[0.98] tracking-tight"
+            <SectionTitle
+              path={`gallery_title_${lang}`}
+              value={title}
               style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-            >
-              {t.gallery.title.split(" ").map((w, i, arr) =>
-                i === arr.length - 1 ? (
-                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
-                ) : (
-                  <span key={i}>{w} </span>
-                ),
-              )}
-            </h2>
+            />
           </div>
           {editMode && (
             <button

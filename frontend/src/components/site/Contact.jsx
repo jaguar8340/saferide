@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
 import { api, formatApiError } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import SectionTitle from "@/components/site/SectionTitle";
 
 export default function Contact({ data }) {
   const { lang, t, pick } = useLang();
@@ -18,6 +19,10 @@ export default function Contact({ data }) {
   const [loading, setLoading] = useState(false);
 
   if (!data) return null;
+
+  const overline = pick(data.overline_de, data.overline_en) || t.contact.overline;
+  const title = pick(data.title_de, data.title_en) || t.contact.title;
+  const sub = pick(data.sub_de, data.sub_en) || t.contact.sub;
 
   const setField = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -52,22 +57,24 @@ export default function Contact({ data }) {
           >
             <div className="flex items-center gap-2 mb-4">
               <span className="dot-accent" />
-              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-                {t.contact.overline}
-              </span>
+              <Editable
+                path={`contact.overline_${lang}`}
+                value={overline}
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+              />
             </div>
-            <h2
-              className="font-display leading-[0.98] tracking-tight"
+            <SectionTitle
+              path={`contact.title_${lang}`}
+              value={title}
               style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-            >
-              {t.contact.title.split(" ").slice(0, -1).join(" ")}{" "}
-              <span className="font-serif-i text-[#ff5a36] font-normal">
-                {t.contact.title.split(" ").slice(-1)}
-              </span>
-            </h2>
-            <p className="mt-5 text-lg text-[#475569] leading-relaxed font-medium max-w-md">
-              {t.contact.sub}
-            </p>
+            />
+            <Editable
+              path={`contact.sub_${lang}`}
+              value={sub}
+              as="p"
+              multiline
+              className="mt-5 text-lg text-[#475569] leading-relaxed font-medium max-w-md block"
+            />
 
             <div className="mt-10 space-y-4">
               <InfoRow

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox } from "lucide-react";
+import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -7,9 +7,11 @@ import ContentEditor from "@/components/admin/ContentEditor";
 import TestimonialsManager from "@/components/admin/TestimonialsManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import SubmissionsViewer from "@/components/admin/SubmissionsViewer";
+import PagesManager from "@/components/admin/PagesManager";
 
 const TABS = [
-  { id: "content", icon: FileText, key: "content" },
+  { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
+  { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
   { id: "testimonials", icon: MessageSquare, key: "testimonials" },
   { id: "gallery", icon: ImageIcon, key: "gallery" },
   { id: "submissions", icon: Inbox, key: "submissions" },
@@ -80,6 +82,7 @@ export default function AdminDashboard() {
           {TABS.map((tb) => {
             const Icon = tb.icon;
             const active = tab === tb.id;
+            const label = tb.label_de || (t.admin.tabs[tb.key] ?? tb.id);
             return (
               <button
                 key={tb.id}
@@ -92,7 +95,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Icon size={14} strokeWidth={1.75} />
-                {t.admin.tabs[tb.key]}
+                {label}
               </button>
             );
           })}
@@ -100,6 +103,7 @@ export default function AdminDashboard() {
 
         <main className="flex-1 p-5 md:p-8 overflow-x-hidden">
           {tab === "content" && <ContentEditor />}
+          {tab === "pages" && <PagesManager />}
           {tab === "testimonials" && <TestimonialsManager />}
           {tab === "gallery" && <GalleryManager />}
           {tab === "submissions" && <SubmissionsViewer />}

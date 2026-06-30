@@ -1,10 +1,15 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
+import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
+import SectionTitle from "@/components/site/SectionTitle";
 
 export default function Fleet({ items }) {
   const { lang, pick, t } = useLang();
+  const { content } = useEdit();
+  const overline = pick(content?.fleet_overline_de, content?.fleet_overline_en) || t.fleet.overline;
+  const title = pick(content?.fleet_title_de, content?.fleet_title_en) || t.fleet.title;
 
   return (
     <section
@@ -17,22 +22,18 @@ export default function Fleet({ items }) {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="dot-accent" />
-              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-white/65">
-                {t.fleet.overline}
-              </span>
+              <Editable
+                path={`fleet_overline_${lang}`}
+                value={overline}
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-white/65"
+              />
             </div>
-            <h2
-              className="font-display leading-[0.98] tracking-tight max-w-2xl"
+            <SectionTitle
+              path={`fleet_title_${lang}`}
+              value={title}
+              className="max-w-2xl text-white"
               style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-            >
-              {t.fleet.title.split(" ").map((w, i, arr) =>
-                i === arr.length - 1 ? (
-                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
-                ) : (
-                  <span key={i}>{w} </span>
-                ),
-              )}
-            </h2>
+            />
           </div>
         </div>
 

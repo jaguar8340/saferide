@@ -19,6 +19,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 import requests
 
+from default_pages import DEFAULT_ABLAUF, DEFAULT_VKU, DEFAULT_LOCATIONS
+
 
 # ---------- MongoDB ----------
 mongo_url = os.environ['MONGO_URL']
@@ -175,6 +177,16 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "cta_secondary_de": "Mehr erfahren",
         "cta_secondary_en": "Learn more",
         "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
+        "tag1_de": "Live",
+        "tag1_en": "Live",
+        "tag2_de": "Saison 2026",
+        "tag2_en": "Season 2026",
+        "call_label_de": "Call Nadine",
+        "call_label_en": "Call Nadine",
+        "regions": "ZH · SZ · SG · GR",
+        "rating_value": "5.0",
+        "rating_label_de": "Bewertung auf Google",
+        "rating_label_en": "Rating on Google",
     },
     "marquee_de": "ANDERS · BESSER · MUTIGER · SAFE RIDE · MIT HERZ AM STEUER",
     "marquee_en": "DIFFERENT · BETTER · BOLDER · SAFE RIDE · DRIVEN BY HEART",
@@ -195,6 +207,11 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "stat3_label_de": "Kantone abgedeckt",
         "stat3_label_en": "Cantons covered",
         "image_url": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxjb25maWRlbnQlMjB3b21hbiUyMGRyaXZpbmclMjBjYXJ8ZW58MHx8fHwxNzgyNzUwNDQ2fDA&ixlib=rb-4.1.0&q=85",
+        "badge_name": "Nadine Stäubli",
+        "badge_role_de": "Fahrlehrerin · seit 2014",
+        "badge_role_en": "Driving instructor · since 2014",
+        "trust_de": "Lizenzierte Fahrlehrerin",
+        "trust_en": "Licensed driving instructor",
     },
     "services": [
         {
@@ -325,6 +342,12 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         ],
         "note_de": "Für Neukund:innen fällt eine einmalige Versicherungspauschale von CHF 120 an (zahlbar bei der zweiten Lektion). Bei Bank- oder Kartenzahlungen verrechnen wir eine Administrationspauschale von CHF 10.",
         "note_en": "For new customers a one-time insurance fee of CHF 120 applies (payable with the second lesson). Bank or card payments incur an administration fee of CHF 10.",
+        "currency_overline_de": "CHF · Preise",
+        "currency_overline_en": "CHF · Pricing",
+        "popular_label_de": "Beliebt",
+        "popular_label_en": "Popular",
+        "cta_text_de": "Anfragen",
+        "cta_text_en": "Book now",
     },
     "contact": {
         "phone": "+41 79 585 00 85",
@@ -335,7 +358,38 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "hours_en": "Mon – Fri · 7:00 – 20:00 · Sat by appointment",
         "instagram": "https://www.instagram.com/",
         "tiktok": "https://www.tiktok.com/@nadine_staeubli",
+        "overline_de": "Kontakt",
+        "overline_en": "Contact",
+        "title_de": "Bereit für deine erste Lektion?",
+        "title_en": "Ready for your first lesson?",
+        "sub_de": "Melde dich – ich freue mich auf dich.",
+        "sub_en": "Get in touch – I'm looking forward to meeting you.",
     },
+    "services_overline_de": "Was du bekommst",
+    "services_overline_en": "What you get",
+    "services_title_de": "Mehr als nur Fahrstunden",
+    "services_title_en": "More than driving lessons",
+    "fleet_overline_de": "Unsere Flotte",
+    "fleet_overline_en": "Our fleet",
+    "fleet_title_de": "Premium am Steuer",
+    "fleet_title_en": "Premium behind the wheel",
+    "gallery_overline_de": "Galerie",
+    "gallery_overline_en": "Gallery",
+    "gallery_title_de": "Eindrücke",
+    "gallery_title_en": "Impressions",
+    "reviews_overline_de": "Bewertungen",
+    "reviews_overline_en": "Reviews",
+    "reviews_title_de": "Was Schüler:innen sagen",
+    "reviews_title_en": "What our students say",
+    "reviews_rating_value": "5.0",
+    "reviews_rating_label_de": "Bewertung auf Google",
+    "reviews_rating_label_en": "Rating on Google",
+    "footer_tagline_de": "Anders. Besser. Mutiger.",
+    "footer_tagline_en": "Different. Better. Bolder.",
+    "nav_cta_de": "Anfragen",
+    "nav_cta_en": "Get in touch",
+    "ablauf": DEFAULT_ABLAUF,
+    "vku": DEFAULT_VKU,
 }
 
 
@@ -473,6 +527,18 @@ class GalleryItem(GalleryItemCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
 
+# ---------- Locations ----------
+class LocationCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    slug: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+
+
+class LocationPatch(BaseModel):
+    """Partial update for a location document (dot-notation paths)."""
+    model_config = ConfigDict(extra="allow")
+
+
 # ---------- App ----------
 app = FastAPI(title="Fahrschule Safe Ride API")
 api = APIRouter(prefix="/api")
@@ -512,6 +578,18 @@ async def startup_event():
     content_doc = await db.site_content.find_one({"id": "main"})
     if not content_doc:
         await db.site_content.insert_one({"id": "main", **DEFAULT_CONTENT})
+    else:
+        # Ensure newer keys exist on existing installs (idempotent deep merge for one level).
+        missing = {}
+        for k, v in DEFAULT_CONTENT.items():
+            if k not in content_doc:
+                missing[k] = v
+            elif isinstance(v, dict) and isinstance(content_doc.get(k), dict):
+                for sub_k, sub_v in v.items():
+                    if sub_k not in content_doc[k]:
+                        missing[f"{k}.{sub_k}"] = sub_v
+        if missing:
+            await db.site_content.update_one({"id": "main"}, {"$set": missing})
 
     # Seed testimonials
     if await db.testimonials.count_documents({}) == 0:
@@ -520,6 +598,15 @@ async def startup_event():
     # Seed gallery
     if await db.gallery.count_documents({}) == 0:
         await db.gallery.insert_many([dict(g) for g in DEFAULT_GALLERY])
+
+    # Seed location landing pages (one document per slug)
+    await db.locations.create_index("slug", unique=True)
+    existing_slugs = set()
+    async for doc in db.locations.find({}, {"slug": 1, "_id": 0}):
+        existing_slugs.add(doc["slug"])
+    to_insert = [dict(loc, id=str(uuid.uuid4())) for loc in DEFAULT_LOCATIONS if loc["slug"] not in existing_slugs]
+    if to_insert:
+        await db.locations.insert_many(to_insert)
 
 
 # ---------- Auth Routes ----------
@@ -708,6 +795,57 @@ async def serve_file(path: str):
     except Exception as e:
         raise HTTPException(status_code=404, detail="Datei nicht gefunden") from e
     return Response(content=data, media_type=ctype, headers={"Cache-Control": "public, max-age=31536000"})
+
+
+# ---------- Locations (SEO landing pages) ----------
+@api.get("/locations")
+async def list_locations():
+    items = await db.locations.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+    return items
+
+
+@api.get("/locations/{slug}")
+async def get_location(slug: str):
+    doc = await db.locations.find_one({"slug": slug}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Standort nicht gefunden")
+    return doc
+
+
+@api.post("/locations")
+async def create_location(payload: LocationCreate, admin=Depends(get_current_admin)):
+    body = payload.model_dump()
+    body["slug"] = body["slug"].lower().strip()
+    existing = await db.locations.find_one({"slug": body["slug"]})
+    if existing:
+        raise HTTPException(status_code=409, detail="Slug existiert bereits")
+    body["id"] = str(uuid.uuid4())
+    body.setdefault("order", await db.locations.count_documents({}))
+    await db.locations.insert_one(body)
+    return {k: v for k, v in body.items() if k != "_id"}
+
+
+@api.patch("/locations/{slug}")
+async def patch_location(slug: str, updates: Dict[str, Any], admin=Depends(get_current_admin)):
+    """Partial update of a location document using dot-notation paths."""
+    if not updates:
+        raise HTTPException(status_code=400, detail="Keine Updates angegeben")
+    set_ops = {k: v for k, v in updates.items() if k not in ("_id", "id", "slug")}
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Keine gültigen Felder")
+    res = await db.locations.update_one({"slug": slug}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Standort nicht gefunden")
+    doc = await db.locations.find_one({"slug": slug}, {"_id": 0})
+    return doc
+
+
+@api.delete("/locations/{slug}")
+async def delete_location(slug: str, admin=Depends(get_current_admin)):
+    res = await db.locations.delete_one({"slug": slug})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Standort nicht gefunden")
+    return {"ok": True}
 
 
 # ---------- Health ----------
