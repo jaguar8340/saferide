@@ -12,14 +12,14 @@ import jwt
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict
 
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Response, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 import requests
 
-from default_pages import DEFAULT_ABLAUF, DEFAULT_VKU, DEFAULT_LOCATIONS, DEFAULT_IMPRESSUM, DEFAULT_DATENSCHUTZ
+from default_pages import DEFAULT_ABLAUF, DEFAULT_VKU, DEFAULT_LOCATIONS, DEFAULT_IMPRESSUM, DEFAULT_DATENSCHUTZ, DEFAULT_BLOG_POSTS, DEFAULT_BOOKING_PACKAGES
 
 
 # ---------- MongoDB ----------
@@ -196,6 +196,126 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     },
     "marquee_de": "ANDERS · BESSER · MUTIGER · SAFE RIDE · MIT HERZ AM STEUER",
     "marquee_en": "DIFFERENT · BETTER · BOLDER · SAFE RIDE · DRIVEN BY HEART",
+    "why_safe_ride": {
+        "overline_de": "Warum Safe Ride",
+        "overline_en": "Why Safe Ride",
+        "title_de": "Warum Fahrschule Safe Ride?",
+        "title_en": "Why Fahrschule Safe Ride?",
+        "intro_de": "Eine Fahrschule wählen heisst Vertrauen schenken. Es geht um Sicherheit, um Freude am Fahren und um den respektvollen Umgang miteinander. Genau dafür stehe ich – jeden Tag, in jeder Lektion.",
+        "intro_en": "Choosing a driving school means giving trust. It's about safety, joy at the wheel and respectful interaction. That's exactly what I stand for – every day, in every lesson.",
+        "pillars": [
+            {
+                "id": "wp1",
+                "icon": "Heart",
+                "title_de": "Persönlich. Echt. Auf Augenhöhe.",
+                "title_en": "Personal. Real. On equal terms.",
+                "body_de": "Ich bin keine anonyme Fahrschule mit fünfzehn Lehrern und einer Hotline. Ich bin Nadine – und ich kenne jeden meiner Fahrschüler:innen mit Namen, weiss um deine Stärken und deine Baustellen, deine Lieblingsstrecken und deine Fahrlieder. Bei mir bekommst du keine Lehrer-Rotation, keine Sätze wie \"Hat dir das Kollege X nicht so erklärt?\" – sondern eine durchgehende Begleitung von der ersten Probelektion bis zum Tag, an dem du den Ausweis in der Hand hältst. Das schafft Vertrauen. Und Vertrauen ist genau das, was hinter dem Steuer den Unterschied macht.",
+                "body_en": "I am not an anonymous school with fifteen instructors and a hotline. I am Nadine – and I know every one of my students by name, I know your strengths and your sticking points, your favourite routes and your driving songs. With me you get no instructor rotation, no \"Didn't colleague X explain it differently?\" – just one consistent guide from your first trial lesson to the day you hold the licence in your hand. That builds trust. And trust is exactly what makes the difference behind the wheel."
+            },
+            {
+                "id": "wp2",
+                "icon": "Brain",
+                "title_de": "Mental Coaching statt Druck",
+                "title_en": "Mental coaching instead of pressure",
+                "body_de": "Fahrenlernen ist Kopfsache. Wer Angst hat oder gestresst ist, vergisst alles, was er gelernt hat – sobald die Prüferin neben dir sitzt. Genau deshalb verbinde ich klassische Fahrlehrer-Arbeit mit fundiertem Mental Coaching: Atemübungen, mentale Vorbereitung, Reframing von Fehlern und gezielte Visualisierung. Du lernst nicht nur, wie man rückwärts parkiert – du lernst auch, wie du dich VOR und WÄHREND der Prüfung in einen ruhigen, klaren Zustand bringst. Das ist ein Unterschied, der zählt: Schüler:innen, die mit mir arbeiten, schaffen die Prüfung im Schnitt nicht nur schneller, sondern auch entspannter.",
+                "body_en": "Learning to drive is a head game. Anyone who is anxious or stressed forgets everything they have learned – as soon as the examiner sits next to you. That is why I combine classical instruction with serious mental coaching: breathing exercises, mental prep, reframing mistakes, targeted visualisation. You don't just learn how to reverse-park – you learn how to bring yourself into a calm, clear state BEFORE and DURING the exam. That is a difference that counts: students who work with me pass not only faster on average, but also more relaxed."
+            },
+            {
+                "id": "wp3",
+                "icon": "Sparkles",
+                "title_de": "Spezialisiert auf ADHS & Autismus",
+                "title_en": "Specialised in ADHD & autism",
+                "body_de": "Standard-Fahrschulen funktionieren für Standard-Schüler:innen. Wer im ADHS-Spektrum unterwegs ist oder Autismus hat, weiss: Reizüberflutung, Routinen, Verarbeitungstempo – das sind keine \"Macken\", sondern Tatsachen. Ich habe Weiterbildungen im neurodiversen Lernen gemacht und passe die Lektionen entsprechend an: kürzere, fokussiertere Einheiten, klarere Strukturen, vorhersehbare Abläufe, sensorisch entlastete Fahrzeuge. Das Ergebnis: Schüler:innen, die bei anderen Schulen frustriert aufgegeben haben, schaffen bei mir den Ausweis – und kommen freiwillig zurück, um Verwandte und Geschwister anzumelden.",
+                "body_en": "Standard driving schools work for standard students. Anyone on the ADHD spectrum or with autism knows: sensory overload, routines, processing speed – these are not \"quirks\", they are facts. I have done continuing education in neurodiverse learning and adapt the lessons accordingly: shorter, more focused units, clearer structures, predictable flows, sensory-relieved vehicles. The result: students who gave up frustrated at other schools pass with me – and come back voluntarily to register their siblings."
+            },
+            {
+                "id": "wp4",
+                "icon": "Car",
+                "title_de": "Moderne Fahrzeuge mit Charakter",
+                "title_en": "Modern vehicles with character",
+                "body_de": "Audi S3, Opel OPC, Range Rover Sport – das ist keine zufällige Sammlung, das ist eine Wahl. Drei verschiedene Konzepte, drei verschiedene Fahrgefühle, drei verschiedene Sitzpositionen. Du lernst nicht nur an einem einzigen Auto, du lernst SCHALTEN. Du spürst den Unterschied zwischen einem sportlichen Kompaktwagen und einem hochbeinigen SUV. Du verstehst, wieso eine kürzere Übersetzung in der Stadt mehr Spass macht und wieso ein langer Radstand auf der Autobahn entspannter ist. Die Fahrzeuge sind technisch top, regelmässig gewartet und – ehrlich gesagt – einfach schöner als das, was die meisten meiner Kolleg:innen anbieten.",
+                "body_en": "Audi S3, Opel OPC, Range Rover Sport – that is not a random collection, that is a choice. Three different concepts, three different driving sensations, three different seating positions. You don't learn on a single car, you learn TO SHIFT. You feel the difference between a sporty compact and a tall SUV. You understand why a shorter gear ratio is more fun in the city and why a long wheelbase is more relaxed on the motorway. The vehicles are technically top-tier, regularly serviced and – honestly – simply more beautiful than what most of my colleagues offer."
+            },
+            {
+                "id": "wp5",
+                "icon": "MapPin",
+                "title_de": "11 Standorte in 4 Kantonen",
+                "title_en": "11 locations across 4 cantons",
+                "body_de": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Probelektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
+                "body_en": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur and Lenzerheide – wherever you live, study or work, I come to you. You don't lose time on long drives to some central driving-school office. We start where it makes sense for you: at the station, in front of your school, at your workplace. That is the difference between half a \"trial lesson with stress because I still have to get to uni\" and a proper 50-minute session in which you actually take something away."
+            },
+            {
+                "id": "wp6",
+                "icon": "ShieldCheck",
+                "title_de": "Transparente Preise. Keine Tricks.",
+                "title_en": "Transparent pricing. No tricks.",
+                "body_de": "Was du auf der Preisseite siehst, ist das, was du zahlst. Kein Aufpreis für \"Wochenend-Lektionen\", keine versteckten Anfahrtspauschalen, keine teuren Pflicht-Pakete. Du bekommst eine ehrliche Rechnung mit allem, was du gefahren hast – inklusive Kilometerstand wenn du das willst. Wenn du eine Lektion absagst, bist du flexibel: 24 Stunden vorher reicht völlig. Ich verdiene mein Geld damit, dass meine Schüler:innen die Prüfung schaffen und mich weiterempfehlen – nicht damit, dass ich mehr Stunden draufpacke als nötig sind. Ehrlich gesagt: Wenn ich nach zehn Stunden sehe, dass du bereit bist, sage ich es dir.",
+                "body_en": "What you see on the pricing page is what you pay. No surcharge for \"weekend lessons\", no hidden travel flat-rates, no expensive mandatory packages. You get an honest invoice with everything you drove – including odometer if you want. If you cancel a lesson, you are flexible: 24 hours before is enough. I earn my money from my students passing and recommending me – not from packing on more hours than necessary. Honestly: if I see after ten hours that you are ready, I will tell you."
+            }
+        ],
+        "closing_de": "Das ist Safe Ride. Keine Marketing-Floskel. Sondern eine ehrliche, persönliche, moderne Fahrschule, die genau das tut, was sie auf der Verpackung verspricht: dich sicher, entspannt und in deinem eigenen Tempo zum Ausweis bringen.",
+        "closing_en": "That is Safe Ride. Not a marketing phrase, but an honest, personal, modern driving school that does exactly what it promises: bring you safely, relaxed and at your own pace to the licence.",
+        "cta_de": "Probelektion sichern",
+        "cta_en": "Book a trial lesson"
+    },
+    "homepage_faqs": [
+        {
+            "id": "hf1",
+            "question_de": "Wo finden die Fahrstunden statt?",
+            "question_en": "Where do the lessons take place?",
+            "answer_de": "In 11 Standorten in den Kantonen Zürich, Schwyz, St. Gallen und Graubünden. Wir treffen uns dort, wo es für dich am bequemsten ist – Bahnhof, Schule oder Arbeitsplatz.",
+            "answer_en": "At 11 locations across the cantons of Zurich, Schwyz, St. Gallen and Graubünden. We meet wherever is most convenient for you – station, school or workplace."
+        },
+        {
+            "id": "hf2",
+            "question_de": "Wie viele Fahrstunden brauche ich bis zur Prüfung?",
+            "question_en": "How many lessons do I need until the exam?",
+            "answer_de": "Im Schnitt 20–35 Lektionen, abhängig von Vorerfahrung, Lerntempo und Strecke. Beim Erstgespräch schätzen wir realistisch ab, was für dich passt.",
+            "answer_en": "On average 20–35 lessons, depending on prior experience, learning pace and route. In the first conversation we realistically estimate what fits for you."
+        },
+        {
+            "id": "hf3",
+            "question_de": "Was kostet eine Fahrstunde?",
+            "question_en": "What does a driving lesson cost?",
+            "answer_de": "Eine Lektion à 50 Minuten kostet CHF 110.–. Es gibt keine versteckten Anfahrtspauschalen und keine Aufpreise für Wochenend-Lektionen.",
+            "answer_en": "A 50-minute lesson costs CHF 110.–. There are no hidden travel surcharges and no markups for weekend lessons."
+        },
+        {
+            "id": "hf4",
+            "question_de": "Welche Fahrzeuge gibt es?",
+            "question_en": "Which vehicles are available?",
+            "answer_de": "Audi S3, Opel OPC und Range Rover Sport – alle modern, gut gewartet und mit Doppelpedalen ausgestattet. Du kannst beim Erstgespräch wählen oder im Verlauf mehrere ausprobieren.",
+            "answer_en": "Audi S3, Opel OPC and Range Rover Sport – all modern, well-serviced and equipped with dual pedals. You choose at the first session or try several over time."
+        },
+        {
+            "id": "hf5",
+            "question_de": "Bietet Safe Ride auch VKU (Verkehrskundeunterricht)?",
+            "question_en": "Does Safe Ride offer VKU (theory course)?",
+            "answer_de": "Ja. Der VKU dauert 8 Stunden und ist gesetzlich vorgeschrieben für alle Neulenker:innen. Die Termine findest du auf der VKU-Seite.",
+            "answer_en": "Yes. VKU lasts 8 hours and is legally required for all new drivers. You'll find the dates on the VKU page."
+        },
+        {
+            "id": "hf6",
+            "question_de": "Wie schnell kann ich starten?",
+            "question_en": "How quickly can I start?",
+            "answer_de": "In der Regel hast du innerhalb von 7 Tagen einen Termin für deine Probelektion. Schreib einfach eine kurze Nachricht – ich antworte am gleichen Tag.",
+            "answer_en": "Usually you have a slot for your trial lesson within 7 days. Just send a short message – I reply the same day."
+        },
+        {
+            "id": "hf7",
+            "question_de": "Was passiert wenn ich die Prüfung nicht bestehe?",
+            "question_en": "What happens if I fail the exam?",
+            "answer_de": "Keine Panik – das passiert selten und ist keine Katastrophe. Wir analysieren ruhig, was schiefgelaufen ist, machen 2–4 gezielte Lektionen zu den schwachen Punkten und du gehst entspannt zurück. Mental-Coaching inklusive.",
+            "answer_en": "Don't panic – it rarely happens and is not a catastrophe. We calmly analyse what went wrong, do 2–4 targeted lessons on the weak points and you go back relaxed. Mental coaching included."
+        },
+        {
+            "id": "hf8",
+            "question_de": "Bietet Safe Ride auch Nothelferkurse an?",
+            "question_en": "Does Safe Ride offer first-aid courses?",
+            "answer_de": "Nein, dafür arbeite ich mit einem zertifizierten Partner zusammen. Auf Wunsch vermittle ich dir direkt einen Platz.",
+            "answer_en": "No, for that I work with a certified partner. On request I directly arrange a spot for you."
+        }
+    ],
     "about": {
         "overline_de": "Über mich",
         "overline_en": "About me",
@@ -566,6 +686,42 @@ class LocationPatch(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class BlogPostCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    slug: str = Field(min_length=1, max_length=120)
+    title_de: str = Field(min_length=1, max_length=240)
+    title_en: str = Field(min_length=1, max_length=240)
+
+
+class BlogPostPatch(BaseModel):
+    """Partial update for a blog post – any field key allowed."""
+    model_config = ConfigDict(extra="allow")
+
+
+class BookingPackageCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    slug: str = Field(min_length=1, max_length=80)
+    title_de: str = Field(min_length=1, max_length=120)
+    title_en: str = Field(min_length=1, max_length=120)
+    price_chf: int = Field(ge=0)
+
+
+class BookingPackagePatch(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class BookingCreate(BaseModel):
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    phone: str = Field(min_length=4, max_length=40)
+    package_slug: str = Field(min_length=1, max_length=80)
+    preferred_date: str = Field(min_length=1, max_length=40)
+    preferred_time: Optional[str] = Field(default=None, max_length=40)
+    location_slug: Optional[str] = Field(default=None, max_length=80)
+    message: Optional[str] = Field(default=None, max_length=2000)
+
+
 # ---------- App ----------
 app = FastAPI(title="Fahrschule Safe Ride API")
 api = APIRouter(prefix="/api")
@@ -659,6 +815,35 @@ async def startup_event():
                     {"slug": slug},
                     {"$set": {"hero_image_url": default_loc["hero_image_url"]}},
                 )
+
+    # Seed blog posts (one document per slug).
+    await db.blog_posts.create_index("slug", unique=True)
+    await db.blog_posts.create_index("published_at")
+    for default_post in DEFAULT_BLOG_POSTS:
+        slug = default_post["slug"]
+        if not await db.blog_posts.find_one({"slug": slug}):
+            doc = dict(default_post)
+            doc["id"] = str(uuid.uuid4())
+            doc["created_at"] = datetime.now(timezone.utc).isoformat()
+            doc["updated_at"] = doc["created_at"]
+            await db.blog_posts.insert_one(doc)
+
+    # Seed booking packages (one document per slug).
+    await db.booking_packages.create_index("slug", unique=True)
+    for default_pkg in DEFAULT_BOOKING_PACKAGES:
+        slug = default_pkg["slug"]
+        existing = await db.booking_packages.find_one({"slug": slug})
+        if not existing:
+            doc = dict(default_pkg)
+            doc["id"] = str(uuid.uuid4())
+            await db.booking_packages.insert_one(doc)
+        else:
+            missing = {k: v for k, v in default_pkg.items() if k not in existing}
+            if missing:
+                await db.booking_packages.update_one({"slug": slug}, {"$set": missing})
+
+    # Index for bookings (queryable by created_at).
+    await db.bookings.create_index("created_at")
 
 
 # ---------- Auth Routes ----------
@@ -905,6 +1090,192 @@ async def delete_location(slug: str, admin=Depends(get_current_admin)):
     return {"ok": True}
 
 
+# ---------- Blog Posts ----------
+def _is_post_published(doc: dict) -> bool:
+    """A post is publicly visible if status == 'published' AND
+    (scheduled_publish_at is null OR scheduled_publish_at <= now)."""
+    if doc.get("status") != "published":
+        return False
+    sched = doc.get("scheduled_publish_at")
+    if not sched:
+        return True
+    try:
+        sched_dt = datetime.fromisoformat(sched.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return True
+    return sched_dt <= datetime.now(timezone.utc)
+
+
+@api.get("/blog")
+async def list_blog_posts(category: Optional[str] = None, tag: Optional[str] = None):
+    """Public list of all published blog posts. Optional filter by category or tag."""
+    items = await db.blog_posts.find({}, {"_id": 0}).sort("published_at", -1).to_list(500)
+    items = [p for p in items if _is_post_published(p)]
+    if category:
+        items = [p for p in items if category in (p.get("categories") or [])]
+    if tag:
+        items = [p for p in items if tag in (p.get("tags") or [])]
+    return items
+
+
+@api.get("/blog/admin")
+async def list_blog_posts_admin(admin=Depends(get_current_admin)):
+    """Admin view – includes drafts and scheduled posts."""
+    items = await db.blog_posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return items
+
+
+@api.get("/blog/{slug}")
+async def get_blog_post(slug: str):
+    doc = await db.blog_posts.find_one({"slug": slug}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Beitrag nicht gefunden")
+    return doc
+
+
+@api.post("/blog")
+async def create_blog_post(payload: BlogPostCreate, admin=Depends(get_current_admin)):
+    body = payload.model_dump()
+    body["slug"] = body["slug"].lower().strip()
+    if await db.blog_posts.find_one({"slug": body["slug"]}):
+        raise HTTPException(status_code=409, detail="Slug existiert bereits")
+    body["id"] = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    body.setdefault("status", "draft")
+    body.setdefault("categories", [])
+    body.setdefault("tags", [])
+    body.setdefault("reading_time_min", 3)
+    body.setdefault("order", await db.blog_posts.count_documents({}))
+    body["created_at"] = now
+    body["updated_at"] = now
+    await db.blog_posts.insert_one(body)
+    return {k: v for k, v in body.items() if k != "_id"}
+
+
+@api.patch("/blog/{slug}")
+async def update_blog_post(slug: str, payload: BlogPostPatch, admin=Depends(get_current_admin)):
+    set_ops = payload.model_dump(exclude_unset=True)
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Leere Aktualisierung")
+    set_ops["updated_at"] = datetime.now(timezone.utc).isoformat()
+    res = await db.blog_posts.update_one({"slug": slug}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Beitrag nicht gefunden")
+    doc = await db.blog_posts.find_one({"slug": slug}, {"_id": 0})
+    return doc
+
+
+@api.delete("/blog/{slug}")
+async def delete_blog_post(slug: str, admin=Depends(get_current_admin)):
+    res = await db.blog_posts.delete_one({"slug": slug})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Beitrag nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Booking Packages ----------
+@api.get("/packages")
+async def list_packages():
+    items = await db.booking_packages.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+    return [p for p in items if p.get("active", True)]
+
+
+@api.get("/packages/admin")
+async def list_packages_admin(admin=Depends(get_current_admin)):
+    return await db.booking_packages.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+
+
+@api.get("/packages/{slug}")
+async def get_package(slug: str):
+    doc = await db.booking_packages.find_one({"slug": slug}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Paket nicht gefunden")
+    return doc
+
+
+@api.post("/packages")
+async def create_package(payload: BookingPackageCreate, admin=Depends(get_current_admin)):
+    body = payload.model_dump()
+    body["slug"] = body["slug"].lower().strip()
+    if await db.booking_packages.find_one({"slug": body["slug"]}):
+        raise HTTPException(status_code=409, detail="Slug existiert bereits")
+    body["id"] = str(uuid.uuid4())
+    body.setdefault("active", True)
+    body.setdefault("order", await db.booking_packages.count_documents({}))
+    await db.booking_packages.insert_one(body)
+    return {k: v for k, v in body.items() if k != "_id"}
+
+
+@api.patch("/packages/{slug}")
+async def update_package(slug: str, payload: BookingPackagePatch, admin=Depends(get_current_admin)):
+    set_ops = payload.model_dump(exclude_unset=True)
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Leere Aktualisierung")
+    res = await db.booking_packages.update_one({"slug": slug}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Paket nicht gefunden")
+    return await db.booking_packages.find_one({"slug": slug}, {"_id": 0})
+
+
+@api.delete("/packages/{slug}")
+async def delete_package(slug: str, admin=Depends(get_current_admin)):
+    res = await db.booking_packages.delete_one({"slug": slug})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Paket nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Bookings ----------
+@api.post("/bookings")
+async def create_booking(payload: BookingCreate):
+    """Public booking creation – stored as a pending request that Nadine confirms manually."""
+    # Validate package exists & is active
+    pkg = await db.booking_packages.find_one({"slug": payload.package_slug})
+    if not pkg or not pkg.get("active", True):
+        raise HTTPException(status_code=404, detail="Paket nicht verfuegbar")
+    doc = payload.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["status"] = "pending"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    # Snapshot the package so historical price/title is preserved
+    doc["package_snapshot"] = {
+        "slug": pkg["slug"],
+        "title_de": pkg.get("title_de"),
+        "title_en": pkg.get("title_en"),
+        "price_chf": pkg.get("price_chf"),
+        "lesson_count": pkg.get("lesson_count"),
+        "service_type": pkg.get("service_type"),
+    }
+    await db.bookings.insert_one(doc)
+    return {"ok": True, "id": doc["id"]}
+
+
+@api.get("/bookings")
+async def list_bookings(admin=Depends(get_current_admin)):
+    items = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return items
+
+
+@api.patch("/bookings/{booking_id}")
+async def update_booking(booking_id: str, payload: Dict[str, Any] = Body(...), admin=Depends(get_current_admin)):
+    allowed = {"status", "admin_note"}
+    set_ops = {k: v for k, v in payload.items() if k in allowed}
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Keine erlaubten Felder")
+    res = await db.bookings.update_one({"id": booking_id}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    return await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+
+
+@api.delete("/bookings/{booking_id}")
+async def delete_booking(booking_id: str, admin=Depends(get_current_admin)):
+    res = await db.bookings.delete_one({"id": booking_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    return {"ok": True}
+
+
 # ---------- SEO: sitemap.xml ----------
 def _public_base_url(request: "Request") -> str:
     """Derive the absolute public base URL the visitor used to reach this API.
@@ -941,9 +1312,16 @@ async def sitemap_xml(request: "Request"):
     loc_docs = await db.locations.find({}, {"slug": 1, "_id": 0}).sort("order", 1).to_list(200)
     loc_urls = [(f"{base}/fahrschule-{d['slug']}", "0.85", "monthly") for d in loc_docs]
 
+    # Blog posts (only published, scheduled-for-now-or-past).
+    blog_docs = await db.blog_posts.find({}, {"_id": 0}).to_list(500)
+    blog_urls = [(f"{base}/blog/{d['slug']}", "0.7", "monthly") for d in blog_docs if _is_post_published(d)]
+    # Blog index page.
+    static_urls.append((f"{base}/blog", "0.8", "weekly"))
+    static_urls.append((f"{base}/buchung", "0.95", "weekly"))
+
     urls_xml = "".join(
         f"<url><loc>{u}</loc><lastmod>{now}</lastmod><changefreq>{f}</changefreq><priority>{p}</priority></url>"
-        for u, p, f in (static_urls + loc_urls)
+        for u, p, f in (static_urls + loc_urls + blog_urls)
     )
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'

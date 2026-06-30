@@ -5,11 +5,13 @@ import Header from "@/components/site/Header";
 import Hero from "@/components/site/Hero";
 import Marquee from "@/components/site/Marquee";
 import About from "@/components/site/About";
+import WhySafeRide from "@/components/site/WhySafeRide";
 import Services from "@/components/site/Services";
 import Fleet from "@/components/site/Fleet";
 import Pricing from "@/components/site/Pricing";
 import Gallery from "@/components/site/Gallery";
 import Testimonials from "@/components/site/Testimonials";
+import HomeFaq from "@/components/site/HomeFaq";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
@@ -54,11 +56,13 @@ export default function Home() {
       <Hero data={content.hero} />
       <Marquee de={content.marquee_de} en={content.marquee_en} />
       <About data={content.about} />
+      <WhySafeRide data={content.why_safe_ride} />
       <Services items={content.services || []} />
       <Fleet items={content.fleet || []} />
       <Pricing data={content.pricing} />
       <Gallery items={gallery} />
       <Testimonials items={testimonials} />
+      <HomeFaq items={content.homepage_faqs || []} />
       <Contact data={content.contact} />
       <Footer data={content.contact} />
       <AdminToolbar />

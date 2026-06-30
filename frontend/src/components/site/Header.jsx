@@ -16,6 +16,8 @@ const sections = [
 const extraLinks = [
   { to: "/ablauf", label_de: "Ablauf", label_en: "Process" },
   { to: "/vku", label_de: "VKU", label_en: "VKU" },
+  { to: "/blog", label_de: "Blog", label_en: "Blog" },
+  { to: "/buchung", label_de: "Buchen", label_en: "Book", primary: true },
 ];
 
 export default function Header() {

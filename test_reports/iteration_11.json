@@ -1,0 +1,67 @@
+{
+  "summary": "Iteration 11 testing complete – 4 feature drop validated. Backend pytest: 19/20 passed (95%) with 1 failure on 'scheduled+past-date' visibility (business-logic mismatch with spec). Frontend Playwright: 100% – Why section (6 pillars), HomeFaq (8 items, accordion single-open), Blog list/filter/detail/back-link, Buchung 4-package selector + booking POST → 200 OK booking_success shown, regression on /, /fahrschule-einsiedeln, /ablauf, /vku, /impressum, /datenschutz all pass. Cleanup performed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "GET /api/blog (public)",
+        "issue": "Spec says: a post with status='scheduled' and scheduled_publish_at in the PAST should be VISIBLE in the public listing. Current _is_post_published() (server.py:1094) only returns True when status=='published'. As a result, posts left in status='scheduled' never auto-promote; an admin must manually flip status to 'published'. Either fix the predicate to: published OR (scheduled AND past), OR add a background job that flips status on publish_at."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "BlogPost back-link",
+        "issue": "[data-testid='blog-back-link'] is hidden behind the fixed site-header when at the top of the page. Playwright click was intercepted by <header data-testid='site-header'>. Functional impact is small (link is reachable by scroll), but a sticky-header offset (scroll-margin-top or pt-24) on the post container would prevent the overlap.",
+        "selector": "[data-testid='blog-back-link']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "BuchungPage",
+        "issues": [
+          "React hydration warning in console: '<span> cannot be a child of <option>'. Cause: visual-editor decorator span injected into the <option> element on the location <select>. No functional break; floods console with warnings on every page load. Wrap option labels in a way that bypasses decorator injection or strip the wrapping span for option children."
+        ]
+      },
+      {
+        "screen": "BuchungPage – date input",
+        "issues": [
+          "Uses browser-native <input type='date'> (per spec acceptable), but no client-side messaging when the user enters today's date or a past date. Browser-native validation 'Value must be 06/30/2026 or later.' fires only on submit and is locale-dependent. Consider a shadcn calendar with min={today}+1 to align with the rest of the design system."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration11.py",
+    "/app/test_reports/pytest/it11_results.xml"
+  ],
+  "action_items": [
+    "Decide on scheduled-post auto-publish semantics and either (a) update _is_post_published to also accept status='scheduled' AND scheduled_publish_at<=now, or (b) document that scheduling is an admin-assist-only feature (status remains 'scheduled' until manually flipped).",
+    "Fix React hydration warning on /buchung <select><option> by removing the editor decorator span wrapping option text.",
+    "Add scroll-margin-top or top padding to BlogPost so the back-link is not hidden under the fixed header."
+  ],
+  "critical_code_review_comments": [
+    "server.py:1094 _is_post_published mixes two responsibilities (status gate + time gate). Per the iteration spec a status='scheduled' post whose publish_at is in the past SHOULD be public – the current implementation contradicts the spec.",
+    "server.py:1260 update_booking accepts a raw Dict[str,Any] payload and whitelists only {'status','admin_note'}. Good defensive pattern, but there is no enum validation on status (could store arbitrary strings like 'foo'). Add Literal['pending','confirmed','cancelled','completed'] on a Pydantic model.",
+    "BuchungPage selection state is conveyed exclusively by CSS class (border-[#ff5a36] -translate-y-1 shadow-lg) and visible 'AUSGEWAHLT' text but lacks aria-pressed / role='radio'. A11y improvement: render packages as a radiogroup or add aria-pressed='true|false' so screen readers and tests can read the state.",
+    "Hydration warning on /buchung options is caused by the visual-editor wrapping <option> text in <span style={display:contents}> – HTML spec forbids non-text children of <option>. Same pattern may exist for any other <option>/<title>/<textarea> in this project; sweep all such elements.",
+    "Sitemap correctly excludes future-scheduled posts via _is_post_published reuse – but because of the same scheduled-vs-published mismatch, sitemap will also under-include posts that admin intended to auto-publish in the past.",
+    "BlogList filter chips correctly drive ?category=… in URL (deep-linkable). Good.",
+    "Booking endpoint snapshots package_snapshot at create-time – nice for historical pricing. Snapshot does NOT include features_de/features_en/duration_min though; if Nadine ever changes a package, the booking confirmation email (when built) might lose context. Consider snapshotting the full pkg doc minus _id."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration11.py (new)",
+    "/app/test_reports/iteration_11.json (new)",
+    "/app/test_reports/pytest/it11_results.xml (new)"
+  ],
+  "success_rate": { "backend": "95%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! → POST /api/auth/login returns {access_token}.",
+  "seed_data_creation": "Test booking with id a0fc9254-961f-40ff-af1d-dab6fe0ecebe (TestQA / qa-playwright@test.ch / 2027-05-20 / probelektion-50) created during Playwright run and DELETED via admin endpoint immediately after – verified 0 TestQA bookings remain. Test draft + scheduled blog posts created by pytest fixtures and deleted in finally blocks. PATCH on /api/packages/probelektion-50 price 50→55→50 restored. PATCH on /api/blog/5-tipps-fuehrerpruefung-bestehen reading_time incremented and restored.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Current 'today' in the preview env is 2026-06-30 (Jun 30, 2026) – any future-dated tests must use 2027+ to clear browser-native date min-validation. Buchung packages use CSS-class-only selection (border-[#ff5a36] + -translate-y-1 + shadow-lg), NO aria-pressed. Default selection is 10er-karte. Booking POST returns {ok:true, id:<uuid>}; admin can DELETE via /api/bookings/{id}. Blog filter chips: data-testid pattern 'blog-filter-all' for Alle, 'blog-filter-category-<exact-label>' for the others (e.g. 'blog-filter-category-Pruefung'). Spec asked for 'category-Alle' but actual is 'blog-filter-all' – cosmetic naming difference, no fix needed. Scheduled-blog visibility logic is in server.py:1094 _is_post_published – currently requires status='published'; spec wanted status='scheduled' + past date to also be public. All 11 location slugs preserved from iter10.",
+  "rca of the issue": "Single backend test failed: test_scheduled_future_hidden_past_visible. Repro: POST /api/blog with status='scheduled' & scheduled_publish_at=<future ISO> → not in GET /api/blog (correct). PATCH scheduled_publish_at to a past ISO, status stays 'scheduled' → still NOT in GET /api/blog (expected: IS in list per spec). Root cause: server.py:1097 `if doc.get('status') != 'published': return False` – the function never inspects time when status is 'scheduled'. Mitigation: change predicate to `status=='published' OR (status=='scheduled' AND scheduled_publish_at<=now)`. Alternatively run a scheduler that promotes 'scheduled'→'published' when time passes. Either change is one-liner with no schema migration."
+}
