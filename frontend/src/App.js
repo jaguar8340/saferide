@@ -12,6 +12,7 @@ import BlogList from "@/pages/BlogList";
 import BlogPost from "@/pages/BlogPost";
 import BuchungPage from "@/pages/BuchungPage";
 import PartnerPage from "@/pages/PartnerPage";
+import WhatsAppFab from "@/components/site/WhatsAppFab";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EditProvider } from "@/contexts/EditContext";
@@ -78,6 +79,7 @@ function App() {
                 <Route path="/:fullSlug" element={<SlugDispatcher />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              <WhatsAppFab />
             </BrowserRouter>
             <Toaster
               theme="light"

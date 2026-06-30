@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 14 testing complete. Backend pytest: 5/5 PASSED (100%) — bookings POST persists location_slug correctly for 'einsiedeln', empty string '' (= sentinel '__any' mapped client-side), and absent field (defaults None); admin GET /api/bookings confirms persistence; cleanup via DELETE → 200; content.contact.phone resolves to 11-digit '41795850085' suitable for wa.me; /api/locations contains 'einsiedeln'. Frontend Playwright: ALL flows pass. BUG FIX VERIFIED — /buchung Standort dropdown is now Radix Select (12 options: 1 'Beliebig' + 11 driving schools, all data-testid'd correctly); ZERO 'span cannot be a child of option' or any validateDOMNesting warnings in console; zero error-level console messages; selecting Einsiedeln updates trigger label to 'Fahrschule Einsiedeln (SZ)' and form.location_slug='einsiedeln'; selecting 'Beliebig' submits location_slug:null (NOT '__any'); full booking POST succeeds with success toast 'Buchung gesendet'. WhatsApp FAB FEATURE VERIFIED — present at bottom-right (x=1828,y=708,64x64) on /, /buchung, /blog, /partner, /fahrschule-einsiedeln, /ablauf, /vku, /impressum, /datenschutz (all 9 routes); background rgb(37,211,102) green; pulsing dot indicator visible; hidden on /admin?tab=blog (count=0). Panel: header 'Nadine · Safe Ride', DE greeting bubble + 3 DE suggestions (s1/s2/s3) + composer + tel-fallback. Open/close: X button, Escape key, outside click — all close panel. Suggestions: all 3 buttons fire window.open with correct URLs — https://wa.me/41795850085?text=Ich%20m%C3%B6chte%20eine%20Probelektion%20buchen. / Wann%20ist%20der%20n%C3%A4chste%20VKU-Kurs%3F / Wie%20viele%20Lektionen%20brauche%20ich%20bis%20zur%20Pr%C3%BCfung%3F; panel auto-closes after click. Custom message 'QA test message' → window.open https://wa.me/41795850085?text=QA%20test%20message; input cleared; panel closes. Tel fallback href=tel:41795850085. Language EN toggle works — html[lang]=en, suggestions become 'I'd like to book a trial lesson.' / 'When is the next VKU course?' / 'How many lessons until my exam?', greeting 'Hi! 👋 Send me a message anytime — I'll get back to you ASAP.', placeholder 'Type your own message…', tel-fallback label 'PREFER TO CALL?'. Regression confirmed: booking submission without location succeeds with location_slug:null, admin endpoint sees the row, DELETE cleans up.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration14.py",
+    "/app/test_reports/pytest/it14_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BuchungPage.jsx 344-376: clean Shadcn Select implementation. Sentinel '__any' kept entirely client-side via onValueChange callback that maps '__any' → ''. No native <option> renders any nested <span>, so the validateDOMNesting/hydration warning is fully eliminated (verified: 0 errors in console across full booking flow).",
+    "WhatsAppFab.jsx: well-structured component. Hidden-on-/admin guard via pathname.startsWith('/admin') is correct and verified. Phone digits sanitized via /[^\\d]/g.replace which strips '+' and spaces before being injected into wa.me URL — produces '41795850085' as expected. Outside-click + Escape close handlers correctly cleaned up in useEffect return.",
+    "Minor (non-blocking): WhatsAppFab uses window.open(url,'_blank','noopener,noreferrer') — good for security. The new tab won't auto-close — that's WhatsApp Web/Mobile behaviour, not a bug.",
+    "Backend POST /api/bookings returns minimal payload {ok:true,id:...} — UI doesn't show location_slug back to the caller, but admin GET /api/bookings shows full record with location_slug correctly stored as 'einsiedeln' / null. Server-side handling of empty string vs null is consistent (both result in falsy field).",
+    "Booking 'Buchung gesendet' confirmation visible at top-right of viewport across both DE+EN flows. UX is clean."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration14.py (new)",
+    "/app/test_reports/iteration_14.json (new)",
+    "/app/test_reports/pytest/it14_results.xml (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (login verified, access_token returned)",
+  "seed_data_creation": "Created 3 transient bookings via pytest (first_name='TESTQA14') — each DELETE'd within its own test (verified). Created 1 booking via Playwright form (first_name='QA14FE', location_slug:null, package='10er-karte') — DELETE'd at end of test run. GET /api/bookings returned count:0 after cleanup. No residual test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend env: server time is 2026-06-30 UTC, so booking.preferred_date must be 2027+ (current iteration used 2027-07-20 and 2027-08-10). Public POST /api/bookings is split first_name/last_name (NOT full_name). Available package slugs from /api/packages: probelektion-50, 5er-karte, 10er-karte, vku-8h (Note: spec said 'probelektion' but actual is 'probelektion-50'). POST /api/bookings response is minimal {ok:true,id} — to verify field persistence (e.g., location_slug), GET /api/bookings as admin and match by id. Default locations from /api/locations include slug 'einsiedeln'. WhatsApp FAB hides on /admin* via pathname.startsWith('/admin'); shows on all other routes including / and /buchung. Phone digits in wa.me URL: 41795850085 (no '+'). Language toggle: 'header >> text=\"EN\"' or 'header >> text=\"DE\"'; sets <html lang> attribute. Sentinel '__any' is consumed ENTIRELY in BuchungPage's onValueChange — server never sees it.",
+  "rca of the issue": "No bugs found this iteration. Both user-requested items pass end-to-end: (1) the hydration warning '<span> cannot be a child of <option>' has been fully eliminated — Shadcn/Radix Select renders portal-mounted divs and there are no native <option> elements in the Standort dropdown anymore. The sentinel '__any' is mapped client-side to '' before submit so the server never receives the literal '__any'. (2) WhatsAppFab is correctly mounted globally inside <BrowserRouter> after <Routes> in App.js, useLocation()-aware hiding on /admin works, lang-aware suggestions render from SUGGESTIONS_DE/EN, and window.open emits properly URL-encoded wa.me links for all 3 suggestions + custom send. Phone digits sanitized to digits-only correctly."
+}

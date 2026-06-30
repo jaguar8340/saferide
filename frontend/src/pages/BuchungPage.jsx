@@ -11,6 +11,13 @@ import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Editable from "@/components/edit/Editable";
 import EditablePackageCard from "@/components/site/EditablePackageCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function formatPrice(chf) {
   if (chf == null) return "—";
@@ -335,21 +342,37 @@ export default function BuchungPage() {
                   />
                 </Field>
                 <Field label={lang === "de" ? "Standort" : "Location"} className="sm:col-span-2">
-                  <select
-                    data-testid="booking-location"
-                    value={form.location_slug}
-                    onChange={update("location_slug")}
-                    className="input-field"
+                  <Select
+                    value={form.location_slug || "__any"}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, location_slug: v === "__any" ? "" : v }))
+                    }
                   >
-                    <option value="">
-                      {lang === "de" ? "Beliebig / keine Präferenz" : "Any / no preference"}
-                    </option>
-                    {locations.map((l) => (
-                      <option key={l.slug} value={l.slug}>
-                        Fahrschule {l.name} ({l.canton})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      data-testid="booking-location"
+                      className="input-field h-auto"
+                    >
+                      <SelectValue
+                        placeholder={
+                          lang === "de" ? "Beliebig / keine Präferenz" : "Any / no preference"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__any" data-testid="booking-location-option-any">
+                        {lang === "de" ? "Beliebig / keine Präferenz" : "Any / no preference"}
+                      </SelectItem>
+                      {locations.map((l) => (
+                        <SelectItem
+                          key={l.slug}
+                          value={l.slug}
+                          data-testid={`booking-location-option-${l.slug}`}
+                        >
+                          {`Fahrschule ${l.name} (${l.canton})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label={lang === "de" ? "Nachricht (optional)" : "Message (optional)"} className="sm:col-span-2">
                   <textarea
