@@ -404,7 +404,18 @@ def _build_location(loc):
         "exam_routes_title_en": "Typical exam routes",
         "exam_routes_intro_de": f"Diese Strecken trainieren wir in {name} regelmässig – sie kommen in der praktischen Prüfung häufig vor.",
         "exam_routes_intro_en": f"We regularly practice these routes in {name} – they often appear in the practical exam.",
-        "exam_routes": [{"id": f"r{i+1}", "text_de": r, "text_en": r} for i, r in enumerate(loc["routes"])],
+        "exam_routes": [
+            {
+                "id": f"r{i+1}",
+                "text_de": r,
+                "text_en": r,
+                "description_de": "",
+                "description_en": "",
+            }
+            for i, r in enumerate(loc["routes"])
+        ],
+        "exam_routes_outro_de": f"Vor der praktischen Prüfung fahren wir die wichtigsten Strecken rund um {name} gezielt durch. Du lernst Kreisel, Vortrittssituationen, Steigungen und Einspurmanöver dort, wo sie in der Prüfung wirklich vorkommen – so wirst du am grossen Tag nicht überrascht.",
+        "exam_routes_outro_en": f"Before the practical exam we go through the most important routes around {name}. You learn roundabouts, right-of-way, slopes and merging exactly where they appear in the real exam – no surprises on the big day.",
         "meet_title_de": "Treffpunkt für Fahrstunden",
         "meet_title_en": "Meeting point for lessons",
         "meet_address_de": loc["meetpoint"],
@@ -451,6 +462,12 @@ def _build_location(loc):
         "google_reviews_cta_de": "Alle Bewertungen auf Google ansehen",
         "google_reviews_cta_en": "View all reviews on Google",
         "google_reviews_url": "https://www.google.com/search?q=Fahrschule+Safe+Ride+Nadine+St%C3%A4ubli+Bewertungen",
+        "other_regions_overline_de": "Andere Standorte",
+        "other_regions_overline_en": "Other locations",
+        "other_regions_title_de": "Ausserdem in folgenden Regionen für dich da",
+        "other_regions_title_en": "Also available in these regions",
+        "other_regions_intro_de": f"Du wohnst nicht direkt in {name}? Kein Problem – Safe Ride ist auch in diesen Regionen für dich da.",
+        "other_regions_intro_en": f"You don't live directly in {name}? No problem – Safe Ride is also available in these regions.",
         "cta_title_de": f"Bereit für deine erste Lektion in {name}?",
         "cta_title_en": f"Ready for your first lesson in {name}?",
         "cta_body_de": "Schreib mir per WhatsApp oder fülle das Kontaktformular aus. Ich melde mich innerhalb von 24 Stunden bei dir.",

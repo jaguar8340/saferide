@@ -21,6 +21,8 @@ import { api, formatApiError, resolveUrl } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
 import GoogleIcon from "@/components/site/GoogleIcon";
+import NadineIntroCard from "@/components/site/NadineIntroCard";
+import OtherLocationsSection from "@/components/site/OtherLocationsSection";
 import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
@@ -50,6 +52,7 @@ export default function LocationPage() {
   const { lang, pick, t } = useLang();
   const { content, editMode } = useEdit();
   const [loc, setLoc] = useState(null);
+  const [allLocs, setAllLocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
@@ -75,6 +78,17 @@ export default function LocationPage() {
     setLoading(true);
     reload();
   }, [reload]);
+
+  // Fetch list of ALL locations for the "Andere Standorte" cross-link block.
+  useEffect(() => {
+    let mounted = true;
+    api.get("/locations")
+      .then((r) => mounted && setAllLocs(r.data || []))
+      .catch(() => mounted && setAllLocs([]));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (loc?.seo_title_de) {
@@ -271,14 +285,7 @@ export default function LocationPage() {
               </div>
             </div>
             <div className="lg:col-span-5">
-              <EditableImage
-                path="hero_image_url"
-                src={loc.hero_image_url}
-                onUpdate={updateField}
-                alt={loc.name}
-                className="block rounded-3xl overflow-hidden border border-[#e2e8f0]"
-                imgClassName="w-full h-[320px] md:h-[460px] object-cover"
-              />
+              <NadineIntroCard data={content?.nadine} />
             </div>
           </div>
         </div>
@@ -399,30 +406,55 @@ export default function LocationPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.4, delay: (i % 2) * 0.04 }}
-                className="relative bg-white border border-[#e2e8f0] rounded-2xl p-5 flex items-start gap-4"
+                className="relative bg-white border border-[#e2e8f0] rounded-2xl p-5"
               >
-                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#0f172a] text-white font-display text-base shrink-0">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <Editable
-                  path={`exam_routes.${i}.text_${lang}`}
-                  value={pick(r.text_de, r.text_en)}
-                  onUpdate={updateField}
-                  as="p"
-                  className="text-base font-semibold leading-snug text-[#0f172a] flex-1 block"
-                />
-                {editMode && (
-                  <button
-                    onClick={removeRoute(r.id)}
-                    data-testid={`loc-route-remove-${i}`}
-                    className="text-[#94a3b8] hover:text-[#ff5a36] transition-colors"
-                    aria-label="Strecke entfernen"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                <div className="flex items-start gap-4">
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#0f172a] text-white font-display text-base shrink-0">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <Editable
+                    path={`exam_routes.${i}.text_${lang}`}
+                    value={pick(r.text_de, r.text_en)}
+                    onUpdate={updateField}
+                    as="p"
+                    className="text-base font-semibold leading-snug text-[#0f172a] flex-1 block"
+                  />
+                  {editMode && (
+                    <button
+                      onClick={removeRoute(r.id)}
+                      data-testid={`loc-route-remove-${i}`}
+                      className="text-[#94a3b8] hover:text-[#ff5a36] transition-colors"
+                      aria-label="Strecke entfernen"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+                {(editMode || pick(r.description_de, r.description_en)) && (
+                  <Editable
+                    path={`exam_routes.${i}.description_${lang}`}
+                    value={pick(r.description_de, r.description_en)}
+                    onUpdate={updateField}
+                    as="p"
+                    multiline
+                    placeholder={lang === "de" ? "Beschreibung der Strecke …" : "Route description …"}
+                    className="mt-3 pl-[3.25rem] text-sm text-[#475569] leading-relaxed font-medium block"
+                  />
                 )}
               </motion.div>
             ))}
+          </div>
+
+          <div className="mt-10 max-w-3xl" data-testid="loc-routes-outro">
+            <Editable
+              path={`exam_routes_outro_${lang}`}
+              value={pick(loc.exam_routes_outro_de, loc.exam_routes_outro_en)}
+              onUpdate={updateField}
+              as="p"
+              multiline
+              placeholder={lang === "de" ? "Ergänzender Text zu den Prüfungsstrecken …" : "Additional text about the exam routes …"}
+              className="text-base text-[#475569] leading-relaxed font-medium block"
+            />
           </div>
         </div>
       </section>
@@ -786,6 +818,22 @@ export default function LocationPage() {
         </div>
       </section>
 
+      {/* OTHER REGIONS */}
+      <OtherLocationsSection
+        currentSlug={loc.slug}
+        currentName={loc.name}
+        allLocations={allLocs}
+        texts={{
+          overline_de: loc.other_regions_overline_de,
+          overline_en: loc.other_regions_overline_en,
+          title_de: loc.other_regions_title_de,
+          title_en: loc.other_regions_title_en,
+          intro_de: loc.other_regions_intro_de,
+          intro_en: loc.other_regions_intro_en,
+        }}
+        onUpdate={updateField}
+      />
+
       {/* FAQ */}
       <section className="section-pad bg-[#fbf9f6]">
         <div className="container-x px-5 md:px-8 lg:px-12">
@@ -854,7 +902,7 @@ export default function LocationPage() {
                       </button>
                     )}
                   </div>
-                  {(isOpen || editMode) && (
+                  {isOpen && (
                     <Editable
                       path={`faqs.${i}.answer_${lang}`}
                       value={pick(f.answer_de, f.answer_en)}

@@ -132,7 +132,13 @@ ALLOWED_IMAGE_TYPES = {
     "image/webp": "webp",
     "image/gif": "gif",
 }
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_VIDEO_TYPES = {
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/webm": "webm",
+}
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB images
+MAX_VIDEO_BYTES = 60 * 1024 * 1024   # 60 MB videos
 
 
 
@@ -392,6 +398,20 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     "google_reviews_count": "60+",
     "google_reviews_label_de": "Bewertungen mit 5,0 Sternen auf Google",
     "google_reviews_label_en": "Reviews with 5.0 stars on Google",
+    "nadine": {
+        "intro_title_de": "Ich bin Nadine",
+        "intro_title_en": "I'm Nadine",
+        "intro_text_de": "Seit 2014 begleite ich Schüler:innen entspannt und ehrlich zum Führerausweis. Lerne mich kurz kennen – dann sehen wir uns auf der ersten Lektion.",
+        "intro_text_en": "Since 2014 I've been guiding students calmly and honestly to their driving licence. Get to know me briefly – then we'll see each other at the first lesson.",
+        "media_type": "image",
+        "media_url": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6?auto=format&fit=crop&w=900&q=80",
+        "stat1_value": "1500+",
+        "stat1_label_de": "Schüler:innen",
+        "stat1_label_en": "students",
+        "stat2_value": "12",
+        "stat2_label_de": "Jahre Erfahrung",
+        "stat2_label_en": "years experience",
+    },
     "ablauf": DEFAULT_ABLAUF,
     "vku": DEFAULT_VKU,
 }
@@ -619,6 +639,14 @@ async def startup_event():
             # Upgrade FAQs from older 4-entry default to 15-entry default.
             if len(existing.get("faqs", [])) < 15:
                 await db.locations.update_one({"slug": slug}, {"$set": {"faqs": default_loc["faqs"]}})
+            # Add description_de/en to existing exam_routes that don't have them yet.
+            existing_routes = existing.get("exam_routes", [])
+            if existing_routes and any(("description_de" not in r) for r in existing_routes):
+                upgraded = [
+                    {**r, "description_de": r.get("description_de", ""), "description_en": r.get("description_en", "")}
+                    for r in existing_routes
+                ]
+                await db.locations.update_one({"slug": slug}, {"$set": {"exam_routes": upgraded}})
 
 
 # ---------- Auth Routes ----------
@@ -777,12 +805,16 @@ async def mark_read(sub_id: str, admin=Depends(get_current_admin)):
 @api.post("/upload")
 async def upload_file(file: UploadFile = File(...), admin=Depends(get_current_admin)):
     content_type = file.content_type or "application/octet-stream"
-    if content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(status_code=400, detail="Nur Bilddateien erlaubt (jpg/png/webp/gif)")
+    is_image = content_type in ALLOWED_IMAGE_TYPES
+    is_video = content_type in ALLOWED_VIDEO_TYPES
+    if not (is_image or is_video):
+        raise HTTPException(status_code=400, detail="Nur Bild- (jpg/png/webp/gif) oder Videodateien (mp4/mov/webm) erlaubt")
     data = await file.read()
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Datei zu gross (max. 10 MB)")
-    ext = ALLOWED_IMAGE_TYPES[content_type]
+    limit = MAX_VIDEO_BYTES if is_video else MAX_UPLOAD_BYTES
+    if len(data) > limit:
+        max_mb = limit // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"Datei zu gross (max. {max_mb} MB)")
+    ext = (ALLOWED_VIDEO_TYPES if is_video else ALLOWED_IMAGE_TYPES)[content_type]
     path = f"{APP_NAME}/uploads/{uuid.uuid4()}.{ext}"
     result = put_object(path, data, content_type)
     stored_path = result.get("path", path)
@@ -791,11 +823,12 @@ async def upload_file(file: UploadFile = File(...), admin=Depends(get_current_ad
         "storage_path": stored_path,
         "original_filename": file.filename,
         "content_type": content_type,
+        "kind": "video" if is_video else "image",
         "size": len(data),
         "uploaded_by": admin.get("email"),
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
-    return {"path": stored_path, "url": f"/api/files/{stored_path}"}
+    return {"path": stored_path, "url": f"/api/files/{stored_path}", "kind": "video" if is_video else "image"}
 
 
 @api.get("/files/{path:path}")

@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 6 fully verified (backend 10/10 + frontend smoke on 3 location slugs). Backend: created /app/backend/tests/test_iteration6_features.py with 10 tests covering (a) GET /api/locations/{einsiedeln,horgen,pfaeffikon-sz} return exam_routes with description_de/en + top-level exam_routes_outro_de/en + other_regions_overline/title/intro (de+en) — title_de exactly 'Ausserdem in folgenden Regionen für dich da'; (b) GET /api/content has the full nadine object with intro_title/text de+en, media_type='image', media_url, stat1/stat2 value+label de+en; (c) POST /api/upload accepts image/png (kind='image') and video/mp4 (kind='video', served back with Content-Type video/mp4 via /api/files/{path}); rejects text/plain with 400 and 11 MB image with 413; (d) PATCH /api/locations/einsiedeln with mixed dot-notation paths {exam_routes.0.description_de, exam_routes_outro_de, other_regions_title_de} updates all three and was reverted; (e) /api/sitemap.xml still returns exactly 14 <url> entries. ALL 10 PASS in 3.31s. Frontend (Playwright on real public URL): /fahrschule-einsiedeln, /fahrschule-horgen, /fahrschule-pfaeffikon-sz all render: H1 = 'Fahrschule {Name}', [data-testid=nadine-intro-card] visible with 'Ich bin Nadine' title + <img> (no <video>), [data-testid=loc-routes-outro] visible with the default 'Vor der praktischen Prüfung …' text, 4 route cards each, [data-testid=loc-other-regions] with exactly 10 [data-testid=other-region-*] cards (current slug correctly excluded — no other-region-einsiedeln on einsiedeln page, etc.), 15 loc-faq-* items, header has 7 nav-* items. FAQ accordion behaves as a TRUE accordion in public view: 0 visible answers initially → click #0 → 1 open → click #1 → still 1 open (i.e. #0 closed automatically). The Pfäffikon SZ screenshot also visually confirms the Nadine card stats (1500+ Schüler:innen, 12 Jahre Erfahrung).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Carryover from iteration_5 (not iter_6 regressions)", "issues": ["Public marquee 'MARQUEE · TEST' still present (flagged in iter_4/5).", "document.title still 'Emergent | Fullstack App' on /, /ablauf, /vku."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration6_features.py",
+    "/app/test_reports/pytest/iteration6_results.xml"
+  ],
+  "action_items": [
+    "(Optional carryover) Reset marquee_de/en to real marketing copy.",
+    "(Optional carryover) Set per-route document.title on /, /ablauf, /vku.",
+    "(Optional, code quality) server.py is now ~966 lines — splitting into routers/ is overdue.",
+    "(Optional, code quality) PATCH /api/locations/{slug} and PATCH /api/content still accept arbitrary dot-notation $set with no allowlist. Admin-only, but consider a Pydantic patch model with explicit field whitelist to prevent accidental writes to unknown keys."
+  ],
+  "critical_code_review_comments": [
+    "Idempotent seed migration in startup_event correctly ADDS missing top-level keys + adds description_de/en to existing exam_routes WITHOUT overwriting values — migration safety preserved between iter 5 and 6. Verified by inspection of server.py:606-649.",
+    "ALLOWED_VIDEO_TYPES={mp4, quicktime, webm} + MAX_VIDEO_BYTES=60MB implemented correctly; /api/upload returns {path, url, kind} and persists kind in db.files. Confirmed end-to-end with a TINY 32-byte mp4 fixture.",
+    "/api/files/{path:path} preserves the upstream Content-Type and adds long Cache-Control — video files are correctly served as video/mp4.",
+    "DEFAULT_CONTENT.nadine object lives under main site content and is merged into existing installs via the missing-keys deep-merge in startup_event — verified via GET /api/content.",
+    "default_pages._build_location now sets exam_routes_outro_de/en + other_regions_overline/title/intro (de+en) + exam_routes items with description_de/en='' — matches spec.",
+    "FAQ accordion only-one-open behaviour: verified empirically via Playwright on the live site (open count went 0→1→1 across two clicks). Confirms LocationPage.jsx changed from `(isOpen || editMode)` to just `isOpen`.",
+    "OtherLocationsSection.jsx correctly excludes the current slug — verified on all three sampled pages.",
+    "server.py is now 966 lines (was 850-ish in iter_5). Crossing the 700-line threshold; consider splitting routers/auth.py, routers/content.py, routers/locations.py, routers/upload.py.",
+    "No regressions detected in nav-* (still 7) or sitemap (still 14 URLs)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration6_features.py",
+    "/app/test_reports/pytest/iteration6_results.xml",
+    "/app/test_reports/iteration_6.json"
+  ],
+  "success_rate": {
+    "backend": "100% on iteration_6 new feature suite (10/10).",
+    "frontend": "100% on all critical iteration_6 flows across 3 location slugs (einsiedeln, horgen, pfaeffikon-sz): Nadine card visible with img, routes outro visible, 4 routes, 10 other-region cards with self excluded, 15 FAQs, true accordion (0→1→1), 7 nav-*."
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (verified working)",
+  "seed_data_creation": "No leftover test data. Backend patch test fully reverts exam_routes.0.description_de, exam_routes_outro_de, other_regions_title_de back to their original values. Uploaded test files (tiny.png + tiny.mp4) remain in storage but are unreferenced (small payload, acceptable). The Nadine card is still configured as media_type=image with the default Unsplash URL — video-upload-via-UI flow was NOT exercised via Playwright (the backend video upload + GET-served-content-type was instead covered directly via the /api/upload + /api/files/{path} integration test).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run iteration_6 suite: `pytest /app/backend/tests/test_iteration6_features.py -v` — expect 10/10. Run full backend regression: `pytest /app/backend/tests/ -v -n auto` — expect ~76/78 (2 known xdist races from prior iterations). Public base: https://driving-school-cms.preview.emergentagent.com. 11 location slugs unchanged. New testids on every LocationPage: nadine-intro-card (hero right), loc-routes-outro (after routes grid), loc-other-regions (after Google reviews) + 10 other-region-{slug} cards. EditableMedia widget in admin edit mode renders two buttons nadine.media_url-upload-image (label 'Foto') and nadine.media_url-upload-video (label 'Video') — wraps either <img> or <video controls>. New editable paths on /fahrschule-{slug}: exam_routes.{i}.description_de, exam_routes_outro_de, other_regions_overline_de, other_regions_title_de, other_regions_intro_de. New editable paths on / (content): nadine.intro_title_de, nadine.intro_text_de, nadine.stat1_value, nadine.stat1_label_de, nadine.stat2_value, nadine.stat2_label_de. FAQ accordion now closes the previous open one when a new one is clicked (verified open-count stayed at 1).",
+  "rca of the issue": "N/A — no functional bugs found in iteration_6 scope."
+}
