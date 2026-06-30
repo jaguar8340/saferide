@@ -26,27 +26,42 @@
 ## What's Implemented (2026-02)
 - **Backend (`/app/backend/server.py`, `default_pages.py`)**
   - JWT-Auth, MongoDB-Collections: `users`, `site_content`, `testimonials`, `gallery`, `contact_submissions`, **`locations` (UNIQUE INDEX slug)**
-  - Public Routes: `/api/content`, `/api/testimonials`, `/api/gallery`, `/api/contact`, **`/api/locations`, `/api/locations/{slug}`**
-  - Admin Routes: Auth, Content (PUT + PATCH dot-notation), Testimonials/Gallery CRUD, Submissions, **`/api/upload`**, **Locations POST/PATCH/DELETE**
-  - **Idempotenter Seed-Merge** für neue Top-Level- und Sub-Keys auf bestehenden Installationen
-  - Default-Seed: Content + 6 Testimonials + 6 Gallery + **Ablauf/VKU-Inhalt + 9 Standort-Dokumente**
+  - Public Routes: `/api/content`, `/api/testimonials`, `/api/gallery`, `/api/contact`, `/api/locations`, `/api/locations/{slug}`, **`/api/sitemap.xml`**
+  - Admin Routes: Auth, Content (PUT + PATCH dot-notation), Testimonials/Gallery CRUD, Submissions, `/api/upload`, Locations POST/PATCH/DELETE
+  - **Idempotente Seed-Migration** für Locations: fügt neue Felder hinzu, hebt FAQs von 4 → 15 ohne Admin-Edits zu zerstören
+  - `_public_base_url`-Helper für Sitemap: PUBLIC_SITE_URL → X-Forwarded-Host → request.base_url
+  - Default-Seed: Content + Testimonials + Gallery + Ablauf/VKU + **11 Standort-Dokumente** (jetzt mit Pfäffikon SZ + Richterswil)
 - **Frontend (`/app/frontend/src/`)**
-  - `/` Public-Site: Hero, Marquee, About, Services, Fleet, Pricing, Gallery, Testimonials, Contact, Footer
-  - **`/ablauf`** – Schritt-für-Schritt-Seite zum Führerausweis (4 Schritte + externe Antrags-Links + Outro-CTA)
-  - **`/vku`** – Verkehrskundeunterricht (Preis CHF 210, Kurslokal Au/ZH, 8 Monatskarten, 4 Infos, CTA)
-  - **`/fahrschule-<slug>`** – 9 Standort-Landingpages (Hero, Warum, Ideal-for, Prüfungsstrecken, Treffpunkt + Google Maps, Preise, Galerie, FAQ, CTA) mit eigenem PATCH-Endpoint und vollständigem Inline-Editing
-  - DE/EN-Sprachkontext, dynamisches `document.title` pro Route
-  - **`SubPageHeader`** für Sub-Pages mit aktiver Nav, **`SectionTitle`** behält Signatur-Italic-Highlight im View-Modus und wird ein editierbares Element im Edit-Modus
-  - Wix-ähnliches Inline-CMS **erweitert**: ALLE bisher hardcoded Texte (Hero-Tags, "Call Nadine", Regions, Rating, About-Badge "Nadine Stäubli", alle Sektions-Overlines/Titel, "Beliebt"-Tag, CTA-Texte, Footer-Tagline) sind nun editierbar
-  - `EditableImage`-Upload für ALLE Sub-Pages (Hero, About, Fleet, Standort-Galerie etc.)
-  - Admin-Dashboard mit neuem Tab **"Seiten & Standorte"** (`PagesManager`) – listet Ablauf/VKU + alle 9 Standorte als Direkt-Links
+  - `/` Public-Site mit dynamischem `document.title` und Hash-Scroll-Effekt für `/#section`-Links von Sub-Pages
+  - `/ablauf`, `/vku` – statische Sub-Seiten mit identischem Header
+  - **`/fahrschule-<slug>`** – 11 SEO-Landingpages mit:
+    - Hero: H1 immer "Fahrschule {Ort}", City-Description als Pill-Badge darunter
+    - Why-Sektion + Ideal-for-Punkte
+    - Prüfungsstrecken (Add/Remove inline)
+    - Treffpunkt + Google Maps iFrame
+    - **NEU: "Warum Safe Ride die richtige Fahrschule in {Ort} ist"** (dunkler Hintergrund, 6 Punkte mit Check-Icons)
+    - Preise
+    - Galerie (Upload/Replace/Delete inline)
+    - **NEU: Google Reviews CTA** mit Google G-Logo, 5,0★, 60+ Bewertungen, editierbarer per-Location Reviews-URL
+    - **15 FAQs** (statt 4) mit Intro-Paragraph
+    - Bottom-CTA
+  - **Identisches Header-Menu** auf ALLEN Seiten (Über mich / Angebot / Preise / Galerie / Bewertungen / Ablauf / VKU + DE/EN + Anfragen)
+  - **Google-Reviews-Integration** auf Startseite (Testimonials-Sektion mit Google G-Logo + "Auf Google ansehen"-CTA + "GOOGLE · Datum" pro Karte)
+  - `SectionTitle`-Helper für Italic-Highlight im View-Modus, editierbar im Edit-Modus
+  - Wix-Inline-CMS: ALLE Texte editierbar (Hero-Tags, "Call Nadine", Regions, Rating, Badge, Section-Overlines/Titles, "Beliebt", CTA-Texte, Footer-Tagline, Why-Punkte, Google-Reviews-Felder pro Standort)
+  - `EditableImage`-Upload für alle Hero-Bilder und Galerie-Einträge
+  - Admin-Dashboard mit **"Seiten & Standorte"**-Tab (`PagesManager`) – listet Ablauf/VKU + alle 11 Standorte
+- **SEO**
+  - `/api/sitemap.xml` mit 14 URLs (Home + Ablauf + VKU + 11 Standorte), public Base-URL aus X-Forwarded-Host
+  - `/robots.txt` in `public/` mit Sitemap-Direktive (Cloudflare überschreibt das im Preview – in Production via DNS-Domäne kontrollierbar)
+  - Dynamic `document.title` pro Route
+  - SEO-Title und SEO-Description per Standort (z. B. "Fahrschule Einsiedeln – Safe Ride · Auto fahren lernen in Einsiedeln")
 - **Tested (2026-02)**: 
-  - Backend pytest 46/47 (1 flaky fixture-race, pre-existing)
-  - Frontend 100% – Inline-Edit Persistenz E2E verifiziert (badge_name + meet_address_de geschrieben und zurückgesetzt)
-  - Alle 9 Standortseiten laden mit korrektem SEO-Title
+  - Backend pytest 66/68 (2 pre-existing xdist fixture-races) + Iteration_5 Suite 21/21
+  - Frontend 100% – 11 Standorte verifiziert, 15 FAQs, Hero-H1 exakt "Fahrschule {Ort}", Google-Reviews-CTA, identisches Header-Menu, Hash-Scroll von Sub-Page zu Home-Sektion
 
 ## Test Credentials
-Siehe `/app/memory/test_credentials.md` (admin@saferide.ch / SafeRide2026!)
+admin@saferide.ch / SafeRide2026!
 
 ## P1 / P2 / P3 Backlog
 - **P1 – E-Mail-Benachrichtigungen** an Nadine bei Kontaktanfrage (Resend/SendGrid)
