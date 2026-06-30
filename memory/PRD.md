@@ -102,5 +102,11 @@ admin@saferide.ch / SafeRide2026!
 - **P2 – Locations in Footer cachen** statt N Requests pro Session
 - **P2 – aria-pressed** auf Buchungs-Paket-Cards (a11y)
 - **P3 – Multi-Instructor-Teamseite** + Author-Profile auf Blog
-- **P3 – Routing-Refactor**: server.py in `routers/auth`, `routers/content`, `routers/locations`, `routers/blog`, `routers/bookings` aufteilen
-- **P3 – Layout-level CanonicalLink** statt pro-Seite
+- ✅ **P2 – Routing-Refactor (DONE 2026-06, Iteration 15)**: `server.py` von 1580 → 76 Zeilen geschrumpft. Aufgesplittet in `core/` (db, security, storage), `models/schemas.py`, `seeds/` (defaults, startup), `routers/` (11 fokussierte Router: auth, content, testimonials, gallery, contact, uploads, locations, blog, bookings, entities, sitemap). 36/36 Backend-Tests grün, keine Verhaltensänderungen.
+- ✅ **P2 – Comprehensive SEO Upgrade (DONE 2026-06, Iteration 16)**:
+  - `public/index.html`: `<html lang="de">`, echter Title + Description, Open Graph (8 Tags), Twitter Card, Favicon (Brand-Logo), Theme-Color, Preconnect, statische `LocalBusiness` JSON-LD mit Phone/Hours/Rating
+  - `public/robots.txt`: absolute Sitemap-URL, explizites Allow für GPTBot/ChatGPT-User/ClaudeBot/PerplexityBot/Google-Extended (Sichtbarkeit in AI-Suchen)
+  - Neue `<Seo />` React-Komponente (`/components/site/Seo.jsx`): verwaltet imperativ `<title>`, `<meta description>`, OG, Twitter, Canonical, hreflang (de/en/x-default), `<html lang>` reaktiv und JSON-LD pro Seite. Konvertiert relative og:image-URLs automatisch zu absolute https.
+  - JSON-LD pro Seite: `FAQPage` (Home + Locations), `LocalBusiness` mit Adresse + Canton (Locations), `BreadcrumbList` (Locations + BlogPost), `HowTo` (Ablauf), `Course` (VKU), `Blog` (BlogList), `BlogPosting` mit Author/Publisher/Image (BlogPost), `ItemList` mit Product+Offer (Buchung), `Organization` mit subOrganization (Partner)
+  - Alle 9 Pages (Home, LocationPage, AblaufPage, VkuPage, LegalPage, BlogList, BlogPost, BuchungPage, PartnerPage) verwenden jetzt `<Seo />`
+  - Frontend Tests: 75/75 (100%) durch `testing_agent_v3_fork` verifiziert
