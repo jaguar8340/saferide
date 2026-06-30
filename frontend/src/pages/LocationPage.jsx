@@ -9,6 +9,7 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import OtherLocationsSection from "@/components/site/OtherLocationsSection";
+import Seo from "@/components/site/Seo";
 
 import LocHero from "@/components/location/LocHero";
 import LocWhyIdeal from "@/components/location/LocWhyIdeal";
@@ -85,6 +86,59 @@ export default function LocationPage() {
     }
   }, [loc, lang]);
 
+  // ---------- Structured data (LocalBusiness + FAQPage + Breadcrumb) ----------
+  const seoTitle = loc
+    ? (lang === "de" ? loc.seo_title_de : (loc.seo_title_en || loc.seo_title_de))
+    : "";
+  const seoDescription = loc
+    ? (lang === "de" ? loc.seo_description_de : (loc.seo_description_en || loc.seo_description_de))
+    : "";
+  const heroImg = loc?.hero_image_url || content?.hero?.image_url;
+  const seoJsonLd = loc
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "@id": `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}#business`,
+          name: `Fahrschule Safe Ride · ${loc.name}`,
+          image: heroImg,
+          telephone: content?.contact?.phone || "+41795850085",
+          email: content?.contact?.email || "info@fahrschule-saferide.ch",
+          url: `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}`,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: loc.name,
+            addressCountry: "CH",
+            addressRegion: loc.canton || "",
+          },
+          areaServed: { "@type": "City", name: loc.name },
+          priceRange: "CHF 90 – CHF 120",
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: lang === "de" ? "Startseite" : "Home", item: "https://www.fahrschule-saferide.ch/" },
+            { "@type": "ListItem", position: 2, name: loc.name, item: `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}` },
+          ],
+        },
+        (loc.faqs || []).length
+          ? {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: (loc.faqs || []).map((f) => ({
+                "@type": "Question",
+                name: lang === "de" ? f.question_de : (f.question_en || f.question_de),
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: lang === "de" ? f.answer_de : (f.answer_en || f.answer_de),
+                },
+              })),
+            }
+          : null,
+      ].filter(Boolean)
+    : null;
+
   const flush = useCallback(async () => {
     const updates = { ...pending.current };
     pending.current = {};
@@ -133,6 +187,16 @@ export default function LocationPage() {
       data-location-slug={loc.slug}
       className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans"
     >
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        path={`/fahrschule-${loc.slug}`}
+        lang={lang}
+        type="website"
+        image={heroImg}
+        imageAlt={loc.name}
+        jsonLd={seoJsonLd}
+      />
       <Header />
       <LocHero loc={loc} updateField={updateField} phone={phone} />
       <LocWhyIdeal loc={loc} updateField={updateField} nadineData={content?.nadine} />

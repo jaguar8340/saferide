@@ -9,6 +9,7 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
+import Seo from "@/components/site/Seo";
 
 function PartnerCard({ partner, onPatch, onRemove }) {
   const { lang, pick } = useLang();
@@ -250,6 +251,27 @@ export default function PartnerPage() {
   return (
     <main data-testid="partner-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
       <CanonicalLink path="/partner" />
+      <Seo
+        title={lang === "de" ? "Partner · Safe Ride" : "Partners · Safe Ride"}
+        description={lang === "de"
+          ? "Die Partner von Fahrschule Safe Ride: Audi Zentrum, Schweizerischer Fahrlehrerverband, Samariterverein, asa, DRIVESWISS und SGS. Stark durch Partnerschaft."
+          : "The partners of Fahrschule Safe Ride: Audi Zentrum, Swiss Driving Instructors Association, Samariterverein, asa, DRIVESWISS and SGS. Strong through partnership."}
+        path="/partner"
+        lang={lang}
+        type="website"
+        jsonLd={(partners || []).length ? {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Fahrschule Safe Ride",
+          url: "https://www.fahrschule-saferide.ch/",
+          subOrganization: (partners || []).map((p) => ({
+            "@type": "Organization",
+            name: p.name,
+            url: p.website_url || undefined,
+            description: lang === "de" ? p.description_de : (p.description_en || p.description_de),
+          })),
+        } : null}
+      />
       <Header />
 
       {/* Hero */}

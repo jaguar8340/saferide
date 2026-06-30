@@ -10,16 +10,11 @@ import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
+import Seo from "@/components/site/Seo";
 
 export default function AblaufPage() {
   const { lang, pick } = useLang();
   const { content } = useEdit();
-
-  useEffect(() => {
-    document.title = lang === "de"
-      ? "Ablauf zum Führerausweis · Safe Ride"
-      : "Process to your driving licence · Safe Ride";
-  }, [lang]);
 
   if (!content) {
     return (
@@ -35,6 +30,29 @@ export default function AblaufPage() {
   return (
     <main data-testid="ablauf-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
       <CanonicalLink path="/ablauf-zum-fuehrerschein" />
+      <Seo
+        title={lang === "de" ? "Ablauf zum Führerausweis · Safe Ride" : "Process to your driving licence · Safe Ride"}
+        description={pick(data.subtitle_de, data.subtitle_en) || (lang === "de"
+          ? "Der ehrliche Weg zum Schweizer Führerausweis: Nothelferkurs, Lernfahrausweis, VKU, Fahrstunden, Praxisprüfung. Alle Schritte transparent erklärt."
+          : "The honest path to your Swiss driving licence: first-aid course, learner permit, theory course, lessons, exam. All steps transparently explained.")}
+        path="/ablauf-zum-fuehrerschein"
+        lang={lang}
+        type="article"
+        image={data.hero_image_url}
+        imageAlt="Ablauf zum Führerausweis"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          name: lang === "de" ? "Ablauf zum Schweizer Führerausweis" : "Process to the Swiss driving licence",
+          description: pick(data.subtitle_de, data.subtitle_en),
+          step: steps.map((s, i) => ({
+            "@type": "HowToStep",
+            position: i + 1,
+            name: lang === "de" ? s.title_de : (s.title_en || s.title_de),
+            text: lang === "de" ? s.body_de : (s.body_en || s.body_de),
+          })),
+        }}
+      />
       <SubPageHeader />
 
       {/* Hero */}

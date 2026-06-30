@@ -10,16 +10,11 @@ import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
+import Seo from "@/components/site/Seo";
 
 export default function VkuPage() {
   const { lang, pick } = useLang();
   const { content } = useEdit();
-
-  useEffect(() => {
-    document.title = lang === "de"
-      ? "VKU · Verkehrskundeunterricht · Safe Ride"
-      : "VKU · Traffic Theory Course · Safe Ride";
-  }, [lang]);
 
   if (!content) {
     return (
@@ -36,6 +31,38 @@ export default function VkuPage() {
   return (
     <main data-testid="vku-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
       <CanonicalLink path="/vku-unterricht" />
+      <Seo
+        title={lang === "de" ? "VKU · Verkehrskundeunterricht · Safe Ride" : "VKU · Traffic Theory Course · Safe Ride"}
+        description={pick(data.subtitle_de, data.subtitle_en) || (lang === "de"
+          ? "VKU (Verkehrskundeunterricht) in 8 Stunden – gesetzlich vorgeschrieben für alle Neulenker:innen. Termine, Ablauf und Anmeldung bei Safe Ride."
+          : "Swiss traffic theory course (VKU) – 8 hours, legally required for all new drivers. Dates, process and registration at Safe Ride.")}
+        path="/vku-unterricht"
+        lang={lang}
+        type="website"
+        image={data.hero_image_url}
+        imageAlt="VKU Verkehrskundeunterricht"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Course",
+          name: "VKU – Verkehrskundeunterricht",
+          description: pick(data.subtitle_de, data.subtitle_en),
+          provider: {
+            "@type": "Organization",
+            name: "Fahrschule Safe Ride",
+            url: "https://www.fahrschule-saferide.ch/",
+          },
+          courseCode: "VKU",
+          inLanguage: "de-CH",
+          educationalLevel: "Beginner",
+          timeRequired: "PT8H",
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "CHF",
+            price: "200",
+            availability: "https://schema.org/InStock",
+          },
+        }}
+      />
       <SubPageHeader />
 
       {/* Hero */}

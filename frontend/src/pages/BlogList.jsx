@@ -9,6 +9,7 @@ import { api, formatApiError, resolveUrl } from "@/lib/api";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
+import Seo from "@/components/site/Seo";
 
 function formatDate(iso, lang) {
   if (!iso) return "";
@@ -112,6 +113,29 @@ export default function BlogList() {
 
   return (
     <main data-testid="blog-list-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
+      <Seo
+        title={lang === "de" ? "Blog · Safe Ride – Tipps zum Führerausweis" : "Blog · Safe Ride – Driving licence tips"}
+        description={lang === "de"
+          ? "Tipps, Erfahrungen und Geschichten rund um den Schweizer Führerausweis – von der Probelektion bis zur Prüfung. Geschrieben von Fahrlehrerin Nadine Stäubli."
+          : "Tips, experiences and stories around the Swiss driving licence – from your first lesson to the exam. Written by driving instructor Nadine Stäubli."}
+        path="/blog"
+        lang={lang}
+        type="website"
+        jsonLd={(posts || []).length ? {
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Safe Ride Blog",
+          url: "https://www.fahrschule-saferide.ch/blog",
+          publisher: { "@type": "Organization", name: "Fahrschule Safe Ride" },
+          blogPost: (posts || []).slice(0, 10).map((p) => ({
+            "@type": "BlogPosting",
+            headline: lang === "de" ? p.title_de : (p.title_en || p.title_de),
+            url: `https://www.fahrschule-saferide.ch/blog/${p.slug}`,
+            datePublished: p.published_at || p.created_at,
+            image: p.hero_image_url ? resolveUrl(p.hero_image_url) : undefined,
+          })),
+        } : null}
+      />
       <Header />
 
       {/* Hero */}

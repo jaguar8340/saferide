@@ -1,0 +1,46 @@
+{
+  "summary": "Frontend-only SEO + smoke regression sweep on Safe Ride. Ran 75+ assertions across homepage, language toggle, 3 location pages (einsiedeln, waedenswil, chur), ablauf, vku, blog list + blog post, buchung, partner, impressum, datenschutz, robots.txt, sitemap.xml, plus regression checks (CTA scroll, admin login, WhatsApp FAB). All SEO requirements satisfied: per-page <title>, meta description, canonical, og:title/desc/image/url/locale, twitter:card, 3 hreflang alternates, and the correct JSON-LD types on each page (LocalBusiness + FAQPage on home; +BreadcrumbList +second LocalBusiness on locations; HowTo on ablauf; Course on VKU; Blog on /blog; BlogPosting+BreadcrumbList on blog post; ItemList(Product offers) on buchung; Organization with subOrganization on partner). Language toggle correctly mutates <html lang>, <title> and meta description for both EN and back to DE. Sitemap returns valid XML with all 11 locations + homepage + ablauf + vku + impressum + datenschutz + blog + buchung + partner = 19 URLs. Net: 0 real SEO regressions, 0 real functional regressions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "INFO (not a bug): robots.txt served by the preview environment is prepended with a Cloudflare 'managed content' block that Disallows GPTBot, ClaudeBot, Google-Extended, etc. The app's own robots.txt directives (allowing those AI crawlers) appear AFTER. Per robots.txt spec the first matching User-agent block wins, so the app-level 'Allow' directives for AI crawlers are effectively neutralised in the preview/Emergent deployment by Cloudflare. This is platform behaviour, not a code bug; in production on www.fahrschule-saferide.ch the Cloudflare block may not exist or may be configurable. Worth flagging to the user.",
+    "INFO: Sitemap is served correctly under the current preview origin (/api/sitemap.xml) but robots.txt advertises Sitemap as https://www.fahrschule-saferide.ch/api/sitemap.xml (the production hostname). This is intentional and correct for production but means crawlers hitting the preview won't fetch the preview sitemap from the preview robots. No action needed unless preview is meant to be indexed.",
+    "Seo.jsx is well-isolated, uses absolute og:image fallback, and reactively switches lang/title/description on locale change — clean.",
+    "BlogPost og:image correctly switches to article images (verified: pexels URL, absolute https)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per instructions)", "frontend": "100% (75/75 once test-side slug typo corrected)"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026! — login verified working (redirects to /, admin toolbar with BEARBEITEN/Live/VERWALTUNG/ANFRAGEN visible, 'Willkommen zurück' toast shown).",
+  "seed_data_creation": "None — used existing seeded content.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 11 location slugs are prefixed with 'fahrschule-' and use Swiss German romanisation: einsiedeln, siebnen, lachen, waedenswil (NOT wadenswil), horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil. Hero h1 text on homepage is 'Fahrschule safe ride · Anders. Besser. Mutiger.' — the substring 'Safe Ride · Fahrschule' only appears in <title>, not in the rendered hero. data-testid attributes are present for all top-level page wrappers (home-page, location-page, blog-list-page, blog-post-page, ablauf-page, vku-page, buchung-page, partner-page, impressum-page, datenschutz-page). Sitemap is at /api/sitemap.xml (NOT /sitemap.xml). robots.txt at /robots.txt is partially overridden by Cloudflare-managed prelude in preview env.",
+  "detailed_results": {
+    "homepage": {"renders": true, "lang": "de", "title": "Safe Ride · Fahrschule in ZH · SZ · SG · GR – Anders. Besser. Mutiger.", "canonical": "ok", "og_all_present": true, "og_image_absolute_https": true, "og_locale_de_CH": true, "twitter_card": "summary_large_image", "hreflang": ["de","en","x-default"], "json_ld_types": ["LocalBusiness","FAQPage"], "json_ld_count": 2},
+    "language_toggle": {"en_title": "Safe Ride · Driving School in ZH · SZ · SG · GR – Different. Better. Bolder.", "lang_switched_en_then_de": true, "title_restored_on_de": true, "meta_description_switched": true},
+    "einsiedeln": {"title_contains_einsiedeln": true, "canonical_correct": true, "og_image_absolute": true, "json_ld_count": 4, "types": ["LocalBusiness","LocalBusiness","BreadcrumbList","FAQPage"], "breadcrumb_contains_einsiedeln": true, "faq_question_count": 15},
+    "waedenswil": {"title": "Fahrschule Wädenswil – Safe Ride · Auto fahren lernen in Wädenswil", "canonical_correct": true, "og_image_absolute_https": true},
+    "chur": {"title": "Fahrschule Chur – Safe Ride · Auto fahren lernen in Chur", "canonical_correct": true, "og_image_absolute_https": true},
+    "ablauf": {"title_contains_ablauf": true, "has_HowTo": true, "step_count": 4},
+    "vku": {"title_contains_VKU": true, "has_Course": true},
+    "blog_list": {"title_contains_Blog": true, "has_Blog_with_blogPost_array": true},
+    "blog_post_adhs": {"title_contains_post_title": true, "og_type_article": true, "og_image_absolute_https": true, "BlogPosting_complete": "headline+datePublished+author+publisher all present", "has_BreadcrumbList": true},
+    "buchung": {"title_contains_Buchung": true, "ItemList_items": 4, "has_product_offers": true},
+    "partner": {"title_contains_Partner": true, "Organization_subOrganization_count": 6},
+    "impressum": {"renders": true, "title_ok": true, "canonical_set": true, "description_set": true},
+    "datenschutz": {"renders": true, "title_ok": true, "canonical_set": true, "description_set": true},
+    "robots_txt": {"contains_app_sitemap_directive": true, "allows_GPTBot_ClaudeBot_PerplexityBot": true, "disallows_admin": true, "note": "Cloudflare-managed prelude is injected before app rules in preview env"},
+    "sitemap_xml": {"valid_xml": true, "all_11_locations": true, "includes_home_ablauf_vku_impressum_datenschutz_blog_buchung_partner": true, "url_count": 19},
+    "regression": {"cta_jetzt_probelektion_anfragen": "clicked successfully", "whatsapp_fab_visible": true, "admin_login": "works with admin@saferide.ch / SafeRide2026! (Willkommen zurück toast, admin toolbar visible)"}
+  },
+  "rca of the issue": "No bugs found. Two initial test failures were test-side: (a) used 'fahrschule-wadenswil' instead of correct slug 'fahrschule-waedenswil' (ä->ae), retested → PASS; (b) checked for literal substring 'Safe Ride · Fahrschule' in hero — but hero h1 renders 'Fahrschule safe ride · Anders. Besser. Mutiger.' (the substring only appears in <title>). Page renders correctly with the right brand text."
+}

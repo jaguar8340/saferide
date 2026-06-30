@@ -1,6 +1,26 @@
+# Fahrschule Safe Ride – robots.txt
 User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
 
-Sitemap: /api/sitemap.xml
+# Explicitly welcome modern AI / answer-engine crawlers (good for visibility
+# in ChatGPT, Perplexity, Claude, Gemini answers).
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+# Dynamic sitemap (lists homepage, ablauf, vku, blog, buchung, partner and
+# all 11 location landing pages). Served by the FastAPI backend.
+Sitemap: https://www.fahrschule-saferide.ch/api/sitemap.xml

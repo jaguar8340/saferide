@@ -6,6 +6,7 @@ import Editable from "@/components/edit/Editable";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
+import Seo from "@/components/site/Seo";
 
 /**
  * Editable legal page (Impressum / Datenschutz). Reads from
@@ -61,6 +62,17 @@ export default function LegalPage({ pageKey, titleFallback }) {
       data-testid={`${pageKey}-page`}
       className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans"
     >
+      <Seo
+        title={lang === "de"
+          ? `${(content?.[pageKey]?.title_de || titleFallback?.de)} · Safe Ride`
+          : `${(content?.[pageKey]?.title_en || titleFallback?.en)} · Safe Ride`}
+        description={lang === "de"
+          ? (content?.[pageKey]?.intro_de || titleFallback?.de)
+          : (content?.[pageKey]?.intro_en || titleFallback?.en)}
+        path={`/${pageKey}`}
+        lang={lang}
+        type="website"
+      />
       <Header />
 
       <section className="pt-16 md:pt-24 pb-12 md:pb-16">
