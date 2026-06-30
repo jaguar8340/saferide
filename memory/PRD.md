@@ -53,10 +53,19 @@
 - **Buchung**: `/buchung` mit 4 Paketen (Probelektion, 5er, 10er, VKU) als Auswahl-Cards; Booking-Form (Name, E-Mail, Tel, Wunschdatum/-zeit, Standort, Nachricht) speichert pending Booking auf Backend mit Package-Snapshot ← NEU 2026-06
 
 ## Tested (2026-06)
-- iteration_11: Backend 19/20 (95%, fix angewendet) + Frontend 100% (Why, FAQ, Blog full flow, Buchung) ✓
-- iteration_10: Backend 15/15 + Frontend 100% (BrandLogo, Footer-11-Links, Inline-Upload, Pexels-Migration, Canonical Tags)
+- iteration_12: Backend 100% (Certificates CRUD, Packages PATCH/POST/DELETE) + Frontend 85% — 2 bugs auto-fixed:
+  - Fixed: +Paket onClick refactored to named `handleAddPackage()` with explicit error logging (POST /api/packages now fires reliably; manual verification 2026-06)
+  - Improved: CantonWappen now detects MULTIPLE canton codes in one label ("Kanton ZH / SZ" → renders BOTH ZH + SZ shields)
+- iteration_11: Backend 19/20 + Frontend 100% (Why, FAQ, Blog, Buchung)
+- iteration_10: Backend 15/15 + Frontend 100% (BrandLogo, Footer-11-Links, Inline-Upload, Pexels-Migration, Canonical)
 - iteration_9: Backend 13/13 + Frontend 9/9 (Legal Pages, Route Aliases, Sitemap)
 - iteration_8: Backend 21/21 + Frontend 100% (LocationPage refactor, Nadine global)
+
+## NEU 2026-06 (Iteration 12)
+- **Kantonswappen** als Inline-SVG (SZ, ZH, SG, GR) auf Homepage-Pricing, LocPrices und OtherLocationsSection — Multi-Canton-Detection rendert mehrere Schilder bei kombinierten Labels
+- **Buchung-Seite VOLLSTÄNDIG inline-editierbar**: Hero overline/title/intro (Content-Keys `buchung_overline_de/en`, `buchung_title_de/en`, `buchung_intro_de/en`); Paket-Titel/Subtitle/Preis/Old-Price/Highlight/Features-Liste/Popular-Flag/Delete (via PATCH /api/packages/{slug}); +Paket-Button (POST /api/packages)
+- **Galerie auf Homepage** in uniformes `aspect-square` Grid (2/3/4 Spalten responsive) statt Mosaic
+- **Diplome & Zertifikate**: Neue Collection `certificates`, GET public + POST/PATCH/DELETE admin; `<CertificatesDialog/>` Modal via Button "Alle Diplome & Zertifikate ansehen" unter About-Stats; 4 Default-Zertifikate seeded; Admin kann hochladen/umbenennen/Jahr setzen/löschen direkt im Modal
 
 ## Test Credentials
 admin@saferide.ch / SafeRide2026!

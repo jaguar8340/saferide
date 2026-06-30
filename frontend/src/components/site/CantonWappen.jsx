@@ -76,13 +76,31 @@ const NAME_TO_CODE = {
 
 export function detectCantonCode(input) {
   if (!input) return null;
-  const norm = String(input).toLowerCase().trim();
-  if (NAME_TO_CODE[norm]) return NAME_TO_CODE[norm];
-  // Try to find canton code within longer strings like "Region Schwyz / SZ"
-  for (const key of Object.keys(NAME_TO_CODE)) {
-    if (norm.includes(key)) return NAME_TO_CODE[key];
+  const codes = detectCantonCodes(input);
+  return codes[0] || null;
+}
+
+/**
+ * Returns ALL canton codes detected in `input`, in order of appearance.
+ * Useful for combined labels like "Kanton ZH / SZ" → ["ZH", "SZ"].
+ */
+export function detectCantonCodes(input) {
+  if (!input) return [];
+  const str = String(input);
+  // First search by stable uppercase code (avoids "sz" matching inside "schwyz" etc.)
+  const codeRegex = /\b(SZ|ZH|SG|GR)\b/g;
+  const codes = [];
+  let m;
+  while ((m = codeRegex.exec(str.toUpperCase()))) {
+    if (!codes.includes(m[1])) codes.push(m[1]);
   }
-  return null;
+  if (codes.length > 0) return codes;
+  // Fallback: full canton names
+  const norm = str.toLowerCase().trim();
+  for (const [name, code] of Object.entries(NAME_TO_CODE)) {
+    if (norm.includes(name) && !codes.includes(code)) codes.push(code);
+  }
+  return codes;
 }
 
 /**
@@ -90,19 +108,42 @@ export function detectCantonCode(input) {
  * @param {object} props
  * @param {string} [props.code]   Direct canton code ("SZ"|"ZH"|"SG"|"GR").
  * @param {string} [props.region] Free-text canton name; auto-detected.
+ *                                When the region matches multiple cantons
+ *                                (e.g. "Kanton ZH / SZ") ALL shields are
+ *                                rendered side-by-side.
  * @param {string} [props.size]   Tailwind size class (default "w-4 h-4").
  * @param {string} [props.className]
  */
 export default function CantonWappen({ code, region, size = "w-4 h-4", className = "" }) {
-  const resolved = code || detectCantonCode(region);
-  if (!resolved || !WAPPEN_SVG[resolved]) return null;
+  const codes = code ? [code] : detectCantonCodes(region);
+  if (codes.length === 0) return null;
+  if (codes.length === 1) {
+    const resolved = codes[0];
+    if (!WAPPEN_SVG[resolved]) return null;
+    return (
+      <span
+        data-testid={`canton-wappen-${resolved}`}
+        className={`inline-block shrink-0 overflow-hidden rounded-[3px] ${size} ${className}`}
+        aria-label={`Wappen ${resolved}`}
+      >
+        {WAPPEN_SVG[resolved]}
+      </span>
+    );
+  }
   return (
-    <span
-      data-testid={`canton-wappen-${resolved}`}
-      className={`inline-block shrink-0 overflow-hidden rounded-[3px] ${size} ${className}`}
-      aria-label={`Wappen ${resolved}`}
-    >
-      {WAPPEN_SVG[resolved]}
+    <span className={`inline-flex items-center gap-0.5 ${className}`}>
+      {codes.map((c) =>
+        WAPPEN_SVG[c] ? (
+          <span
+            key={c}
+            data-testid={`canton-wappen-${c}`}
+            className={`inline-block shrink-0 overflow-hidden rounded-[3px] ${size}`}
+            aria-label={`Wappen ${c}`}
+          >
+            {WAPPEN_SVG[c]}
+          </span>
+        ) : null,
+      )}
     </span>
   );
 }

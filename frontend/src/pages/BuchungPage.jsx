@@ -98,6 +98,37 @@ export default function BuchungPage() {
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const today = new Date().toISOString().slice(0, 10);
 
+  const handleAddPackage = async () => {
+    if (creatingPackage) return;
+    setCreatingPackage(true);
+    try {
+      const slug = `paket-${Date.now()}`;
+      const r = await api.post("/packages", {
+        slug,
+        title_de: "Neues Paket",
+        title_en: "New package",
+        subtitle_de: "Kurzbeschreibung…",
+        subtitle_en: "Short description…",
+        service_type: "auto",
+        lesson_count: 1,
+        duration_minutes: 50,
+        price_chf: 100,
+        features_de: ["Feature 1", "Feature 2"],
+        features_en: ["Feature 1", "Feature 2"],
+        color_class: "bg-[#dbeafe]",
+        active: true,
+        order: packages.length,
+      });
+      setPackages((cur) => [...cur, r.data]);
+      toast.success("Paket erstellt");
+    } catch (err) {
+      console.error("[BuchungPage] Paket erstellen fehlgeschlagen", err);
+      toast.error(formatApiError(err, "Paket konnte nicht erstellt werden"));
+    } finally {
+      setCreatingPackage(false);
+    }
+  };
+
   if (packages === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fbf9f6] text-[#0f172a]">
@@ -186,34 +217,7 @@ export default function BuchungPage() {
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                onClick={async () => {
-                  setCreatingPackage(true);
-                  try {
-                    const slug = `paket-${Date.now()}`;
-                    const r = await api.post("/packages", {
-                      slug,
-                      title_de: "Neues Paket",
-                      title_en: "New package",
-                      subtitle_de: "Kurzbeschreibung…",
-                      subtitle_en: "Short description…",
-                      service_type: "auto",
-                      lesson_count: 1,
-                      duration_minutes: 50,
-                      price_chf: 100,
-                      features_de: ["Feature 1", "Feature 2"],
-                      features_en: ["Feature 1", "Feature 2"],
-                      color_class: "bg-[#dbeafe]",
-                      active: true,
-                      order: packages.length,
-                    });
-                    setPackages((cur) => [...cur, r.data]);
-                    toast.success("Paket erstellt");
-                  } catch (err) {
-                    toast.error(formatApiError(err));
-                  } finally {
-                    setCreatingPackage(false);
-                  }
-                }}
+                onClick={handleAddPackage}
                 disabled={creatingPackage}
                 data-testid="package-add"
                 className="btn-accent text-sm"
