@@ -1,118 +1,73 @@
 {
-  "theme": "light",
-  "archetype": "High-Energy Dopamine (Bold & Dynamic)",
-  "typography": {
-    "fonts": {
-      "heading": "Clash Display",
-      "body": "Outfit",
-      "accent": "Unbounded"
-    },
-    "scales": {
-      "h1": "text-5xl sm:text-7xl lg:text-[8vw] leading-none tracking-tighter uppercase font-black",
-      "h2": "text-4xl sm:text-5xl lg:text-7xl leading-tight tracking-tighter font-bold",
-      "h3": "text-2xl sm:text-3xl lg:text-4xl leading-snug tracking-tight",
-      "body": "text-lg sm:text-xl leading-relaxed font-medium"
-    }
+  "theme_and_archetype": {
+    "domain": "Driving School / Education / Personal Brand",
+    "theme": "LIGHT",
+    "archetype": "1 (Organic & Earthy) with Swiss Minimalist influence",
+    "description": "Tasteful, editorial, minimal, premium but understated. A warm and approachable driving school that feels like a Swiss premium design studio built it."
   },
   "colors": {
-    "background": {
-      "base": "#F4F5F0",
-      "alt": "#FFFFFF",
-      "accent_container": "#0033FF"
-    },
-    "text": {
-      "primary": "#0A0A0A",
-      "secondary": "#4B5563",
-      "inverse": "#FFFFFF",
-      "accent": "#CCFF00"
-    },
-    "brand": {
-      "primary": "#0033FF",
-      "accent": "#CCFF00",
-      "secondary": "#FF0055"
-    },
-    "ui": {
-      "border": "#E5E7EB",
-      "card_bg": "#FFFFFF",
-      "hover": "#0022CC"
-    }
+    "background_base": "bg-stone-50",
+    "background_surface": "bg-white",
+    "text_primary": "text-stone-900",
+    "text_muted": "text-stone-500",
+    "accent_primary": "bg-emerald-800",
+    "accent_hover": "hover:bg-emerald-900",
+    "accent_text": "text-emerald-800",
+    "border_light": "border-stone-200"
   },
-  "layout_and_spacing": {
-    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
-    "section_padding": "py-24 sm:py-32 lg:py-40",
-    "border_radius": "rounded-3xl",
-    "bento_gap": "gap-4 sm:gap-6",
-    "grid_strategy": "Asymmetric layouts, overlap elements to break rigid grids, generous negative space."
+  "typography": {
+    "heading_font": "Fraunces",
+    "body_font": "Manrope",
+    "scale": {
+      "h1": "text-5xl md:text-6xl font-light tracking-tight",
+      "h2": "text-3xl md:text-4xl font-light tracking-tight",
+      "h3": "text-xl md:text-2xl font-normal",
+      "body": "text-base md:text-lg font-light leading-relaxed text-stone-600",
+      "label": "text-xs uppercase tracking-[0.2em] font-medium text-stone-500"
+    },
+    "rules": "No Clash Display or Inter for headings. Use Fraunces for a warm, editorial, premium feel. Manrope for clean, highly legible body text."
   },
-  "motion_and_interactions": {
-    "scroll_reveal": "Staggered fade-up with slight rotation using framer-motion.",
-    "hover_states": "Scale up slightly, shadow deepens, border color shifts to primary.",
-    "marquee": "Fast-moving, text-8xl outline text in background, mix of filled and outlined typography.",
-    "buttons": "Pill-shaped, high-contrast, kinetic hover effect.",
-    "parallax": "Images in bento boxes have slow scale effect on scroll."
+  "spacing_and_layout": {
+    "section_padding": "py-24 md:py-32 px-6 md:px-12",
+    "container": "max-w-7xl mx-auto",
+    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12",
+    "border_radius": "rounded-xl for cards, rounded-full for pills/buttons",
+    "whitespace": "Generous. Allow elements to breathe. Do not cramp content. Follow Swiss grid principles."
   },
   "components": {
-    "navigation": {
-      "style": "Floating glassmorphism pill",
-      "classes": "fixed top-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-xl border border-white/40 rounded-full px-8 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.05)] z-50 flex items-center justify-between w-[95%] max-w-5xl"
-    },
-    "hero": {
-      "style": "Kinetic typography dominant",
-      "layout": "Massive text taking up 70% of viewport, overlapping a vibrant image or video loop with a pill-shaped CTA floating near the bottom."
-    },
-    "cards": {
-      "style": "Neo-brutalist lite",
-      "classes": "bg-white rounded-3xl p-8 border-2 border-transparent hover:border-[#0033FF] transition-colors duration-300 shadow-sm hover:shadow-xl"
-    },
-    "buttons": {
-      "primary": "bg-[#0033FF] text-[#CCFF00] rounded-full px-8 py-4 font-bold uppercase tracking-wide hover:bg-[#0022CC] transition-all",
-      "secondary": "bg-white text-[#0A0A0A] border-2 border-[#0A0A0A] rounded-full px-8 py-4 font-bold uppercase tracking-wide hover:bg-[#0A0A0A] hover:text-white transition-all"
-    }
+    "buttons": "Refined pill shape (rounded-full). Primary: bg-emerald-800 text-white hover:bg-emerald-900. Secondary: border border-stone-300 text-stone-900 hover:border-stone-400 bg-transparent. Subtle transition duration-300.",
+    "cards": "bg-white border border-stone-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300. No aggressive hovers.",
+    "forms": "Minimal editorial forms. Underline inputs only (border-b border-stone-300 bg-transparent rounded-none px-0). No heavy box shadows on inputs.",
+    "navigation": "Sticky, glassmorphism (backdrop-blur-xl bg-white/80) with a 1px bottom border (border-stone-200). Refined and minimal."
   },
-  "sections": [
+  "animation": {
+    "philosophy": "Much lighter touch. Subtle fade-in and slide-up on scroll using framer-motion. No rotating blobs, no rotating cards.",
+    "hover_states": "Subtle border/color shifts, maybe a 1px translate-y on cards or button shadows. Keep it elegant."
+  },
+  "image_urls": [
     {
-      "name": "Hero",
-      "design_notes": "Massive H1 'SAFE RIDE' in Clash Display. A fast marquee behind the text reading 'DRIVING SCHOOL ZÜRICH & SCHWYZ'. Vibrant Cobalt blue primary CTA."
+      "category": "Hero Background",
+      "url": "https://images.unsplash.com/photo-1551952237-954a0e68786c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHxjYXIlMjBvbiUyMHNjZW5pYyUyMHJvYWR8ZW58MHx8fHwxNzgyNzk5MzA2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Scenic empty road driving, soft lighting"
     },
     {
-      "name": "Über mich (Nadine Stäubli)",
-      "design_notes": "Asymmetric layout. Large portrait image (rounded-3xl) offset with a big typography block 'Your Instructor'. Vibrant pink or lime accent blob behind the image."
+      "category": "About Nadine / Instructor",
+      "url": "https://images.unsplash.com/photo-1516862523118-a3724eb136d7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxkcml2aW5nJTIwaW5zdHJ1Y3RvcnxlbnwwfHx8fDE3ODI3OTkzMDZ8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Instructor in car"
     },
     {
-      "name": "Services / Angebote",
-      "design_notes": "Bento grid of 6 cards. Background is a soft cream #F4F5F0. Cards are white with large colorful icons and bold titles."
-    },
-    {
-      "name": "Fahrzeugflotte",
-      "design_notes": "Horizontal scrolling section or large staggered cards. High-contrast imagery of Audi S3, Opel OPC, Range Rover Sport. Overlay with thick typography."
-    },
-    {
-      "name": "Preise",
-      "design_notes": "Split layout: ZH/SZ vs GR. Use big bold price numbers (e.g., 'CHF 90'). High contrast boxes (one blue with lime text, one white with dark text)."
-    },
-    {
-      "name": "Bildergalerie",
-      "design_notes": "Masonry grid with hover-to-reveal color or hover-to-zoom (parallax) effect."
-    },
-    {
-      "name": "Bewertungen",
-      "design_notes": "Marquee slider with review cards. Cards have a vibrant top border and big quote marks."
-    },
-    {
-      "name": "Kontaktformular",
-      "design_notes": "Solid Cobalt Blue background section. White massive typography. The form uses thick bottom borders for inputs (no full box), placeholder text in neon lime."
-    },
-    {
-      "name": "Admin CMS",
-      "design_notes": "Functional but styled. Font family (Outfit). Restrained use of Cobalt Blue for primary actions. Lots of white space, dense tables. Apply data-testid to interactive elements."
+      "category": "Fleet / Interior",
+      "url": "https://images.unsplash.com/photo-1625690180114-5530b1304127?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBjYXIlMjBpbnRlcmlvcnxlbnwwfHx8fDE3ODI3OTkzMDZ8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Modern car interior, black/clean"
     }
   ],
-  "image_urls": {
-    "hero_background": "https://images.unsplash.com/photo-1527593167147-e9c94a5883e6",
-    "instructor_portrait": "https://images.pexels.com/photos/28038603/pexels-photo-28038603.jpeg",
-    "fleet_audi": "https://images.unsplash.com/photo-1550517636-ad7bac40dc28",
-    "fleet_generic": "https://images.unsplash.com/photo-1562877961-efcec8439f9d",
-    "decorative_driving": "https://images.pexels.com/photos/7843970/pexels-photo-7843970.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-  },
-  "instructions_to_main_agent": "Use 'Clash Display' for all massive headings and 'Outfit' for body text. Apply framer-motion for scroll reveals and continuous marquees. Implement the floating pill nav. Ensure the contrast between #0033FF (Cobalt) and #CCFF00 (Lime) is used for high-impact CTAs. Ditch all previous dark-theme artifacts. Apply data-testid to all interactive elements. Generate .js and .jsx files, not .tsx. Implement a responsive DE/EN switcher in the nav."
+  "instructions_to_main_agent": [
+    "Discard the previous bold/dynamic design completely.",
+    "Implement a refined, minimal, and warm editorial design using the Stone and Emerald color palette.",
+    "Use Fraunces for all headings, and Manrope for body text.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Implement the following sections: Hero, Über mich (Nadine), Services (6 cards), Fleet (3 cars), Pricing (4 plans), Gallery, Testimonials, Contact form.",
+    "Build a DE/EN switcher in the header.",
+    "Keep animations strictly to subtle framer-motion fades (e.g. initial={opacity: 0, y: 20} whileInView={opacity: 1, y: 0}). No floating blobs."
+  ]
 }
