@@ -142,7 +142,7 @@ export default function BlogPost() {
       <Header />
 
       {/* Back + admin actions */}
-      <div className="container-x px-5 md:px-8 lg:px-12 pt-10 md:pt-14">
+      <div className="container-x px-5 md:px-8 lg:px-12 pt-24 md:pt-28">
         <div className="flex items-center justify-between gap-4">
           <Link
             to="/blog"

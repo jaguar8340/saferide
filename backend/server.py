@@ -1092,18 +1092,28 @@ async def delete_location(slug: str, admin=Depends(get_current_admin)):
 
 # ---------- Blog Posts ----------
 def _is_post_published(doc: dict) -> bool:
-    """A post is publicly visible if status == 'published' AND
-    (scheduled_publish_at is null OR scheduled_publish_at <= now)."""
-    if doc.get("status") != "published":
-        return False
+    """A post is publicly visible if:
+      - status == 'published' (with optional future scheduled_publish_at as a publish-delay), OR
+      - status == 'scheduled' AND scheduled_publish_at is in the past (auto-promote).
+    """
+    status = doc.get("status")
     sched = doc.get("scheduled_publish_at")
-    if not sched:
-        return True
-    try:
-        sched_dt = datetime.fromisoformat(sched.replace("Z", "+00:00"))
-    except (ValueError, TypeError):
-        return True
-    return sched_dt <= datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    if status == "published":
+        if not sched:
+            return True
+        try:
+            sched_dt = datetime.fromisoformat(sched.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return True
+        return sched_dt <= now
+    if status == "scheduled" and sched:
+        try:
+            sched_dt = datetime.fromisoformat(sched.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return False
+        return sched_dt <= now
+    return False
 
 
 @api.get("/blog")

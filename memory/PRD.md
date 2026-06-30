@@ -23,7 +23,7 @@
 - **Fahrschüler:in (17–30)** – browst Angebot/Preise/Bewertungen, sendet Kontaktanfrage, kommt per Google-Suche auf eine Standortseite (`/fahrschule-einsiedeln`)
 - **Nadine Stäubli (Admin)** – meldet sich an, bearbeitet ALLES direkt auf der Live-Seite, inkl. der 9 Standort-Landingpages über `/admin → Seiten & Standorte`
 
-## What's Implemented (2026-02)
+## What's Implemented (2026-02 / Updated 2026-06)
 - **Backend (`/app/backend/server.py`, `default_pages.py`)**
   - JWT-Auth, MongoDB-Collections: `users`, `site_content`, `testimonials`, `gallery`, `contact_submissions`, `locations` (UNIQUE INDEX slug), `files`
   - Public Routes: `/api/content`, `/api/testimonials`, `/api/gallery`, `/api/contact`, `/api/locations`, `/api/locations/{slug}`, `/api/sitemap.xml`
@@ -47,23 +47,35 @@
   - `/api/sitemap.xml` mit 16 URLs (homepage, ablauf-zum-fuehrerschein, vku-unterricht, impressum, datenschutz, 11 Locations)
   - Canonical Tags auf Ablauf/VKU verweisen auf die SEO-freundlichen langen URLs
   - Dynamic `document.title`, SEO-Title/Description per Standort
-- **Tested (2026-06)**:
-  - iteration_10: Backend 15/15 + Frontend 100% (BrandLogo, Footer-11-Links, Inline-Upload, Pexels-Migration, Canonical Tags) ✓
-  - iteration_9: Backend 13/13 + Frontend 9/9 (Legal Pages, Route Aliases, Sitemap)
-  - iteration_8: Backend 21/21 + Frontend 100% (LocationPage refactor, Nadine global)
+- **Pages-Inventar (Home)**
+  - `Hero` → `Marquee` → `About` → **`WhySafeRide` (6 Pillars, ~800 Wörter)** → `Services` → `Fleet` → `Pricing` → `Gallery` → `Testimonials` → **`HomeFaq` (8 Accordion-FAQs)** → `Contact` ← NEU 2026-06
+- **Blog (Variant B)**: `/blog` Liste mit Kategorie/Tag-Filter (URL-deeplinkable), Featured-Post + Grid; `/blog/{slug}` Detail mit inline-editierbarem Titel/Excerpt/Body/Kategorien/Tags/Author-Bio + Reading-Time + Publish-/Scheduled-Date-Pickers + Status (Draft/Geplant/Veröffentlicht). Auto-Publish wenn `status='scheduled' + scheduled_publish_at<=now` ← NEU 2026-06
+- **Buchung**: `/buchung` mit 4 Paketen (Probelektion, 5er, 10er, VKU) als Auswahl-Cards; Booking-Form (Name, E-Mail, Tel, Wunschdatum/-zeit, Standort, Nachricht) speichert pending Booking auf Backend mit Package-Snapshot ← NEU 2026-06
+
+## Tested (2026-06)
+- iteration_11: Backend 19/20 (95%, fix angewendet) + Frontend 100% (Why, FAQ, Blog full flow, Buchung) ✓
+- iteration_10: Backend 15/15 + Frontend 100% (BrandLogo, Footer-11-Links, Inline-Upload, Pexels-Migration, Canonical Tags)
+- iteration_9: Backend 13/13 + Frontend 9/9 (Legal Pages, Route Aliases, Sitemap)
+- iteration_8: Backend 21/21 + Frontend 100% (LocationPage refactor, Nadine global)
 
 ## Test Credentials
 admin@saferide.ch / SafeRide2026!
 
 ## P1 / P2 / P3 Backlog
-- **P1 – E-Mail-Benachrichtigungen** an Nadine bei Kontaktanfrage (Resend/SendGrid)
+- **P1 – Stripe-Integration** für direkte Bezahlung der Pakete und Probelektion (Pakete sind bereits modelliert)
+- **P1 – E-Mail-Benachrichtigungen** an Nadine bei Kontaktanfrage UND bei neuer Buchung + Bestätigung an Schüler:in (Resend/SendGrid)
+- **P1 – Admin-Dashboard-Tabs** für Blog (Drafts/Veröffentlicht), Buchungen (Pending/Bestätigt), Pakete
 - **P1 – PATCH-Pfad-Allowlist** für `/api/content` und `/api/locations/{slug}` (Hardening)
-- **P1 – Selbst-gehostete Hero-Bilder** für die 11 Standorte statt Pexels/Unsplash (Permanenz) – Admin kann jetzt einfach via Inline-Upload austauschen
-- **P2 – Online-Buchung** (Kalender pro Service)
-- **P2 – Online-Bezahlung** (Stripe für Pakete / Gutscheine)
+- **P1 – Bookings-Status-Enum** als Pydantic Literal (verhindert beliebige Status-Strings)
+- **P1 – Selbst-gehostete Hero-Bilder** für die 11 Standorte statt Pexels (Permanenz) – Admin kann via Inline-Upload austauschen
+- **P2 – Hydration-Warning beheben**: `<option>`-Children werden vom Visual-Editor mit `<span>` umschlossen (React-Warnung im Console, keine Funktionsstörung)
+- **P2 – Shadcn-Calendar** statt nativem `<input type="date">` auf der Buchungsseite
+- **P2 – Blog-RSS-Feed** + Share-Buttons + verwandte Beiträge
+- **P2 – Booking-Package-Snapshot vervollständigen** (features_de, duration_minutes)
 - **P2 – Cache-Control-Header** auf `/api/locations/{slug}` (mostly-static)
-- **P2 – Native `confirm()` ersetzen** durch Radix AlertDialog (LegalPage, LocFaq) für bessere UX/Testbarkeit
-- **P2 – Locations in Footer cachen** statt N Requests pro Session (React Query oder shared Context)
-- **P3 – Multi-Instructor-Teamseite**
-- **P3 – Routing-Refactor**: server.py in `routers/auth`, `routers/content`, `routers/locations` etc. aufteilen
-- **P3 – Layout-level CanonicalLink** statt pro-Seite (verhindert stale Tags bei Route-Wechsel)
+- **P2 – Native `confirm()` ersetzen** durch Radix AlertDialog (LegalPage, LocFaq, BlogPost-Delete)
+- **P2 – Locations in Footer cachen** statt N Requests pro Session
+- **P2 – aria-pressed** auf Buchungs-Paket-Cards (a11y)
+- **P3 – Multi-Instructor-Teamseite** + Author-Profile auf Blog
+- **P3 – Routing-Refactor**: server.py in `routers/auth`, `routers/content`, `routers/locations`, `routers/blog`, `routers/bookings` aufteilen
+- **P3 – Layout-level CanonicalLink** statt pro-Seite
