@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -150,6 +151,11 @@ export default function CertificatesDialog() {
               ? "Alle Diplome, Berufsbewilligungen und Weiterbildungen — laufend ergänzt."
               : "All diplomas, professional licences and further training — continuously updated."}
           </p>
+          <DialogDescription className="sr-only">
+            {lang === "de"
+              ? "Liste aller Diplome und Zertifikate von Nadine Stäubli. Klicke ein Bild für die Vollansicht."
+              : "List of all diplomas and certificates of Nadine Stäubli. Click an image for full view."}
+          </DialogDescription>
         </DialogHeader>
 
         {editMode && (
@@ -353,7 +359,10 @@ export default function CertificatesDialog() {
                   <Award size={11} /> {items[zoomIndex].year}
                 </span>
               )}
-              <span className="text-xs text-white/50 ml-2">
+              <span
+                data-testid="certificate-lightbox-counter"
+                className="text-xs text-white/50 ml-2"
+              >
                 {zoomIndex + 1} / {items.length}
               </span>
             </div>

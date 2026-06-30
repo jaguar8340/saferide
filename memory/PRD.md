@@ -53,7 +53,23 @@
 - **Buchung**: `/buchung` mit 4 Paketen (Probelektion, 5er, 10er, VKU) als Auswahl-Cards; Booking-Form (Name, E-Mail, Tel, Wunschdatum/-zeit, Standort, Nachricht) speichert pending Booking auf Backend mit Package-Snapshot ← NEU 2026-06
 
 ## Tested (2026-06)
-- iteration_12: Backend 100% (Certificates CRUD, Packages PATCH/POST/DELETE) + Frontend 85% — 2 bugs auto-fixed:
+- iteration_13: Backend 11/11 (100%) + Frontend 98% (TopContactBar, Diplome-Lightbox, /partner CRUD inline-edit, Admin-Dashboard 5 neue Tabs)
+- iteration_12: Backend 9/9 + Frontend 100% (Kantonswappen, Buchung inline-edit, Galerie uniform, Diplome-Modal)
+- iteration_11: Backend 19/20 + Frontend 100% (Why-Section, Home-FAQ, Blog, Buchung)
+- iteration_10: Backend 15/15 + Frontend 100% (BrandLogo, Footer 11-Links, OtherLocations upload)
+- iteration_9: Backend 13/13 + Frontend 9/9 (Legal Pages, Route Aliases, Sitemap)
+- iteration_8: Backend 21/21 + Frontend 100% (LocationPage refactor, Nadine global)
+
+## NEU 2026-06 (Iteration 13)
+- **TopContactBar**: Sticky Navy-Bar OBEN AUF JEDER SEITE mit Telefon-Nummer (One-Tap-Anruf via `tel:`-Link), Öffnungszeiten und Standorte-Übersicht. Bleibt sichtbar beim Scrollen
+- **Diplome-Lightbox**: Klick auf Diplom-Bild öffnet Vollbild-Overlay mit Prev/Next-Pfeilen, Tastatur-Navigation (Esc/Arrows), Counter
+- **`/partner` Seite**: 6 Default-Partner (DRIVESWISS, asa, Samariter Lachen, Audi Zentrum, SFV, SGS) als Cards. Vollständig inline-editierbar (Name, Kategorie, Beschreibung, Website-URL, Logo-Upload). Admin-Button „+ Neuer Partner". Header-Link „Partner" + Sitemap-Eintrag
+- **Admin-Dashboard 5 neue Tabs**: Blog, Buchungen, Pakete, Diplome, Partner
+  - Blog: Liste mit Status-Select (Draft/Geplant/Veröffentlicht), Öffnen-Button, Löschen
+  - Buchungen: Split-View mit Liste links + Detail-Panel rechts; Status-Workflow (Offen/Bestätigt/Storniert), Telefon/E-Mail tappable, Paket-Snapshot
+  - Pakete: Liste mit Aktiv/Inaktiv-Toggle + Löschen (Edit verweist auf /buchung Inline-Editor)
+  - Diplome: Grid-Übersicht mit Löschen (Upload verweist auf About-Bereich Modal)
+  - Partner: Liste mit Logo, Kategorie, Name, Website (Edit verweist auf /partner Inline-Editor)
   - Fixed: +Paket onClick refactored to named `handleAddPackage()` with explicit error logging (POST /api/packages now fires reliably; manual verification 2026-06)
   - Improved: CantonWappen now detects MULTIPLE canton codes in one label ("Kanton ZH / SZ" → renders BOTH ZH + SZ shields)
 - iteration_11: Backend 19/20 + Frontend 100% (Why, FAQ, Blog, Buchung)
