@@ -9,6 +9,7 @@ import EditableImage from "@/components/edit/EditableImage";
 import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
+import CanonicalLink from "@/components/site/CanonicalLink";
 
 export default function AblaufPage() {
   const { lang, pick } = useLang();
@@ -33,6 +34,7 @@ export default function AblaufPage() {
 
   return (
     <main data-testid="ablauf-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
+      <CanonicalLink path="/ablauf-zum-fuehrerschein" />
       <SubPageHeader />
 
       {/* Hero */}

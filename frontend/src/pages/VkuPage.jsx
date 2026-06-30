@@ -9,6 +9,7 @@ import EditableImage from "@/components/edit/EditableImage";
 import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
+import CanonicalLink from "@/components/site/CanonicalLink";
 
 export default function VkuPage() {
   const { lang, pick } = useLang();
@@ -34,6 +35,7 @@ export default function VkuPage() {
 
   return (
     <main data-testid="vku-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
+      <CanonicalLink path="/vku-unterricht" />
       <SubPageHeader />
 
       {/* Hero */}

@@ -398,6 +398,7 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     "google_reviews_count": "60+",
     "google_reviews_label_de": "Bewertungen mit 5,0 Sternen auf Google",
     "google_reviews_label_en": "Reviews with 5.0 stars on Google",
+    "logo_url": "https://customer-assets.emergentagent.com/job_driving-school-cms/artifacts/0v9hxuzi_saferide%20logo.jpg",
     "nadine": {
         "intro_title_de": "Ich bin Nadine",
         "intro_title_en": "I'm Nadine",
@@ -649,6 +650,15 @@ async def startup_event():
                     for r in existing_routes
                 ]
                 await db.locations.update_one({"slug": slug}, {"$set": {"exam_routes": upgraded}})
+            # One-time fix: replace any remaining broken/unrelated Unsplash
+            # hero images with the curated Pexels fallback. Preserves admin
+            # uploads (which use the /api/files/ path).
+            current_hero = existing.get("hero_image_url", "")
+            if "images.unsplash.com" in current_hero and default_loc.get("hero_image_url") != current_hero:
+                await db.locations.update_one(
+                    {"slug": slug},
+                    {"$set": {"hero_image_url": default_loc["hero_image_url"]}},
+                )
 
 
 # ---------- Auth Routes ----------

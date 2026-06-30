@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 10 — BrandLogo (header/footer), Footer rebuild w/ 11 locations, OtherLocationsSection inline admin upload, Pexels migration, canonical links. ALL TESTS PASS (15/15 backend pytest + 100% Playwright UI). Backend: GET /api/content has logo_url (customer-assets URL). GET /api/locations returns 11 (einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil). siebnen/lachen/waedenswil/altendorf/lenzerheide/rapperswil/pfaeffikon-sz/richterswil hero_image_url start with https://images.pexels.com/. einsiedeln/horgen/chur are NOT Unsplash (admin /api/files/* preserved per migration). PATCH /api/locations/siebnen {hero_image_url} with admin Bearer returns 200, GET confirms persistence, restored. PATCH without auth → 403. SPA routes /, /ablauf, /ablauf-zum-fuehrerschein, /vku, /vku-unterricht, /fahrschule-einsiedeln, /impressum, /datenschutz all 200. POST /api/contact (first_name, last_name, email, phone, message) returns 200. Frontend Playwright: header [data-testid='brand-logo'] with <img src> rendered on /, /fahrschule-einsiedeln, /ablauf, /vku, /impressum — all 5 have bg-[#0f172a] navy badge. Footer [data-testid='site-footer'] [data-testid='brand-logo'] present on all 5. Footer [data-testid='footer-locations-list'] has exactly 11 <a> with data-testid='footer-location-{slug}' for all expected slugs. Click footer-location-siebnen → /fahrschule-siebnen ✓. Canonical link tags: /ablauf and /ablauf-zum-fuehrerschein both → ends with /ablauf-zum-fuehrerschein; /vku and /vku-unterricht both → /vku-unterricht (asserted via document.head querySelector). Public (non-edit) mode on /fahrschule-einsiedeln: 0 other-region-upload-* buttons (hidden as expected). Admin edit mode: 10/10 OtherLocationCards have [data-testid='other-region-upload-{slug}'] visible. Header logo click from /ablauf → / (scrollY=0, scroll-to-top works; URL is /#top which is the home anchor). Footer legal links (impressum/datenschutz/admin) all have correct hrefs.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "OtherLocationsSection on /fahrschule-einsiedeln", "issues": ["Several Pexels migration images don't match a 'driving school in Switzerland' vibe: Lachen shows a building/dealership, Altendorf and Rapperswil show large freight trucks (semi-trailers on a forest highway). These read more as US trucking stock than Swiss driving-school photography. Consider replacing with curated CH road/scenic photos via the admin inline upload (which now works perfectly)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration10.py",
+    "/app/test_reports/pytest/it10_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BrandLogo.jsx uses inline absolute-positioned upload button only when editMode=true — correct and tested. Note the upload PATCHes content.logo_url globally via updateField, which means a single admin can break ALL pages' headers and footers with one bad image. Consider an undo/preview before commit.",
+    "OtherLocationsSection.jsx wraps the entire card in a <Link>, then mounts the upload <button type='button'> AND a hidden <input type='file'> inside that link with e.preventDefault()/stopPropagation() guards in onClick. This works (verified) but is fragile — a future Link/Button library upgrade could break stopPropagation. A cleaner pattern: render the card as a non-anchor and use a separate onClick handler for navigation, leaving the upload button outside the navigation surface.",
+    "Footer locations list is fetched client-side on every footer mount via /api/locations. Since Footer renders on every page, this is N requests per session even though /api/content already contains most config. Consider lifting locations into a shared context or caching via SWR/react-query (already a dependency).",
+    "CanonicalLink.jsx imperatively mutates document.head but the cleanup intentionally leaves the tag in place. If a future page forgets to render <CanonicalLink>, a stale tag from the previous page will persist. Recommend either clearing on unmount OR adding CanonicalLink on every public page (Layout-level).",
+    "Backend default_pages.py one-time Unsplash→Pexels migration (server.py:653-660) is idempotent (no-op on subsequent runs because URLs no longer match unsplash.com), but it has no version flag — if the Pexels URLs themselves break in future, there's no clean way to re-trigger. Consider storing a content.migration_version key.",
+    "Frontend Footer.jsx and BrandLogo.jsx now total ~250 LOC combined; healthy. No file >700 LOC."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration10.py (new)",
+    "/app/test_reports/iteration_10.json (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! → POST /api/auth/login returns {access_token}. localStorage key: saferide_admin_token.",
+  "seed_data_creation": "None. PATCH siebnen.hero_image_url was modified to test URL then restored to the original Pexels URL via the same endpoint. Contact form created one TEST_iter10 submission (admin can clean via /api/contact/submissions if desired).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Edit-mode state PERSISTS across reloads (likely localStorage). When asserting on edit-mode UI (BrandLogo upload, OtherLocations upload, contentEditable), DO NOT blindly click [data-testid='toolbar-toggle-edit']. Instead, first probe the state via brand-logo-upload-header count (1 → editMode ON, 0 → editMode OFF) and only toggle if needed. Toolbar button label flips: shows 'BEARBEITEN' when active (edit ON) OR when inactive (preview ON, click to edit) — relying on text is ambiguous, use the upload-icon probe pattern. All iteration 10 slugs: einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil. Pexels-migrated: all 8 EXCEPT einsiedeln/horgen/chur (kept /api/files/* admin uploads). Canonical paths: /ablauf↔/ablauf-zum-fuehrerschein, /vku↔/vku-unterricht (canonical URL = the long one). Contact POST schema: {first_name, last_name, email, phone, message}.",
+  "rca of the issue": "Initial Playwright run incorrectly reported 0/10 other-region-upload buttons in admin edit mode. RCA: edit-mode state was already ON when the page loaded (persisted via localStorage from a previous admin session in the browser context). Clicking toolbar-toggle-edit then turned edit-mode OFF, hiding all upload buttons. Fixed by probing brand-logo-upload-header count first and only toggling when needed — second run found exactly 10/10 upload buttons correctly rendered."
+}

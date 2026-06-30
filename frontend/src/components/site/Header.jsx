@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
+import BrandLogo from "@/components/site/BrandLogo";
 
 const sections = [
   { id: "about", key: "about" },
@@ -63,12 +64,9 @@ export default function Header() {
           href="#top"
           data-testid="logo-link"
           onClick={(e) => handleAnchorClick(e, "top")}
-          className="flex items-center gap-2"
+          className="inline-flex items-center"
         >
-          <span className="dot-accent" />
-          <span className="font-display text-xl tracking-tight">
-            Safe<span className="font-serif-i text-[#ff5a36]">Ride</span>
-          </span>
+          <BrandLogo variant="header" />
         </a>
 
         <nav className="hidden lg:flex items-center gap-6 xl:gap-7">

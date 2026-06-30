@@ -106,6 +106,24 @@ DEFAULT_VKU = {
 
 # ---------- 9 Location Landing Pages ----------
 
+# Reliable Pexels stock photos used as fallback hero images for the
+# location landing pages. The admin can replace each one via the inline
+# editor on /fahrschule-<slug> or directly from the "Andere Standorte"
+# cards.
+_FALLBACK_HERO_IMAGES = {
+    "einsiedeln": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "siebnen": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "lachen": "https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "waedenswil": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "horgen": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "altendorf": "https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "chur": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "lenzerheide": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "rapperswil": "https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "pfaeffikon-sz": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "richterswil": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
+}
+
 _LOCATIONS_RAW = [
     {
         "slug": "einsiedeln",
@@ -362,6 +380,7 @@ def _why_safe_ride(name):
 
 def _build_location(loc):
     name = loc["name"]
+    hero_url = _FALLBACK_HERO_IMAGES.get(loc["slug"], loc["image"])
     return {
         "slug": loc["slug"],
         "name": name,
@@ -371,7 +390,7 @@ def _build_location(loc):
         "seo_title_en": f"Driving school {name} – Safe Ride · learn to drive in {name}",
         "seo_description_de": f"Fahrstunden in {name} mit Safe Ride. Persönliche Betreuung, moderne Fahrzeuge und gezielte Prüfungsvorbereitung in {name} ({loc['canton']}).",
         "seo_description_en": f"Driving lessons in {name} with Safe Ride. Personal coaching, modern vehicles and focused exam preparation in {name} ({loc['canton']}).",
-        "hero_image_url": loc["image"],
+        "hero_image_url": hero_url,
         "hero_overline_de": f"Fahrschule · {loc['canton']}",
         "hero_overline_en": f"Driving School · {loc['canton']}",
         "hero_title_de": f"Fahrschule {name}",
