@@ -29,12 +29,14 @@
   - Public Routes: `/api/content`, `/api/testimonials`, `/api/gallery`, `/api/contact`, `/api/locations`, `/api/locations/{slug}`, `/api/sitemap.xml`
   - Admin Routes: Auth, Content (PUT + PATCH dot-notation), Testimonials/Gallery CRUD, Submissions, `/api/upload` (Bild **+ Video** mp4/mov/webm, 60 MB), Locations POST/PATCH/DELETE
   - **Idempotente Seed-Migration** für Locations: fügt neue Felder hinzu, hebt FAQs auf 15, ergänzt `description_de/en` auf existierenden `exam_routes` ohne Admin-Edits zu zerstören
-  - Default-Seed: Content + Testimonials + Gallery + Ablauf/VKU + 11 Standorte
+  - Default-Seed: Content + Testimonials + Gallery + Ablauf/VKU + 11 Standorte + **Impressum (5 Sektionen) + Datenschutz (6 Sektionen)** ← NEU 2026-06
 - **Frontend (`/app/frontend/src/`)**
   - `/` Homepage mit Hash-Scroll-Effekt; dynamisches `document.title` pro Route
   - `/ablauf`, `/vku` – statische Sub-Seiten mit identischem Header
-  - **`/fahrschule-<slug>` – 11 SEO-Landingpages** mit:
-    - Hero: H1 immer "Fahrschule {Ort}", City-Pill, links Probelektion-CTA + Tel-Link, **rechts `NadineIntroCard` (Foto ODER Video Upload, "Ich bin Nadine" Intro, 2 Stats)**
+  - **`/ablauf-zum-fuehrerschein`, `/vku-unterricht`** – SEO-freundliche Alias-Routen (gleiche Komponente) ← NEU 2026-06
+  - **`/impressum`, `/datenschutz`** – editierbare Rechtsseiten via gemeinsame `LegalPage.jsx` Komponente ← NEU 2026-06
+  - **`/fahrschule-<slug>` – 11 SEO-Landingpages** (refaktoriert auf 10 Sub-Komponenten in `/components/location/` – LocationPage.jsx 971→170 Zeilen ← NEU 2026-06) mit:
+    - Hero: H1 immer "Fahrschule {Ort}", City-Pill, links Probelektion-CTA + Tel-Link, **rechts `NadineIntroCard` (Foto ODER Video Upload, GLOBAL – ein Upload erscheint auf allen 11 Standorten)**
     - "Warum {Ort}?" + Ideal-for-Punkte
     - **Prüfungsstrecken: Titel + Beschreibung pro Strecke (inline editierbar) + Outro-Paragraph darunter**
     - Treffpunkt + Google Maps iFrame
@@ -46,19 +48,19 @@
     - **15 FAQs als TRUE Accordion** (nur eine Antwort gleichzeitig offen, auch im Edit-Modus)
     - Bottom-CTA
   - Header identisch auf allen Seiten (7 Items + DE/EN + Anfragen)
+  - Footer: Impressum + Datenschutz + CMS-Login Links ← NEU 2026-06
   - Google-Reviews-Integration auf Startseite (Cards mit "GOOGLE · Datum"-Badge + Auf-Google-ansehen-CTA)
   - **`EditableMedia`** – Image-+-Video-Upload-Widget mit Foto/Video-Toggle
-  - **`NadineIntroCard`** – wiederverwendbarer Personal-Intro-Block (Hero-Rechts, alle Landingpages)
+  - **`NadineIntroCard`** – wiederverwendbarer Personal-Intro-Block (GLOBAL via `content.nadine.*`, verifiziert 2026-06)
   - **`OtherLocationsSection`** – filtert current slug aus, rendert Rest als Cards
   - Admin-Dashboard mit "Seiten & Standorte"-Tab
 - **SEO**
-  - `/api/sitemap.xml` mit 14 URLs, public Base-URL aus X-Forwarded-Host
+  - `/api/sitemap.xml` mit 16 URLs (homepage, ablauf-zum-fuehrerschein, vku-unterricht, impressum, datenschutz, 11 Locations) ← erweitert 2026-06
   - `/robots.txt` (von Cloudflare im Preview überschrieben – in Production via DNS-Domain kontrollierbar)
   - Dynamic `document.title` pro Route, SEO-Title/Description per Standort
-- **Tested (2026-02)**: 
-  - iteration_6: Backend 10/10 + Frontend 100% (Nadine-Card mit img/video render, Routes-Outro, OtherRegions-10-Cards, FAQ-Accordion 0→1→1)
-  - iteration_5: 21/21 neue Feature-Tests
-  - Regression-Total: ~76/78 (2 bekannte xdist-Fixture-Races)
+- **Tested (2026-06)**: 
+  - iteration_9: Backend 13/13 + Frontend 9/9 (Legal Pages, Route Aliases, Sitemap, Inline-Edit-Persistenz, Lang-Toggle)
+  - iteration_8: Backend 21/21 + Frontend 100% (LocationPage refactor stable, Nadine global verified)
   - Migration-Safety verifiziert (existierende Daten bleiben erhalten)
 
 ## Test Credentials
@@ -67,11 +69,11 @@ admin@saferide.ch / SafeRide2026!
 ## P1 / P2 / P3 Backlog
 - **P1 – E-Mail-Benachrichtigungen** an Nadine bei Kontaktanfrage (Resend/SendGrid)
 - **P1 – PATCH-Pfad-Allowlist** für `/api/content` und `/api/locations/{slug}` (Hardening)
-- **P1 – Selbst-gehostete Hero-Bilder** für die 9 Standorte statt Unsplash (Permanenz)
-- **P2 – sitemap.xml & robots.txt** mit allen 9 Standort-URLs für maximale SEO-Sichtbarkeit
+- **P1 – Selbst-gehostete Hero-Bilder** für die 11 Standorte statt Unsplash (Permanenz)
 - **P2 – Online-Buchung** (Kalender pro Service)
 - **P2 – Online-Bezahlung** (Stripe für Pakete / Gutscheine)
 - **P2 – Cache-Control-Header** auf `/api/locations/{slug}` (mostly-static)
+- **P2 – Native confirm() ersetzen** durch Radix AlertDialog (LegalPage.removeSection, LocFaq.removeFaq) für bessere UX/Testbarkeit
+- **P2 – Canonical-Link-Tags** auf AblaufPage/VkuPage zu den SEO-Pfaden (Duplicate-Content vermeiden)
 - **P3 – Multi-Instructor-Teamseite**
-- **P3 – Impressum / Datenschutz**
 - **P3 – Routing-Refactor**: server.py in routers/auth, routers/content, routers/locations etc. aufteilen
