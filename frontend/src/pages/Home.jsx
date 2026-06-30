@@ -24,6 +24,17 @@ export default function Home() {
       : "Safe Ride · Driving School in ZH · SZ · SG · GR";
   }, [lang]);
 
+  // Smoothly scroll to the section indicated by location.hash on mount/change
+  useEffect(() => {
+    const hash = window.location.hash?.replace("#", "");
+    if (!hash) return;
+    // Wait one render frame so the DOM has the section
+    const t = setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [content]);
+
   if (!content) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fbf9f6] text-[#0f172a]">

@@ -32,6 +32,9 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const isSubPage = loc.pathname !== "/";
+  const opaque = scrolled || isSubPage;
+
   const handleAnchorClick = (e, id) => {
     e.preventDefault();
     if (loc.pathname !== "/") {
@@ -50,7 +53,7 @@ export default function Header() {
     <header
       data-testid="site-header"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        opaque
           ? "bg-[#fbf9f6]/90 backdrop-blur-md border-b border-[#e2e8f0]"
           : "bg-transparent"
       }`}

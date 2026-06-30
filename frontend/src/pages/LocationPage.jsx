@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Loader2,
   ImagePlus,
+  Star,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
@@ -18,7 +20,8 @@ import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError, resolveUrl } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
-import SubPageHeader from "@/components/site/SubPageHeader";
+import GoogleIcon from "@/components/site/GoogleIcon";
+import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 
@@ -240,16 +243,14 @@ export default function LocationPage() {
                   as="span"
                   className="inline-block"
                 />
-                <br />
-                <Editable
-                  path={`hero_highlight_${lang}`}
-                  value={pick(loc.hero_highlight_de, loc.hero_highlight_en)}
-                  onUpdate={updateField}
-                  as="span"
-                  className="inline-block font-serif-i text-[#ff5a36] font-normal"
-                  style={{ fontSize: "clamp(1.8rem, 4.5vw, 4rem)" }}
-                />
               </h1>
+              <Editable
+                path={`hero_highlight_${lang}`}
+                value={pick(loc.hero_highlight_de, loc.hero_highlight_en)}
+                onUpdate={updateField}
+                as="p"
+                className="mt-4 inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full px-4 py-2 text-sm font-semibold text-[#475569]"
+              />
               <Editable
                 path={`hero_subtitle_${lang}`}
                 value={pick(loc.hero_subtitle_de, loc.hero_subtitle_en)}
@@ -494,6 +495,64 @@ export default function LocationPage() {
         </div>
       </section>
 
+      {/* WHY SAFE RIDE in {name} */}
+      <section className="section-pad bg-[#0f172a] text-white" data-testid="loc-why-saferide">
+        <div className="container-x px-5 md:px-8 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            <div className="lg:col-span-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="dot-accent" />
+                <Editable
+                  path={`why_overline2_${lang}`}
+                  value={pick(loc.why_overline2_de, loc.why_overline2_en)}
+                  onUpdate={updateField}
+                  className="text-xs font-semibold tracking-[0.18em] uppercase text-white/65"
+                />
+              </div>
+              <Editable
+                path={`why_title2_${lang}`}
+                value={pick(loc.why_title2_de, loc.why_title2_en)}
+                onUpdate={updateField}
+                as="h2"
+                className="font-display leading-[0.98] tracking-tight block text-white"
+                style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
+              />
+              <Editable
+                path={`why_body2_${lang}`}
+                value={pick(loc.why_body2_de, loc.why_body2_en)}
+                onUpdate={updateField}
+                as="p"
+                multiline
+                className="mt-6 text-lg text-white/75 leading-relaxed font-medium block"
+              />
+            </div>
+            <div className="lg:col-span-7">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(loc.why_points2 || []).map((p, i) => (
+                  <li
+                    key={p.id || i}
+                    data-testid={`loc-why2-${i}`}
+                    className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-2xl p-5"
+                  >
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ff5a36] text-white shrink-0">
+                      <Check size={14} strokeWidth={2.6} />
+                    </span>
+                    <Editable
+                      path={`why_points2.${i}.text_${lang}`}
+                      value={pick(p.text_de, p.text_en)}
+                      onUpdate={updateField}
+                      as="p"
+                      multiline
+                      className="text-base text-white leading-relaxed font-medium block flex-1"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRICES */}
       <section className="section-pad bg-[#fbf9f6]">
         <div className="container-x px-5 md:px-8 lg:px-12">
@@ -653,6 +712,80 @@ export default function LocationPage() {
         </div>
       </section>
 
+      {/* GOOGLE REVIEWS */}
+      <section className="section-pad bg-white border-y border-[#e2e8f0]" data-testid="loc-google-reviews">
+        <div className="container-x px-5 md:px-8 lg:px-12 text-center max-w-3xl mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <GoogleIcon size={20} />
+            <Editable
+              path={`google_reviews_overline_${lang}`}
+              value={pick(loc.google_reviews_overline_de, loc.google_reviews_overline_en)}
+              onUpdate={updateField}
+              className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+            />
+          </div>
+          <Editable
+            path={`google_reviews_title_${lang}`}
+            value={pick(loc.google_reviews_title_de, loc.google_reviews_title_en)}
+            onUpdate={updateField}
+            as="h2"
+            className="font-display leading-[0.98] tracking-tight block"
+            style={{ fontSize: "clamp(2rem, 4vw, 3.4rem)" }}
+          />
+          <div className="mt-5 inline-flex items-center gap-3 bg-[#fbf9f6] rounded-full px-5 py-2.5 text-sm">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={14} className="text-[#ff5a36]" fill="#ff5a36" />
+              ))}
+            </div>
+            <span className="font-semibold text-[#0f172a]">
+              {content?.google_reviews_count || "60+"}
+            </span>
+            <span className="text-[#475569]">
+              {lang === "de" ? "5-Sterne-Bewertungen" : "5-star reviews"}
+            </span>
+          </div>
+          <Editable
+            path={`google_reviews_subtitle_${lang}`}
+            value={pick(loc.google_reviews_subtitle_de, loc.google_reviews_subtitle_en)}
+            onUpdate={updateField}
+            as="p"
+            multiline
+            className="mt-6 max-w-xl mx-auto text-base text-[#475569] leading-relaxed font-medium block"
+          />
+          {editMode && (
+            <div className="mt-4 max-w-xl mx-auto">
+              <label className="text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8] block text-left mb-1">
+                Google-Bewertungen-Link (für diesen Standort)
+              </label>
+              <input
+                type="url"
+                defaultValue={loc.google_reviews_url || ""}
+                onBlur={(e) => updateField("google_reviews_url", e.target.value)}
+                placeholder="https://g.page/r/…"
+                data-testid="loc-google-reviews-url"
+                className="w-full text-xs bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </div>
+          )}
+          <a
+            href={loc.google_reviews_url || content?.google_reviews_url || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="loc-google-reviews-cta"
+            className="mt-8 inline-flex items-center gap-2 btn-accent"
+          >
+            <GoogleIcon size={16} />
+            <Editable
+              path={`google_reviews_cta_${lang}`}
+              value={pick(loc.google_reviews_cta_de, loc.google_reviews_cta_en)}
+              onUpdate={updateField}
+            />
+            <ArrowUpRight size={14} />
+          </a>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="section-pad bg-[#fbf9f6]">
         <div className="container-x px-5 md:px-8 lg:px-12">
@@ -671,6 +804,14 @@ export default function LocationPage() {
                 as="h2"
                 className="font-display leading-[0.98] tracking-tight block"
                 style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
+              />
+              <Editable
+                path={`faq_intro_${lang}`}
+                value={pick(loc.faq_intro_de, loc.faq_intro_en)}
+                onUpdate={updateField}
+                as="p"
+                multiline
+                className="mt-3 max-w-xl text-base text-[#475569] leading-relaxed font-medium block"
               />
             </div>
             {editMode && (

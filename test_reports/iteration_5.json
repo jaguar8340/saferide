@@ -1,0 +1,55 @@
+{
+  "summary": "Iteration 5 validated the full feature surface area: (a) 2 new locations pfaeffikon-sz + richterswil (now 11 total); (b) hero H1 exact = 'Fahrschule {name}' with pill badge below; (c) Google Reviews integration on home (Testimonials reviews-google-cta target=_blank + per-card Google badge) and on every location page (loc-google-reviews + loc-google-reviews-cta target=_blank); (d) consistent SiteHeader across /, /ablauf, /vku, /fahrschule-* with all 7 nav-* testids; (e) new loc-why-saferide section with 6 why_points2 bullets and dark bg; (f) 15 FAQs per location (migrated from 4); (g) /api/sitemap.xml with 14 URLs using public base URL; (h) editable per-location google_reviews_url via loc-google-reviews-url input. Backend: created /app/backend/tests/test_iteration5_features.py with 21 new tests, ALL 21 PASS. Combined suite 66/68 (the 2 remaining failures are the same pre-existing flaky races already noted in iteration_4 — TestAdminSubmissions::test_list_and_lifecycle and test_patch_content::test_patch_top_level_dot_path_and_revert race against each other when run with pytest-xdist). Frontend: verified via Playwright on real URL. /fahrschule-einsiedeln H1 textContent EXACTLY 'Fahrschule Einsiedeln' (no italic highlight inside H1); pill 'Klosterdorf · Übungsstrecken zwischen Berg & Tal' rendered with rounded-full class below H1. site-header on sub-pages opaque (rgba(251,249,246,0.9)). All 7 nav-* testids present on /, /ablauf, /vku, /fahrschule-einsiedeln. Clicking nav-pricing on /ablauf navigates to /#pricing AND scrolls pricing section to top of viewport (top=0.34px). loc-why-saferide with all 6 [data-testid=loc-why2-0..5] points rendered. loc-google-reviews + loc-google-reviews-cta href=https://www.google.com/search?q=...Safe+Ride+Nadine... target=_blank. Exactly 15 numeric loc-faq-* items on einsiedeln, pfaeffikon-sz and richterswil. Home reviews-google-cta href + target=_blank verified. Two new slugs render H1='Fahrschule Pfäffikon SZ' / 'Fahrschule Richterswil' with why=1, google_reviews=1, faqs=15. Admin pages tab shows all 11 pages-link-loc-* including pfaeffikon-sz and richterswil. Edit mode on /fahrschule-einsiedeln: total 76 [data-edit-path] wrappers; all 10 spec'd paths present exactly once (hero_title_de, why_title2_de, why_body2_de, why_points2.0.text_de, google_reviews_title_de, google_reviews_cta_de, google_reviews_subtitle_de, faq_intro_de, faqs.0.question_de, faqs.14.question_de). loc-google-reviews-url input visible ONLY in edit mode (1 in edit, 0 in preview). Unknown slug /fahrschule-foo renders in-page 404 'Standort nicht gefunden' without redirect. PATCH /api/locations/einsiedeln with {why_title2_de, google_reviews_url} updates only those fields, persists via GET, and reverts cleanly — verified end-to-end in pytest.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/contact/submissions DELETE & /api/content PATCH", "issue": "Pre-existing fixture-race between TestAdminSubmissions::test_list_and_lifecycle and test_patch_content::test_patch_top_level_dot_path_and_revert when running pytest -n auto (xdist). Same race documented in iteration_4. Not new. Tests pass when run sequentially or in isolation."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Home marquee (carryover from iteration_4)", "issues": ["Public marquee STILL reads 'MARQUEE · TEST · MARQUEE · TEST …'. Was flagged in iteration_4, not yet reset. Visible to all visitors."]},
+      {"screen": "Page <title> on / + /ablauf + /vku (carryover)", "issues": ["Still 'Emergent | Fullstack App'. Only LocationPage sets a per-route title."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration5_features.py",
+    "/app/backend/tests/test_pages_and_locations.py",
+    "/app/backend/tests/test_patch_content.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/iteration5_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional carryover) Reset marquee_de/_en to real marketing copy — leftover 'MARQUEE · TEST' is publicly visible.",
+    "(Optional carryover) Set document.title per route on /, /ablauf, /vku.",
+    "(Optional carryover) Stabilise pytest-xdist race between TestAdminSubmissions and test_patch_content fixtures (split scopes or use unique TEST_ prefixes per worker).",
+    "(Optional carryover, code quality) Add allowlist for PATCH /api/locations/{slug} & PATCH /api/content keys to prevent arbitrary $set."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now well past 700 lines and accumulating responsibilities (auth + content + locations + sitemap + uploads + submissions + seed). Splitting into routers/ is overdue.",
+    "PATCH /api/locations still has no key allowlist — admin can $set any dot-notation path. Consider Pydantic patch model with explicit field whitelist.",
+    "Sitemap endpoint uses _public_base_url helper that honours PUBLIC_SITE_URL → X-Forwarded-Host → request.base_url and correctly returns the public driving-school-cms.preview.emergentagent.com host (verified). Good.",
+    "Cloudflare intercepting /robots.txt is a known platform limitation per agent-to-agent note — not flagged as a bug.",
+    "google_reviews_url default points to a Google search URL rather than a real Google Maps place URL. Functionally fine (link is editable by admin) but consider documenting expected format.",
+    "LocationPage hero H1 is now clean (exact 'Fahrschule {name}') and the city description correctly moved to a pill badge with rounded-full — matches spec.",
+    "React console warning '<button> cannot be a descendant of <button>' (noted in iter_4) was NOT reproduced this iteration — may have been fixed silently or only triggered on specific admin routes."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration5_features.py",
+    "/app/test_reports/pytest/iteration5_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "success_rate": {
+    "backend": "100% on iteration_5 new feature suite (21/21). Combined regression 66/68 — the 2 failures are pre-existing xdist fixture races, not iteration_5 regressions.",
+    "frontend": "100% on all critical iteration_5 flows (hero H1 exact match, pill badge, 7 nav-* testids on /, /ablauf, /vku, /fahrschule-einsiedeln, opaque sub-page header, nav-pricing → /#pricing scroll, loc-why-saferide with 6 points, loc-google-reviews + CTA, 15 FAQs across 3 sampled slugs, home reviews-google-cta, admin pages list shows all 11 locations, all 10 spec'd edit-paths present in edit mode, loc-google-reviews-url visible only in edit mode, /fahrschule-foo in-page 404)."
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (verified working)",
+  "seed_data_creation": "No leftover test data. test_patch_why_title2_and_google_reviews_url and test_patch_why_points2_dot_notation both revert in same test. test_patch_content fixture data was NOT touched by iteration_5 tests.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run all backend tests: `pytest /app/backend/tests/ -v -n auto --junitxml=/app/test_reports/pytest/pytest_results.xml` — expect 66/68 (2 known flaky xdist races). Run only iteration_5 suite in isolation: `pytest /app/backend/tests/test_iteration5_features.py -v` — should be 21/21. Public base URL: https://driving-school-cms.preview.emergentagent.com . Total locations now = 11; canonical slug list is in EXPECTED_SLUGS_11. Sitemap is at /api/sitemap.xml and contains exactly 14 <url> entries. Header testids: nav-about, nav-services, nav-pricing, nav-gallery, nav-reviews, nav-ablauf, nav-vku. The SiteHeader is rendered identically on /, /ablauf, /vku, /fahrschule-* — on non-home pages it is opaque (bg cream rgba(251,249,246,0.9)). Hero H1 on every location page is EXACTLY 'Fahrschule {name}' (no italic highlight inside). Pill badge is the sibling under H1, contains 'rounded-full' class. loc-why-saferide ships 6 points (loc-why2-0..5). loc-google-reviews CTA target=_blank. FAQ count per location = 15 (loc-faq-0..14). On home, reviews-google-cta link is target=_blank. Edit-path wrappers only render when toolbar is in EDIT mode (button label switches 'Bearbeiten' ↔ 'Vorschau'); when in preview the count is 0. loc-google-reviews-url <input> is admin-edit-mode-only. The marquee carryover and document.title issues from iteration_4 are still present.",
+  "rca of the issue": "N/A — no functional bugs found in iteration_5 scope. The 2 carryover design issues (marquee TEST text, missing per-route titles) and the 2 xdist fixture races are documented in iteration_4."
+}

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote, Plus, Trash2, Loader2 } from "lucide-react";
+import { Star, Quote, Plus, Trash2, Loader2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
 import SectionTitle from "@/components/site/SectionTitle";
+import GoogleIcon from "@/components/site/GoogleIcon";
 
 export default function Testimonials({ items }) {
   const { lang, pick, t } = useLang();
@@ -88,8 +89,9 @@ export default function Testimonials({ items }) {
               style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-3 bg-[#fbf9f6] rounded-full px-5 py-3 text-sm">
+              <GoogleIcon size={16} />
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={14} className="text-[#ff5a36]" fill="#ff5a36" />
@@ -104,6 +106,16 @@ export default function Testimonials({ items }) {
                 · <Editable path={`reviews_rating_label_${lang}`} value={ratingLabel} />
               </span>
             </div>
+            <a
+              href={content?.google_reviews_url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="reviews-google-cta"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f172a] hover:text-[#ff5a36] transition-colors"
+            >
+              {lang === "de" ? "Auf Google ansehen" : "View on Google"}
+              <ArrowUpRight size={14} />
+            </a>
             {editMode && (
               <button
                 onClick={addNew}
@@ -166,7 +178,7 @@ export default function Testimonials({ items }) {
                 </p>
               )}
               <div className={`mt-6 pt-5 border-t flex items-center justify-between ${i === 0 ? "border-white/20" : "border-[#e2e8f0]"}`}>
-                <div>
+                <div className="flex-1 min-w-0">
                   {editMode ? (
                     <input
                       type="text"
@@ -180,21 +192,24 @@ export default function Testimonials({ items }) {
                   ) : (
                     <div className="font-semibold text-base">{r.name}</div>
                   )}
-                  {editMode ? (
-                    <input
-                      type="text"
-                      defaultValue={r.date}
-                      onBlur={(e) => updateField(r.id, "date", e.target.value)}
-                      data-testid={`review-date-${r.id}`}
-                      className={`text-[10px] tracking-widest uppercase mt-1 font-semibold bg-transparent focus:outline-none rounded-md px-2 -mx-2 max-w-[10rem] ${
-                        i === 0 ? "text-white/70 focus:bg-white/10" : "text-[#94a3b8] focus:bg-white"
-                      }`}
-                    />
-                  ) : (
-                    <div className={`text-[10px] tracking-widest uppercase mt-1 font-semibold ${i === 0 ? "text-white/60" : "text-[#94a3b8]"}`}>
-                      {r.date}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <GoogleIcon size={10} className="shrink-0" />
+                    {editMode ? (
+                      <input
+                        type="text"
+                        defaultValue={r.date}
+                        onBlur={(e) => updateField(r.id, "date", e.target.value)}
+                        data-testid={`review-date-${r.id}`}
+                        className={`text-[10px] tracking-widest uppercase font-semibold bg-transparent focus:outline-none rounded-md px-1 -mx-1 max-w-[10rem] ${
+                          i === 0 ? "text-white/70 focus:bg-white/10" : "text-[#94a3b8] focus:bg-white"
+                        }`}
+                      />
+                    ) : (
+                      <div className={`text-[10px] tracking-widest uppercase font-semibold ${i === 0 ? "text-white/60" : "text-[#94a3b8]"}`}>
+                        Google · {r.date}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex">
                   {[...Array(r.rating || 5)].map((_, idx) => (

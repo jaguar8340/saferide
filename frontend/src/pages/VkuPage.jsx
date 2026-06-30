@@ -6,7 +6,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
-import SubPageHeader from "@/components/site/SubPageHeader";
+import SubPageHeader from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 

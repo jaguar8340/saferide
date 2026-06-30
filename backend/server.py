@@ -388,6 +388,10 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     "footer_tagline_en": "Different. Better. Bolder.",
     "nav_cta_de": "Anfragen",
     "nav_cta_en": "Get in touch",
+    "google_reviews_url": "https://www.google.com/search?q=Fahrschule+Safe+Ride+Nadine+St%C3%A4ubli+Bewertungen",
+    "google_reviews_count": "60+",
+    "google_reviews_label_de": "Bewertungen mit 5,0 Sternen auf Google",
+    "google_reviews_label_en": "Reviews with 5.0 stars on Google",
     "ablauf": DEFAULT_ABLAUF,
     "vku": DEFAULT_VKU,
 }
@@ -599,14 +603,22 @@ async def startup_event():
     if await db.gallery.count_documents({}) == 0:
         await db.gallery.insert_many([dict(g) for g in DEFAULT_GALLERY])
 
-    # Seed location landing pages (one document per slug)
+    # Seed location landing pages (one document per slug) with idempotent migration.
     await db.locations.create_index("slug", unique=True)
-    existing_slugs = set()
-    async for doc in db.locations.find({}, {"slug": 1, "_id": 0}):
-        existing_slugs.add(doc["slug"])
-    to_insert = [dict(loc, id=str(uuid.uuid4())) for loc in DEFAULT_LOCATIONS if loc["slug"] not in existing_slugs]
-    if to_insert:
-        await db.locations.insert_many(to_insert)
+    for default_loc in DEFAULT_LOCATIONS:
+        slug = default_loc["slug"]
+        existing = await db.locations.find_one({"slug": slug})
+        if not existing:
+            doc = dict(default_loc)
+            doc["id"] = str(uuid.uuid4())
+            await db.locations.insert_one(doc)
+        else:
+            missing = {k: v for k, v in default_loc.items() if k not in existing}
+            if missing:
+                await db.locations.update_one({"slug": slug}, {"$set": missing})
+            # Upgrade FAQs from older 4-entry default to 15-entry default.
+            if len(existing.get("faqs", [])) < 15:
+                await db.locations.update_one({"slug": slug}, {"$set": {"faqs": default_loc["faqs"]}})
 
 
 # ---------- Auth Routes ----------
@@ -846,6 +858,53 @@ async def delete_location(slug: str, admin=Depends(get_current_admin)):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Standort nicht gefunden")
     return {"ok": True}
+
+
+# ---------- SEO: sitemap.xml ----------
+def _public_base_url(request: "Request") -> str:
+    """Derive the absolute public base URL the visitor used to reach this API.
+    Honours the PUBLIC_SITE_URL env var first, then X-Forwarded-* headers,
+    then falls back to request.base_url. Strips trailing `/api`."""
+    override = os.environ.get("PUBLIC_SITE_URL")
+    if override:
+        return override.rstrip("/")
+    fwd_host = request.headers.get("x-forwarded-host")
+    fwd_proto = request.headers.get("x-forwarded-proto", "https")
+    if fwd_host:
+        base = f"{fwd_proto}://{fwd_host}".rstrip("/")
+    else:
+        base = str(request.base_url).rstrip("/")
+    if base.endswith("/api"):
+        base = base[: -len("/api")]
+    return base
+
+
+@api.get("/sitemap.xml")
+async def sitemap_xml(request: "Request"):
+    """Dynamic sitemap listing the homepage, ablauf, vku and ALL location landing pages.
+    Recommended robots.txt entry: `Sitemap: <PUBLIC_SITE_URL>/api/sitemap.xml`."""
+    from datetime import datetime as _dt
+    base = _public_base_url(request)
+    now = _dt.now(timezone.utc).strftime("%Y-%m-%d")
+    static_urls = [
+        (f"{base}/", "1.0", "weekly"),
+        (f"{base}/ablauf", "0.9", "monthly"),
+        (f"{base}/vku", "0.9", "weekly"),
+    ]
+    loc_docs = await db.locations.find({}, {"slug": 1, "_id": 0}).sort("order", 1).to_list(200)
+    loc_urls = [(f"{base}/fahrschule-{d['slug']}", "0.85", "monthly") for d in loc_docs]
+
+    urls_xml = "".join(
+        f"<url><loc>{u}</loc><lastmod>{now}</lastmod><changefreq>{f}</changefreq><priority>{p}</priority></url>"
+        for u, p, f in (static_urls + loc_urls)
+    )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{urls_xml}"
+        "</urlset>"
+    )
+    return Response(content=body, media_type="application/xml")
 
 
 # ---------- Health ----------
