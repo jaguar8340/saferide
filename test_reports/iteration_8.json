@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 8 – LocationPage refactor + global Nadine block end-to-end verification. Backend: 21/21 pytest tests pass. All 11 dynamic location slugs (einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil) return 200 and contain hero_title_de, ideal_for_points_de, exam_routes, faqs. NONE of the location docs contain a nadine sub-block – confirmed nadine is stored only in /api/content. PATCH /api/content with body {'nadine.intro_title_de': sentinel} updates the global key without touching location docs. PATCH /api/locations/{slug} also persists for hero_title_de and ideal_for_points_de. Unauth PATCH returns 401/403. Frontend: All 11 location pages render LocHero+Nadine+Routes+FAQ+CTA without console errors. Admin inline editing verified: editing hero_title_de via contentEditable triggers PATCH /api/locations/einsiedeln and reload preserves it; editing Nadine intro_title_de updates /api/content and the new title appears UNCHANGED on /fahrschule-siebnen (proves GLOBAL). + Frage and + Strecke buttons add a row (faqs 15→16, exam_routes 4→5). nadine.media_url-upload-image and nadine.media_url-upload-video buttons exist. Language toggle DE/EN switches hero element from [data-edit-path=hero_title_de] to [data-edit-path=hero_title_en]. Contact form POST /api/contact returns success + sonner toast 'Danke! Ich melde mich bei dir.'. Regression: /, /ablauf, /vku all render distinct H1s; homepage shows hero, /ablauf shows 'Hast du alles?', /vku shows 'Verkehrskundeunterricht'.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8.py",
+    "/app/test_reports/pytest/it8_results.xml"
+  ],
+  "action_items": [
+    "CLARIFY ROUTING DISCREPANCY: Problem statement mentioned /ablauf-zum-fuehrerschein and /vku-unterricht, but actual routes in App.js are /ablauf and /vku. The SlugDispatcher silently redirects unknown slugs to /. Consider either (a) adding the longer SEO slugs as additional routes/aliases, or (b) updating spec to /ablauf and /vku.",
+    "SLUG NAME DISCREPANCY: Problem statement listed slugs galgenen, reichenburg, tuggen, wangen-sz, wollerau which DO NOT exist in /api/locations. Actual missing-from-spec slugs that DO exist: waedenswil, horgen, chur, lenzerheide, rapperswil. Update either the seed data or the spec/SEO plan."
+  ],
+  "critical_code_review_comments": [
+    "LocFaq.removeFaq uses native confirm() dialog (line 25). Playwright/Cypress tests will silently fail unless they pre-attach a dialog handler. Consider replacing with a non-blocking confirmation UI (Radix AlertDialog) or auto-confirm in edit mode.",
+    "LocationPage.jsx (170 lines after refactor) and EditContext.jsx (109 lines) are well under the 700-line threshold – good improvement from the 971-line monolith.",
+    "EditableMedia silently falls back to ctx.updateField when onUpdate isn't passed – this is intentional for the Nadine GLOBAL behavior. NadineIntroCard never passes onUpdate so writes always go to /api/content – behavior confirmed end-to-end."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8.py (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – POST /api/auth/login returns {access_token}, use Authorization: Bearer <token> for PATCH /api/content and PATCH /api/locations/{slug}",
+  "seed_data_creation": "None. All tests used append-and-restore pattern. PATCH tests for hero_title_de, ideal_for_points_de, nadine.intro_title_de all restored to original values. One extra FAQ added during +Frage Playwright test was cleaned up via direct API PATCH (faqs back to 15).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Actual 11 location slugs in DB: einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil. Hero is editable via [data-edit-path='hero_title_de']. Nadine card is GLOBAL via [data-edit-path='nadine.intro_title_de'] writing PATCH /api/content. Contact form uses data-testid: contact-first-name, contact-last-name, contact-email-input, contact-phone-input, contact-message. Real special pages live at /ablauf and /vku (NOT /ablauf-zum-fuehrerschein, /vku-unterricht). FAQ remove uses native confirm() – tests must dialog-accept or call /api/locations/{slug} directly.",
+  "rca of the issue": "N/A – no functional bugs found. Two spec/data discrepancies noted in action_items for main agent attention but the implementation itself is correct."
+}
