@@ -33,8 +33,8 @@ export default function Home() {
 
   if (!content) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f0] text-[#0a0a0a]">
-        <span className="font-accent tracking-widest text-sm uppercase opacity-60">
+      <div className="min-h-screen flex items-center justify-center bg-[#fbf9f6] text-[#0f172a]">
+        <span className="text-xs font-semibold tracking-widest uppercase opacity-50">
           Lade…
         </span>
       </div>
@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <main
       data-testid="home-page"
-      className="min-h-screen bg-[#f4f5f0] text-[#0a0a0a] font-body overflow-hidden"
+      className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans"
     >
       <Header />
       <Hero data={content.hero} />

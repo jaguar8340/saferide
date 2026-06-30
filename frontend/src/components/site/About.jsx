@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function About({ data }) {
@@ -10,35 +10,38 @@ export default function About({ data }) {
     <section
       id="about"
       data-testid="about-section"
-      className="section-pad relative bg-[#f4f5f0]"
+      className="section-pad bg-[#fbf9f6]"
     >
-      <div className="container-x px-5 md:px-10 lg:px-14 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+      <div className="container-x">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-6 order-2 lg:order-1"
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-7 order-2 lg:order-1"
           >
-            <div className="eyebrow text-[#0033ff] mb-5">
-              <Sparkles size={14} className="inline-block mr-2 -mt-1" />
-              {pick(data.overline_de, data.overline_en)}
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles size={14} className="text-[#ff5a36]" />
+              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
+                {pick(data.overline_de, data.overline_en)}
+              </span>
             </div>
             <h2
-              className="font-display font-black uppercase leading-[0.9] tracking-tighter text-[#0a0a0a]"
-              style={{ fontSize: "clamp(2.4rem, 5.5vw, 5rem)" }}
+              className="font-display leading-[0.98] tracking-tight text-[#0f172a]"
+              style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
             >
-              {pick(data.title_de, data.title_en)}
+              {pick(data.title_de, data.title_en).split("–")[0]}
+              <span className="font-serif-i text-[#ff5a36] font-normal">
+                – {pick(data.title_de, data.title_en).split("–")[1]?.trim()}
+              </span>
             </h2>
-            <p className="mt-8 text-[#4b5563] text-lg md:text-xl leading-relaxed max-w-xl font-medium">
+            <p className="mt-7 text-lg text-[#475569] leading-relaxed font-medium max-w-xl">
               {pick(data.body_de, data.body_en)}
             </p>
-            <div className="mt-7 inline-flex items-center gap-3 bg-white border-2 border-[#0a0a0a] rounded-full px-5 py-2.5">
-              <CheckCircle2 className="text-[#0033ff]" size={18} />
-              <span className="text-sm font-bold tracking-wide">
-                {t.about.trust}
-              </span>
+            <div className="mt-6 inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full px-4 py-2 text-sm font-semibold">
+              <span className="dot-accent" />
+              {t.about.trust}
             </div>
 
             <div className="mt-10 grid grid-cols-3 gap-3 md:gap-4">
@@ -46,72 +49,55 @@ export default function About({ data }) {
                 {
                   v: data.stat1_value,
                   l: pick(data.stat1_label_de, data.stat1_label_en),
-                  bg: "bg-[#0033ff]",
-                  fg: "text-[#ccff00]",
+                  bg: "bg-[#ff5a36]",
+                  fg: "text-white",
                 },
                 {
                   v: data.stat2_value,
                   l: pick(data.stat2_label_de, data.stat2_label_en),
-                  bg: "bg-[#ccff00]",
-                  fg: "text-[#0a0a0a]",
+                  bg: "bg-white border border-[#e2e8f0]",
+                  fg: "text-[#0f172a]",
                 },
                 {
                   v: data.stat3_value,
                   l: pick(data.stat3_label_de, data.stat3_label_en),
-                  bg: "bg-[#ff0055]",
+                  bg: "bg-[#0f172a]",
                   fg: "text-white",
                 },
               ].map((s, i) => (
-                <motion.div
+                <div
                   key={i}
                   data-testid={`about-stat-${i}`}
-                  initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
-                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
-                  className={`${s.bg} ${s.fg} rounded-2xl p-4 md:p-5 border-2 border-[#0a0a0a]`}
+                  className={`${s.bg} ${s.fg} rounded-2xl p-5`}
                 >
-                  <div className="font-display font-black text-3xl md:text-4xl leading-none">
+                  <div className="font-display text-3xl md:text-4xl leading-none">
                     {s.v}
                   </div>
-                  <div className="mt-2 text-[10px] tracking-widest uppercase opacity-90 font-bold">
+                  <div className="mt-2 text-[10px] tracking-widest uppercase opacity-80 font-semibold">
                     {s.l}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-6 order-1 lg:order-2 relative"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="lg:col-span-5 order-1 lg:order-2"
           >
-            <div
-              aria-hidden
-              className="absolute -top-6 -left-6 w-44 h-44 rounded-full bg-[#ccff00] animate-blob"
-            />
-            <div
-              aria-hidden
-              className="absolute -bottom-8 -right-8 w-56 h-56 rounded-full bg-[#ff0055] animate-blob"
-              style={{ animationDelay: "-3s" }}
-            />
             <div className="relative">
               <img
                 src={data.image_url}
                 alt="Nadine Stäubli"
-                className="relative w-full h-[460px] md:h-[560px] object-cover rounded-3xl border-2 border-[#0a0a0a]"
+                className="w-full h-[440px] md:h-[560px] object-cover rounded-3xl"
               />
-              <div
-                className="absolute -bottom-6 -left-6 bg-white border-2 border-[#0a0a0a] rounded-2xl px-5 py-4 max-w-[240px] shadow-xl rotate-[-3deg]"
-              >
-                <div className="font-display font-black text-2xl text-[#0033ff] leading-none">
-                  Nadine
-                </div>
-                <div className="text-xs text-[#0a0a0a]/70 mt-1.5 font-semibold">
-                  Stäubli · Fahrlehrerin
+              <div className="absolute -bottom-5 -left-5 md:-left-8 bg-white border border-[#e2e8f0] rounded-2xl px-5 py-4 shadow-[0_12px_30px_-12px_rgba(15,23,42,0.18)]">
+                <div className="font-display text-xl text-[#0f172a]">Nadine Stäubli</div>
+                <div className="text-xs text-[#475569] mt-1 font-medium">
+                  Fahrlehrerin <span className="text-[#ff5a36]">·</span> seit 2014
                 </div>
               </div>
             </div>

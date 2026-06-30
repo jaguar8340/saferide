@@ -11,10 +11,8 @@ function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f0] text-[#0a0a0a]">
-        <span className="font-accent tracking-widest text-sm uppercase opacity-60">
-          Lade…
-        </span>
+      <div className="min-h-screen flex items-center justify-center bg-[#fafaf9] text-[#1c1917]">
+        <span className="label">Lade…</span>
       </div>
     );
   }
@@ -48,9 +46,9 @@ function App() {
             toastOptions={{
               style: {
                 background: "#ffffff",
-                color: "#0a0a0a",
-                border: "2px solid #0033ff",
-                borderRadius: "16px",
+                color: "#1c1917",
+                border: "1px solid #e7e5e4",
+                borderRadius: "12px",
               },
             }}
           />

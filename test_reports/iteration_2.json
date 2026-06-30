@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 2 validated the new file-upload feature for the gallery and the young & modern design. All 21 pytest cases pass (16 regression + 5 new upload/file tests). The new POST /api/upload endpoint correctly (a) requires JWT (401 without it), (b) rejects non-image content-types (400), (c) accepts image/png, stores under saferide/uploads/<uuid>.png and returns {path, url:'/api/files/...'}. GET /api/files/{path} serves the bytes with the proper Content-Type. End-to-end UI: admin login -> Galerie tab -> Hinzufügen -> hidden file input upload -> coral PNG preview appears -> save -> item visible in admin list and in public /api/gallery with image_url='/api/files/saferide/uploads/<uuid>.png'. resolveUrl on the public site renders the image correctly via the backend. The new hero design (italic Instrument-Serif accent in coral #ff5a36, dot accent overline, LIVE/SAISON 2026 chips, Call-Nadine card, dark marquee bar) is rendering as intended. Test gallery item cleaned up.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_upload.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now ~720 lines (>700) – consider splitting into routers/auth, routers/content, routers/gallery, routers/upload + a storage module. (server.py)",
+    "Upload endpoint validates Content-Type only (ALLOWED_IMAGE_TYPES dict). A malicious client can lie about content-type; consider verifying magic bytes (e.g. imghdr/Pillow) before persisting. (server.py:662-683)",
+    "MAX_UPLOAD_BYTES check happens after fully reading the file into memory (await file.read()); a 100 MB upload will still buffer fully before the 413. Use file.read(MAX_UPLOAD_BYTES+1) or stream in chunks. (server.py:667-669)",
+    "put_object stores no record of the original uploader IP/admin id in the storage object itself, only in db.files; that's fine, but db.files has no index on storage_path which will scan if you later need lookup by path. (server.py:674-682)",
+    "GET /api/files/{path} returns 503 from get_object when storage is unavailable (instead of the specified 404). For truly missing keys the underlying requests.raise_for_status raises and is caught -> 404, but 5xx from upstream is wrapped through HTTPException unchanged. Acceptable but worth documenting.",
+    "CORS allow_origins still defaults to '*' with allow_credentials=True; not exploited today because frontend uses Bearer in localStorage, but should be tightened for production. (server.py:705-711)",
+    "PUT /api/content still accepts arbitrary Dict[str,Any] (no Pydantic model). An admin could accidentally wipe schema-required keys – consider a typed model. (server.py:559-565)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_upload.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "success_rate": {"backend": "100% (21/21 pytest)", "frontend": "100% on tested critical flows (hero design, admin gallery upload, public render via /api/files)"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (verified working)",
+  "seed_data_creation": "One temporary gallery item TEST_UPLOAD_DE_E2E was created and deleted at the end. The uploaded object remains in Emergent object storage under saferide/uploads/<uuid>.png (orphaned in storage but not referenced in DB) — backend does not provide a delete-object endpoint; acceptable for testing but main agent may want to add cleanup on gallery delete.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "21 pytest cases in /app/backend/tests/ (backend_test.py + test_upload.py). Admin testids: admin-tab-gallery, gallery-add-btn, gallery-upload-btn (dropzone), gallery-file-input (hidden file input — use page.set_input_files), gallery-caption-de, gallery-caption-en, gallery-save. The login form does NOT have data-testid; use input[type=email]/input[type=password]/button[type=submit]. JWT token is stored in localStorage but the key name was not found via the standard keys; use the response from /api/auth/login directly in tests. Public gallery section in screenshot is at the bottom of the page – use page.goto('/') then evaluate img tags containing '/api/files/' to verify resolveUrl prepends REACT_APP_BACKEND_URL correctly. Uploaded image path always starts with 'saferide/uploads/'. Storage is reachable (EMERGENT_LLM_KEY works).",
+  "rca of the issue": "N/A — no bugs found."
+}

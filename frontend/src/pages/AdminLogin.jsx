@@ -33,41 +33,44 @@ export default function AdminLogin() {
   return (
     <div
       data-testid="admin-login-page"
-      className="min-h-screen bg-[#f4f5f0] flex items-center justify-center px-5 relative overflow-hidden"
+      className="min-h-screen bg-[#fbf9f6] flex items-center justify-center px-5"
     >
-      <div
-        aria-hidden
-        className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-[#ccff00] animate-blob"
-      />
-      <div
-        aria-hidden
-        className="absolute -bottom-32 -left-32 w-[24rem] h-[24rem] rounded-full bg-[#0033ff] animate-blob"
-        style={{ animationDelay: "-4s" }}
-      />
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative w-full max-w-md bg-white border-2 border-[#0a0a0a] rounded-3xl p-9 shadow-[8px_8px_0_#ccff00]"
+        className="w-full max-w-md bg-white border border-[#e2e8f0] rounded-3xl p-9 shadow-[0_18px_50px_-25px_rgba(15,23,42,0.18)]"
       >
-        <Link to="/" className="inline-block mb-8" data-testid="admin-back-home">
-          <div className="font-display font-black tracking-tighter text-2xl uppercase">
-            Safe<span className="text-[#0033ff]">Ride</span>
+        <Link to="/" className="inline-block mb-9" data-testid="admin-back-home">
+          <div className="font-display text-xl tracking-tight">
+            Safe<span className="font-serif-i text-[#ff5a36]">Ride</span>
           </div>
         </Link>
-        <div className="eyebrow text-[#ff0055] mb-3">CMS</div>
-        <h1 className="font-display font-black uppercase tracking-tighter text-4xl md:text-5xl leading-[0.95]">
-          {t.admin.title}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="dot-accent" />
+          <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">CMS</span>
+        </div>
+        <h1
+          className="font-display leading-[0.98] tracking-tight"
+          style={{ fontSize: "clamp(2rem, 3.6vw, 2.8rem)" }}
+        >
+          {t.admin.title.split(" ").map((w, i, arr) =>
+            i === arr.length - 1 ? (
+              <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
+            ) : (
+              <span key={i}>{w} </span>
+            ),
+          )}
         </h1>
-        <p className="text-[#4b5563] text-base mt-3 font-medium">{t.admin.subtitle}</p>
+        <p className="text-[#475569] mt-3 font-medium">{t.admin.subtitle}</p>
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-5"
+          className="mt-8 space-y-6"
           data-testid="admin-login-form"
         >
           <div>
-            <label className="text-[10px] tracking-[0.25em] uppercase text-[#0a0a0a]/60 font-extrabold">
+            <label className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
               {t.admin.email}
             </label>
             <input
@@ -77,12 +80,12 @@ export default function AdminLogin() {
               data-testid="admin-email-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full bg-transparent border-b-2 border-[#0a0a0a]/20 focus:border-[#0033ff] focus:outline-none py-3 text-[#0a0a0a] font-medium transition-colors"
+              className="input-underline mt-2"
               placeholder="admin@saferide.ch"
             />
           </div>
           <div>
-            <label className="text-[10px] tracking-[0.25em] uppercase text-[#0a0a0a]/60 font-extrabold">
+            <label className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
               {t.admin.password}
             </label>
             <input
@@ -92,7 +95,7 @@ export default function AdminLogin() {
               data-testid="admin-password-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full bg-transparent border-b-2 border-[#0a0a0a]/20 focus:border-[#0033ff] focus:outline-none py-3 text-[#0a0a0a] font-medium transition-colors"
+              className="input-underline mt-2"
               placeholder="••••••••"
             />
           </div>
@@ -100,7 +103,7 @@ export default function AdminLogin() {
             type="submit"
             disabled={submitting}
             data-testid="admin-login-submit"
-            className="btn-pill-primary w-full justify-center disabled:opacity-60"
+            className="btn-accent w-full justify-center disabled:opacity-60"
           >
             <Lock size={14} />
             {submitting ? t.admin.loggingIn : t.admin.login}

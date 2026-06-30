@@ -11,23 +11,16 @@ import {
 } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 
-const ICONS = {
-  Car,
-  Truck,
-  BookOpen,
-  Brain,
-  Heart,
-  ShieldCheck,
-  Sparkles,
-};
+const ICONS = { Car, Truck, BookOpen, Brain, Heart, ShieldCheck, Sparkles };
 
-const COLOR_VARIANTS = [
-  { bg: "bg-[#0033ff]", fg: "text-[#ccff00]", iconBg: "bg-[#ccff00]", iconFg: "text-[#0a0a0a]" },
-  { bg: "bg-white", fg: "text-[#0a0a0a]", iconBg: "bg-[#0033ff]", iconFg: "text-[#ccff00]" },
-  { bg: "bg-[#ccff00]", fg: "text-[#0a0a0a]", iconBg: "bg-[#0a0a0a]", iconFg: "text-[#ccff00]" },
-  { bg: "bg-white", fg: "text-[#0a0a0a]", iconBg: "bg-[#ff0055]", iconFg: "text-white" },
-  { bg: "bg-[#ff0055]", fg: "text-white", iconBg: "bg-white", iconFg: "text-[#ff0055]" },
-  { bg: "bg-white", fg: "text-[#0a0a0a]", iconBg: "bg-[#0a0a0a]", iconFg: "text-[#ccff00]" },
+// Bento variants - one card per row is colored for personality
+const VARIANTS = [
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#fef3c7]", iconFg: "text-[#0f172a]" },
+  { bg: "bg-[#ff5a36]", fg: "text-white", iconBg: "bg-white/15", iconFg: "text-white" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#d1fae5]", iconFg: "text-[#065f46]" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#dbeafe]", iconFg: "text-[#1d4ed8]" },
+  { bg: "bg-[#0f172a]", fg: "text-white", iconBg: "bg-[#ff5a36]", iconFg: "text-white" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#fce7f3]", iconFg: "text-[#be185d]" },
 ];
 
 export default function Services({ items }) {
@@ -37,57 +30,69 @@ export default function Services({ items }) {
     <section
       id="services"
       data-testid="services-section"
-      className="section-pad bg-[#f4f5f0]"
+      className="section-pad bg-[#fbf9f6]"
     >
-      <div className="container-x px-5 md:px-10 lg:px-14">
+      <div className="container-x">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <div>
-            <div className="eyebrow text-[#ff0055] mb-4">{t.services.overline}</div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="dot-accent" />
+              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
+                {t.services.overline}
+              </span>
+            </div>
             <h2
-              className="font-display font-black uppercase tracking-tighter leading-[0.92] max-w-3xl"
-              style={{ fontSize: "clamp(2.4rem, 5.5vw, 5rem)" }}
+              className="font-display leading-[0.98] tracking-tight max-w-3xl"
+              style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
             >
-              {t.services.title}
+              {t.services.title.split(" ").map((w, i, arr) =>
+                i === arr.length - 1 ? (
+                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">
+                    {w}
+                  </span>
+                ) : (
+                  <span key={i}>{w} </span>
+                ),
+              )}
             </h2>
           </div>
-          <div className="text-[#0a0a0a]/50 text-sm font-bold tracking-widest uppercase">
-            <span className="text-[#0033ff] text-3xl font-display">
-              {String(items.length).padStart(2, "0")}
-            </span>{" "}
-            / Services
-          </div>
+          <span className="tag tag-light">
+            {String(items.length).padStart(2, "0")} Services
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {items.map((s, i) => {
             const Icon = ICONS[s.icon] || Sparkles;
-            const v = COLOR_VARIANTS[i % COLOR_VARIANTS.length];
+            const v = VARIANTS[i % VARIANTS.length];
             return (
               <motion.div
                 key={s.id || i}
                 data-testid={`service-card-${i}`}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.55, delay: (i % 3) * 0.08 }}
-                className={`group relative ${v.bg} ${v.fg} rounded-3xl p-7 md:p-8 border-2 border-[#0a0a0a] overflow-hidden hover:-translate-y-1 transition-transform duration-300`}
+                transition={{ duration: 0.5, delay: (i % 3) * 0.07 }}
+                className={`group relative ${v.bg} ${v.fg} border border-[#e2e8f0] rounded-3xl p-7 md:p-8 hover:-translate-y-1 transition-transform duration-300`}
               >
-                <div className="absolute top-5 right-5 text-[10px] font-bold tracking-widest opacity-50">
-                  {String(i + 1).padStart(2, "0")} / 0{items.length}
+                <div className="flex items-start justify-between mb-7">
+                  <span
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl ${v.iconBg} ${v.iconFg}`}
+                  >
+                    <Icon size={20} strokeWidth={1.75} />
+                  </span>
+                  <span className="text-xs font-semibold opacity-50 tabular-nums">
+                    {String(i + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+                  </span>
                 </div>
-                <div
-                  className={`inline-flex items-center justify-center w-14 h-14 rounded-full ${v.iconBg} ${v.iconFg} mb-6 border-2 border-[#0a0a0a] group-hover:rotate-12 transition-transform duration-500`}
-                >
-                  <Icon size={22} />
-                </div>
-                <h3 className="font-display font-black text-2xl md:text-3xl leading-[1.05] mb-3 uppercase tracking-tight">
+                <h3 className="font-display text-2xl leading-tight mb-3">
                   {pick(s.title_de, s.title_en)}
                 </h3>
                 <p className="text-base leading-relaxed opacity-90 font-medium">
                   {pick(s.description_de, s.description_en)}
                 </p>
                 <ArrowUpRight
-                  size={22}
+                  size={20}
                   className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity"
                 />
               </motion.div>

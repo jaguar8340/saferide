@@ -23,37 +23,35 @@ export default function AdminDashboard() {
   return (
     <div
       data-testid="admin-dashboard"
-      className="min-h-screen bg-[#f4f5f0] text-[#0a0a0a] flex flex-col"
+      className="min-h-screen bg-[#fafaf9] text-[#1c1917] flex flex-col"
     >
       <header
-        className="border-b-2 border-[#0a0a0a]/10 bg-white px-5 md:px-8 py-4 flex items-center justify-between"
+        className="border-b border-[#e7e5e4] bg-white px-5 md:px-8 py-4 flex items-center justify-between"
         data-testid="admin-header"
       >
         <div className="flex items-center gap-3">
           <Link to="/" data-testid="admin-logo">
-            <div className="font-display font-black tracking-tighter text-xl uppercase">
-              Safe<span className="text-[#0033ff]">Ride</span>
+            <div className="font-display text-xl tracking-tight">
+              Safe<span className="font-serif-i text-[#ff5a36]">Ride</span>
             </div>
           </Link>
-          <span className="text-[10px] tracking-widest uppercase text-[#0a0a0a]/40 border-l-2 border-[#0a0a0a]/10 pl-3 ml-1 font-bold">
+          <span className="text-[10px] tracking-widest uppercase text-[#a8a29e] border-l border-[#e7e5e4] pl-3 ml-1 font-medium">
             CMS
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-xs text-[#0a0a0a]/55 mr-2 font-medium">
-            {user?.email}
-          </span>
+          <span className="hidden sm:inline text-xs text-[#78716c] mr-2">{user?.email}</span>
           <Link
             to="/"
             data-testid="admin-view-site"
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-extrabold tracking-widest uppercase border-2 border-[#0a0a0a] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors"
+            className="btn-ghost text-xs py-2 px-3"
           >
             <Home size={13} /> Website
           </Link>
           <button
             data-testid="admin-logout-btn"
             onClick={logout}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-extrabold tracking-widest uppercase bg-[#0033ff] text-[#ccff00] hover:bg-[#0022cc] transition-colors"
+            className="btn-primary text-xs py-2 px-3"
           >
             <LogOut size={13} /> {t.admin.logout}
           </button>
@@ -63,7 +61,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col lg:flex-row flex-1">
         <aside
           data-testid="admin-sidebar"
-          className="lg:w-64 bg-white border-b-2 lg:border-b-0 lg:border-r-2 border-[#0a0a0a]/10 px-3 md:px-4 py-5 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible"
+          className="lg:w-60 bg-white border-b lg:border-b-0 lg:border-r border-[#e7e5e4] px-3 md:px-4 py-5 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible"
         >
           {TABS.map((tb) => {
             const Icon = tb.icon;
@@ -73,13 +71,13 @@ export default function AdminDashboard() {
                 key={tb.id}
                 onClick={() => setTab(tb.id)}
                 data-testid={`admin-tab-${tb.id}`}
-                className={`text-left flex items-center gap-3 px-3 py-3 text-xs tracking-widest uppercase font-extrabold transition-colors whitespace-nowrap rounded-full ${
+                className={`text-left flex items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-colors whitespace-nowrap rounded-full ${
                   active
-                    ? "bg-[#0033ff] text-[#ccff00]"
-                    : "text-[#0a0a0a]/55 hover:text-[#0a0a0a] hover:bg-[#0a0a0a]/5"
+                    ? "bg-[#ff5a36] text-white"
+                    : "text-[#475569] hover:text-[#0f172a] hover:bg-[#fbf9f6]"
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={14} strokeWidth={1.75} />
                 {t.admin.tabs[tb.key]}
               </button>
             );

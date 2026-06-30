@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, Clock, Send, ArrowRight } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
 import { api, formatApiError } from "@/lib/api";
@@ -38,146 +38,64 @@ export default function Contact({ data }) {
     <section
       id="contact"
       data-testid="contact-section"
-      className="section-pad bg-[#0033ff] text-white relative overflow-hidden"
+      className="section-pad bg-[#fbf9f6]"
     >
-      <div
-        aria-hidden
-        className="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-[#ccff00] mix-blend-difference animate-blob"
-      />
-      <div
-        aria-hidden
-        className="absolute -bottom-32 -left-20 w-[24rem] h-[24rem] rounded-full bg-[#ff0055] mix-blend-difference animate-blob"
-        style={{ animationDelay: "-4s" }}
-      />
-
-      <div className="container-x px-5 md:px-10 lg:px-14 relative z-10">
+      <div className="container-x">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.6 }}
             className="lg:col-span-5"
           >
-            <div className="eyebrow text-[#ccff00] mb-5">{t.contact.overline}</div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="dot-accent" />
+              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
+                {t.contact.overline}
+              </span>
+            </div>
             <h2
-              className="font-display font-black uppercase tracking-tighter leading-[0.88]"
-              style={{ fontSize: "clamp(2.4rem, 5.5vw, 5.5rem)" }}
+              className="font-display leading-[0.98] tracking-tight"
+              style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
             >
-              {t.contact.title}
+              {t.contact.title.split(" ").slice(0, -1).join(" ")}{" "}
+              <span className="font-serif-i text-[#ff5a36] font-normal">
+                {t.contact.title.split(" ").slice(-1)}
+              </span>
             </h2>
-            <p className="mt-6 text-white/85 text-lg md:text-xl font-medium max-w-md">
+            <p className="mt-5 text-lg text-[#475569] leading-relaxed font-medium max-w-md">
               {t.contact.sub}
             </p>
 
-            <div className="mt-10 space-y-5">
-              <a
-                href={`tel:${(data.phone || "").replace(/\s/g, "")}`}
-                data-testid="contact-phone"
-                className="flex items-start gap-4 group"
-              >
-                <span className="w-12 h-12 rounded-full bg-[#ccff00] text-[#0a0a0a] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Phone size={18} />
-                </span>
-                <div>
-                  <div className="text-[10px] tracking-widest uppercase text-white/60 mb-1 font-bold">
-                    Tel
-                  </div>
-                  <div className="font-display font-extrabold text-xl">
-                    {data.phone}
-                  </div>
-                </div>
-              </a>
-              <a
-                href={`mailto:${data.email}`}
-                data-testid="contact-email"
-                className="flex items-start gap-4 group"
-              >
-                <span className="w-12 h-12 rounded-full bg-white text-[#0033ff] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Mail size={18} />
-                </span>
-                <div>
-                  <div className="text-[10px] tracking-widest uppercase text-white/60 mb-1 font-bold">
-                    E-Mail
-                  </div>
-                  <div className="text-base">{data.email}</div>
-                </div>
-              </a>
-              <div className="flex items-start gap-4">
-                <span className="w-12 h-12 rounded-full bg-[#ff0055] text-white flex items-center justify-center">
-                  <MapPin size={18} />
-                </span>
-                <div>
-                  <div className="text-[10px] tracking-widest uppercase text-white/60 mb-1 font-bold">
-                    {t.contact.address}
-                  </div>
-                  <div className="text-base">
-                    {pick(data.address_de, data.address_en)}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <span className="w-12 h-12 rounded-full bg-white text-[#0033ff] flex items-center justify-center">
-                  <Clock size={18} />
-                </span>
-                <div>
-                  <div className="text-[10px] tracking-widest uppercase text-white/60 mb-1 font-bold">
-                    {t.contact.hours}
-                  </div>
-                  <div className="text-base">
-                    {pick(data.hours_de, data.hours_en)}
-                  </div>
-                </div>
-              </div>
+            <div className="mt-10 space-y-4">
+              <InfoRow icon={Phone} label="Tel" value={data.phone} href={`tel:${(data.phone || "").replace(/\s/g, "")}`} testid="contact-phone" />
+              <InfoRow icon={Mail} label="E-Mail" value={data.email} href={`mailto:${data.email}`} testid="contact-email" />
+              <InfoRow icon={MapPin} label={t.contact.address} value={pick(data.address_de, data.address_en)} />
+              <InfoRow icon={Clock} label={t.contact.hours} value={pick(data.hours_de, data.hours_en)} />
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-7"
           >
             <form
               onSubmit={handleSubmit}
               data-testid="contact-form"
-              className="bg-white text-[#0a0a0a] rounded-3xl p-6 md:p-10 space-y-5 border-2 border-[#0a0a0a] shadow-[8px_8px_0_#ccff00]"
+              className="bg-white border border-[#e2e8f0] rounded-3xl p-7 md:p-10 space-y-6 shadow-[0_18px_50px_-25px_rgba(15,23,42,0.18)]"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Field
-                  label={t.contact.firstName}
-                  testid="contact-first-name"
-                  value={form.first_name}
-                  onChange={setField("first_name")}
-                  required
-                />
-                <Field
-                  label={t.contact.lastName}
-                  testid="contact-last-name"
-                  value={form.last_name}
-                  onChange={setField("last_name")}
-                  required
-                />
-                <Field
-                  label={t.contact.email}
-                  type="email"
-                  testid="contact-email-input"
-                  value={form.email}
-                  onChange={setField("email")}
-                  required
-                />
-                <Field
-                  label={t.contact.phone}
-                  type="tel"
-                  testid="contact-phone-input"
-                  value={form.phone}
-                  onChange={setField("phone")}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <Field label={t.contact.firstName} testid="contact-first-name" value={form.first_name} onChange={setField("first_name")} required />
+                <Field label={t.contact.lastName} testid="contact-last-name" value={form.last_name} onChange={setField("last_name")} required />
+                <Field label={t.contact.email} type="email" testid="contact-email-input" value={form.email} onChange={setField("email")} required />
+                <Field label={t.contact.phone} type="tel" testid="contact-phone-input" value={form.phone} onChange={setField("phone")} required />
               </div>
               <div>
-                <label className="text-[10px] tracking-[0.25em] uppercase text-[#0a0a0a]/60 font-extrabold">
+                <label className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
                   {t.contact.message}
                 </label>
                 <textarea
@@ -185,7 +103,7 @@ export default function Contact({ data }) {
                   value={form.message}
                   onChange={setField("message")}
                   data-testid="contact-message"
-                  className="mt-2 w-full bg-transparent border-b-2 border-[#0a0a0a]/20 focus:border-[#0033ff] focus:outline-none py-3 text-[#0a0a0a] placeholder:text-[#0a0a0a]/30 transition-colors resize-none font-medium"
+                  className="input-underline resize-none mt-2"
                   placeholder="…"
                 />
               </div>
@@ -193,10 +111,10 @@ export default function Contact({ data }) {
                 type="submit"
                 disabled={loading}
                 data-testid="contact-submit"
-                className="btn-pill-primary w-full md:w-auto disabled:opacity-60 justify-center"
+                className="btn-accent disabled:opacity-60"
               >
                 {loading ? t.contact.sending : t.contact.send}
-                {!loading ? <Send size={15} /> : <ArrowRight size={15} />}
+                <ArrowRight size={14} />
               </button>
             </form>
           </motion.div>
@@ -206,12 +124,33 @@ export default function Contact({ data }) {
   );
 }
 
+function InfoRow({ icon: Icon, label, value, href, testid }) {
+  const inner = (
+    <>
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[#e2e8f0] text-[#ff5a36] shrink-0">
+        <Icon size={15} />
+      </span>
+      <div>
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8]">{label}</div>
+        <div className="text-[#0f172a] mt-1 font-semibold">{value}</div>
+      </div>
+    </>
+  );
+  return href ? (
+    <a href={href} data-testid={testid} className="flex items-start gap-4 group hover:opacity-80 transition-opacity">
+      {inner}
+    </a>
+  ) : (
+    <div data-testid={testid} className="flex items-start gap-4">{inner}</div>
+  );
+}
+
 function Field({ label, type = "text", value, onChange, testid, required }) {
   return (
     <div>
-      <label className="text-[10px] tracking-[0.25em] uppercase text-[#0a0a0a]/60 font-extrabold">
+      <label className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
         {label}
-        {required && <span className="text-[#ff0055]">*</span>}
+        {required && <span className="text-[#ff5a36]">*</span>}
       </label>
       <input
         type={type}
@@ -219,7 +158,7 @@ function Field({ label, type = "text", value, onChange, testid, required }) {
         onChange={onChange}
         data-testid={testid}
         required={required}
-        className="mt-2 w-full bg-transparent border-b-2 border-[#0a0a0a]/20 focus:border-[#0033ff] focus:outline-none py-3 text-[#0a0a0a] placeholder:text-[#0a0a0a]/30 transition-colors font-medium"
+        className="input-underline mt-2"
       />
     </div>
   );

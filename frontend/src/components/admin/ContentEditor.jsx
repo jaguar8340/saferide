@@ -7,16 +7,14 @@ import { useLang } from "@/contexts/LanguageContext";
 function Field({ label, value, onChange, multiline, testid, type = "text" }) {
   return (
     <label className="block">
-      <span className="text-[10px] tracking-[0.25em] uppercase text-[#0a0a0a]/60 font-extrabold block mb-2">
-        {label}
-      </span>
+      <span className="label block mb-2">{label}</span>
       {multiline ? (
         <textarea
           rows={3}
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
           data-testid={testid}
-          className="w-full bg-[#f4f5f0] border-2 border-[#0a0a0a]/10 focus:border-[#0033ff] focus:outline-none px-3 py-2.5 text-sm text-[#0a0a0a] transition-colors resize-y rounded-xl font-medium"
+          className="w-full bg-white border border-[#e7e5e4] focus:border-[#1c1917] focus:outline-none px-3 py-2.5 text-sm text-[#1c1917] rounded-lg resize-y font-light"
         />
       ) : (
         <input
@@ -24,7 +22,7 @@ function Field({ label, value, onChange, multiline, testid, type = "text" }) {
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
           data-testid={testid}
-          className="w-full bg-[#f4f5f0] border-2 border-[#0a0a0a]/10 focus:border-[#0033ff] focus:outline-none px-3 py-2.5 text-sm text-[#0a0a0a] transition-colors rounded-xl font-medium"
+          className="w-full bg-white border border-[#e7e5e4] focus:border-[#1c1917] focus:outline-none px-3 py-2.5 text-sm text-[#1c1917] rounded-lg font-light"
         />
       )}
     </label>
@@ -33,22 +31,12 @@ function Field({ label, value, onChange, multiline, testid, type = "text" }) {
 
 function Block({ title, children, testid }) {
   return (
-    <section
-      data-testid={testid}
-      className="bg-white border-2 border-[#0a0a0a]/10 rounded-3xl p-6 md:p-7"
-    >
-      <h3 className="font-display font-black uppercase tracking-tight text-2xl mb-5">
-        {title}
-      </h3>
+    <section data-testid={testid} className="card p-6 md:p-7">
+      <h3 className="font-display text-xl mb-5">{title}</h3>
       <div className="space-y-4">{children}</div>
     </section>
   );
 }
-
-const BTN_PRIMARY =
-  "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[10px] font-extrabold tracking-widest uppercase bg-[#0033ff] text-[#ccff00] hover:bg-[#0022cc] transition-colors";
-const BTN_GHOST =
-  "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-extrabold tracking-widest uppercase border-2 border-[#0a0a0a] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white transition-colors";
 
 export default function ContentEditor() {
   const { t } = useLang();
@@ -56,20 +44,15 @@ export default function ContentEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchContent();
-  }, []);
+  useEffect(() => { fetchContent(); }, []);
 
   const fetchContent = async () => {
     setLoading(true);
     try {
       const r = await api.get("/content");
       setData(r.data);
-    } catch (err) {
-      toast.error(formatApiError(err));
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { toast.error(formatApiError(err)); }
+    finally { setLoading(false); }
   };
 
   const set = (path) => (val) => {
@@ -110,38 +93,28 @@ export default function ContentEditor() {
     try {
       await api.put("/content", data);
       toast.success(t.admin.saved);
-    } catch (err) {
-      toast.error(formatApiError(err));
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { toast.error(formatApiError(err)); }
+    finally { setSaving(false); }
   };
 
-  if (loading || !data) {
-    return <div className="text-[#0a0a0a]/50 text-sm">Lade…</div>;
-  }
+  if (loading || !data) return <div className="text-[#78716c] text-sm">Lade…</div>;
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="font-display font-black uppercase tracking-tighter text-3xl md:text-4xl">
+          <h2 className="font-display leading-[0.98] tracking-tight text-3xl md:text-4xl">
             {t.admin.tabs.content}
           </h2>
-          <p className="text-[#0a0a0a]/55 text-sm mt-1 font-medium">
+          <p className="text-[#475569] text-sm mt-1 font-medium">
             Alle Inhalte deiner Website auf einen Blick.
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetchContent} data-testid="content-refresh" className={BTN_GHOST}>
+          <button onClick={fetchContent} data-testid="content-refresh" className="btn-ghost text-xs py-2 px-3">
             <RefreshCw size={13} /> Reload
           </button>
-          <button
-            onClick={save}
-            disabled={saving}
-            data-testid="content-save-btn"
-            className={`${BTN_PRIMARY} disabled:opacity-60`}
-          >
+          <button onClick={save} disabled={saving} data-testid="content-save-btn" className="btn-primary text-xs py-2 px-4 disabled:opacity-60">
             <Save size={13} />
             {saving ? t.admin.saving : t.admin.save}
           </button>
@@ -161,13 +134,6 @@ export default function ContentEditor() {
           <Field label="CTA primär DE" value={data.hero?.cta_primary_de} onChange={set("hero.cta_primary_de")} testid="hero-cta-primary-de" />
           <Field label="CTA primär EN" value={data.hero?.cta_primary_en} onChange={set("hero.cta_primary_en")} testid="hero-cta-primary-en" />
           <Field label="Bild URL" value={data.hero?.image_url} onChange={set("hero.image_url")} testid="hero-image-url" />
-        </div>
-      </Block>
-
-      <Block title="Marquee" testid="block-marquee">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Text DE (mit · trennen)" value={data.marquee_de} onChange={set("marquee_de")} testid="marquee-de" />
-          <Field label="Text EN (mit · trennen)" value={data.marquee_en} onChange={set("marquee_en")} testid="marquee-en" />
         </div>
       </Block>
 
@@ -197,11 +163,7 @@ export default function ContentEditor() {
       <Block title="Angebote" testid="block-services">
         <div className="space-y-4">
           {(data.services || []).map((s, i) => (
-            <div
-              key={s.id || i}
-              data-testid={`service-edit-${i}`}
-              className="grid grid-cols-1 md:grid-cols-2 gap-3 border-2 border-[#0a0a0a]/10 p-4 rounded-2xl bg-[#f4f5f0]"
-            >
+            <div key={s.id || i} data-testid={`service-edit-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-[#e7e5e4] p-4 rounded-xl bg-[#fafaf9]">
               <Field label={`#${i + 1} Titel DE`} value={s.title_de} onChange={(v) => setArrayItem("services", i, "title_de", v)} testid={`service-${i}-title-de`} />
               <Field label="Titel EN" value={s.title_en} onChange={(v) => setArrayItem("services", i, "title_en", v)} testid={`service-${i}-title-en`} />
               <Field label="Beschreibung DE" value={s.description_de} onChange={(v) => setArrayItem("services", i, "description_de", v)} testid={`service-${i}-desc-de`} multiline />
@@ -215,11 +177,7 @@ export default function ContentEditor() {
       <Block title="Flotte" testid="block-fleet">
         <div className="space-y-4">
           {(data.fleet || []).map((f, i) => (
-            <div
-              key={f.id || i}
-              data-testid={`fleet-edit-${i}`}
-              className="grid grid-cols-1 md:grid-cols-2 gap-3 border-2 border-[#0a0a0a]/10 p-4 rounded-2xl bg-[#f4f5f0]"
-            >
+            <div key={f.id || i} data-testid={`fleet-edit-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-[#e7e5e4] p-4 rounded-xl bg-[#fafaf9]">
               <Field label={`#${i + 1} Name`} value={f.name} onChange={(v) => setArrayItem("fleet", i, "name", v)} testid={`fleet-${i}-name`} />
               <Field label="Spec" value={f.spec} onChange={(v) => setArrayItem("fleet", i, "spec", v)} testid={`fleet-${i}-spec`} />
               <Field label="Beschreibung DE" value={f.description_de} onChange={(v) => setArrayItem("fleet", i, "description_de", v)} testid={`fleet-${i}-desc-de`} multiline />
@@ -241,11 +199,7 @@ export default function ContentEditor() {
         </div>
         <div className="space-y-3 mt-3">
           {(data.pricing?.plans || []).map((p, i) => (
-            <div
-              key={p.id || i}
-              data-testid={`plan-edit-${i}`}
-              className="grid grid-cols-1 md:grid-cols-3 gap-3 border-2 border-[#0a0a0a]/10 p-4 rounded-2xl bg-[#f4f5f0]"
-            >
+            <div key={p.id || i} data-testid={`plan-edit-${i}`} className="grid grid-cols-1 md:grid-cols-3 gap-3 border border-[#e7e5e4] p-4 rounded-xl bg-[#fafaf9]">
               <Field label={`#${i + 1} Region DE`} value={p.region_de} onChange={(v) => setPlan(i, "region_de", v)} testid={`plan-${i}-region-de`} />
               <Field label="Region EN" value={p.region_en} onChange={(v) => setPlan(i, "region_en", v)} testid={`plan-${i}-region-en`} />
               <Field label="Preis" value={p.price} onChange={(v) => setPlan(i, "price", v)} testid={`plan-${i}-price`} />
@@ -253,13 +207,8 @@ export default function ContentEditor() {
               <Field label="Name EN" value={p.name_en} onChange={(v) => setPlan(i, "name_en", v)} testid={`plan-${i}-name-en`} />
               <Field label="Dauer DE" value={p.duration_de} onChange={(v) => setPlan(i, "duration_de", v)} testid={`plan-${i}-dur-de`} />
               <Field label="Dauer EN" value={p.duration_en} onChange={(v) => setPlan(i, "duration_en", v)} testid={`plan-${i}-dur-en`} />
-              <label className="flex items-center gap-2 text-xs mt-7 font-medium">
-                <input
-                  type="checkbox"
-                  checked={!!p.highlight}
-                  onChange={(e) => setPlan(i, "highlight", e.target.checked)}
-                  data-testid={`plan-${i}-highlight`}
-                />
+              <label className="flex items-center gap-2 text-xs mt-7 font-medium text-[#1c1917]">
+                <input type="checkbox" checked={!!p.highlight} onChange={(e) => setPlan(i, "highlight", e.target.checked)} data-testid={`plan-${i}-highlight`} />
                 Hervorheben
               </label>
             </div>
@@ -280,13 +229,8 @@ export default function ContentEditor() {
         </div>
       </Block>
 
-      <div className="sticky bottom-3 bg-white/95 backdrop-blur p-3 border-2 border-[#0a0a0a]/10 rounded-full flex justify-end">
-        <button
-          onClick={save}
-          disabled={saving}
-          data-testid="content-save-btn-bottom"
-          className={`${BTN_PRIMARY} disabled:opacity-60`}
-        >
+      <div className="sticky bottom-3 bg-white/95 backdrop-blur p-3 border border-[#e7e5e4] rounded-full flex justify-end">
+        <button onClick={save} disabled={saving} data-testid="content-save-btn-bottom" className="btn-primary text-xs py-2 px-4 disabled:opacity-60">
           <Save size={13} />
           {saving ? t.admin.saving : t.admin.save}
         </button>

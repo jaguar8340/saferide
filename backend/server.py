@@ -12,11 +12,12 @@ import jwt
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Any, Dict
 
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
+import requests
 
 
 # ---------- MongoDB ----------
@@ -51,6 +52,86 @@ def create_access_token(user_id: str, email: str) -> str:
 
 
 bearer = HTTPBearer(auto_error=False)
+
+
+# ---------- Object Storage ----------
+STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
+APP_NAME = os.environ.get("APP_NAME", "saferide")
+_storage_key: Optional[str] = None
+
+
+def init_storage() -> Optional[str]:
+    global _storage_key
+    if _storage_key:
+        return _storage_key
+    key = os.environ.get("EMERGENT_LLM_KEY")
+    if not key:
+        return None
+    try:
+        resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": key}, timeout=30)
+        resp.raise_for_status()
+        _storage_key = resp.json()["storage_key"]
+        return _storage_key
+    except Exception as e:
+        logging.warning("Storage init failed: %s", e)
+        return None
+
+
+def put_object(path: str, data: bytes, content_type: str) -> dict:
+    global _storage_key
+    key = init_storage()
+    if not key:
+        raise HTTPException(status_code=503, detail="Storage unavailable")
+    resp = requests.put(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key, "Content-Type": content_type},
+        data=data,
+        timeout=120,
+    )
+    if resp.status_code == 403:
+        _storage_key = None
+        key = init_storage()
+        resp = requests.put(
+            f"{STORAGE_URL}/objects/{path}",
+            headers={"X-Storage-Key": key, "Content-Type": content_type},
+            data=data,
+            timeout=120,
+        )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def get_object(path: str):
+    global _storage_key
+    key = init_storage()
+    if not key:
+        raise HTTPException(status_code=503, detail="Storage unavailable")
+    resp = requests.get(
+        f"{STORAGE_URL}/objects/{path}",
+        headers={"X-Storage-Key": key},
+        timeout=60,
+    )
+    if resp.status_code == 403:
+        _storage_key = None
+        key = init_storage()
+        resp = requests.get(
+            f"{STORAGE_URL}/objects/{path}",
+            headers={"X-Storage-Key": key},
+            timeout=60,
+        )
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+
+
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+}
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
 
 
 async def get_current_admin(
@@ -399,6 +480,9 @@ api = APIRouter(prefix="/api")
 
 @app.on_event("startup")
 async def startup_event():
+    # Storage
+    init_storage()
+
     # Indexes
     await db.users.create_index("email", unique=True)
     await db.contact_submissions.create_index("created_at")
@@ -572,6 +656,42 @@ async def mark_read(sub_id: str, admin=Depends(get_current_admin)):
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     return {"ok": True}
+
+
+# ---------- File Upload ----------
+@api.post("/upload")
+async def upload_file(file: UploadFile = File(...), admin=Depends(get_current_admin)):
+    content_type = file.content_type or "application/octet-stream"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Nur Bilddateien erlaubt (jpg/png/webp/gif)")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Datei zu gross (max. 10 MB)")
+    ext = ALLOWED_IMAGE_TYPES[content_type]
+    path = f"{APP_NAME}/uploads/{uuid.uuid4()}.{ext}"
+    result = put_object(path, data, content_type)
+    stored_path = result.get("path", path)
+    await db.files.insert_one({
+        "id": str(uuid.uuid4()),
+        "storage_path": stored_path,
+        "original_filename": file.filename,
+        "content_type": content_type,
+        "size": len(data),
+        "uploaded_by": admin.get("email"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"path": stored_path, "url": f"/api/files/{stored_path}"}
+
+
+@api.get("/files/{path:path}")
+async def serve_file(path: str):
+    try:
+        data, ctype = get_object(path)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden") from e
+    return Response(content=data, media_type=ctype, headers={"Cache-Control": "public, max-age=31536000"})
 
 
 # ---------- Health ----------

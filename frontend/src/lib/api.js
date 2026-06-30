@@ -27,6 +27,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Resolve API-relative URLs (e.g. "/api/files/x") to absolute URLs
+export function resolveUrl(url) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/api/")) return `${BACKEND_URL}${url}`;
+  return url;
+}
+
 export function formatApiError(err, fallback = "Etwas ist schiefgelaufen.") {
   const detail = err?.response?.data?.detail;
   if (!detail) return err?.message || fallback;

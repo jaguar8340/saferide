@@ -17,9 +17,7 @@ const STRINGS = {
       ctaShort: "Anfragen",
       admin: "Admin",
     },
-    hero: {
-      scroll: "Scroll",
-    },
+    hero: { scroll: "Scroll" },
     about: { trust: "Lizenzierte Fahrlehrerin" },
     services: { overline: "Was du bekommst", title: "Mehr als nur Fahrstunden" },
     fleet: { overline: "Unsere Flotte", title: "Premium am Steuer" },
@@ -32,7 +30,7 @@ const STRINGS = {
     },
     contact: {
       overline: "Kontakt",
-      title: "Bereit für die erste Lektion?",
+      title: "Bereit für deine erste Lektion?",
       sub: "Melde dich – ich freue mich auf dich.",
       firstName: "Vorname",
       lastName: "Nachname",
@@ -47,7 +45,7 @@ const STRINGS = {
     },
     footer: {
       rights: "Alle Rechte vorbehalten.",
-      tagline: "Fahren lernen. Anders. Besser. Mutiger.",
+      tagline: "Anders. Besser. Mutiger.",
       imprint: "Impressum",
       privacy: "Datenschutz",
     },
@@ -73,6 +71,10 @@ const STRINGS = {
       edit: "Bearbeiten",
       cancel: "Abbrechen",
       noItems: "Noch keine Einträge.",
+      upload: "Datei wählen",
+      uploading: "Lade hoch…",
+      uploaded: "Hochgeladen",
+      dropHere: "Bild hierher ziehen oder klicken",
     },
   },
   en: {
@@ -84,7 +86,7 @@ const STRINGS = {
       gallery: "Gallery",
       reviews: "Reviews",
       contact: "Contact",
-      ctaShort: "Get started",
+      ctaShort: "Get in touch",
       admin: "Admin",
     },
     hero: { scroll: "Scroll" },
@@ -115,7 +117,7 @@ const STRINGS = {
     },
     footer: {
       rights: "All rights reserved.",
-      tagline: "Learn to drive. Different. Better. Bolder.",
+      tagline: "Different. Better. Bolder.",
       imprint: "Imprint",
       privacy: "Privacy",
     },
@@ -141,6 +143,10 @@ const STRINGS = {
       edit: "Edit",
       cancel: "Cancel",
       noItems: "No entries yet.",
+      upload: "Choose file",
+      uploading: "Uploading…",
+      uploaded: "Uploaded",
+      dropHere: "Drop image here or click",
     },
   },
 };
@@ -173,7 +179,6 @@ export function LanguageProvider({ children }) {
 
 export function useLang() {
   const ctx = useContext(LanguageContext);
-  if (!ctx)
-    throw new Error("useLang must be used within LanguageProvider");
+  if (!ctx) throw new Error("useLang must be used within LanguageProvider");
   return ctx;
 }
