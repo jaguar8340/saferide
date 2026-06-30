@@ -140,14 +140,12 @@ export default function Gallery({ items }) {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: (i % 4) * 0.05 }}
-              className={`group relative overflow-hidden rounded-3xl ${
-                i % 5 === 0 ? "col-span-2 row-span-2" : ""
-              }`}
+              className="group relative overflow-hidden rounded-3xl aspect-square bg-[#fbf9f6]"
             >
               <img
                 src={resolveUrl(g.image_url)}
                 alt={pick(g.caption_de, g.caption_en) || "gallery"}
-                className="w-full h-full min-h-[220px] md:min-h-[280px] object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {!editMode && (g.caption_de || g.caption_en) && (
                 <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Clock, MapPin, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Clock, MapPin, Loader2, ArrowRight, Sparkles, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
@@ -9,6 +9,8 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
+import Editable from "@/components/edit/Editable";
+import EditablePackageCard from "@/components/site/EditablePackageCard";
 
 function formatPrice(chf) {
   if (chf == null) return "—";
@@ -17,10 +19,11 @@ function formatPrice(chf) {
 
 export default function BuchungPage() {
   const { lang, pick } = useLang();
-  const { content } = useEdit();
+  const { content, editMode } = useEdit();
   const [packages, setPackages] = useState(null);
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [creatingPackage, setCreatingPackage] = useState(false);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -113,29 +116,41 @@ export default function BuchungPage() {
         <div className="container-x px-5 md:px-8 lg:px-12">
           <div className="flex items-center gap-2 mb-5">
             <span className="dot-accent animate-pulse-accent" />
-            <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-              {lang === "de" ? "Online-Buchung" : "Online booking"}
-            </span>
+            <Editable
+              path={`buchung_overline_${lang}`}
+              value={
+                pick(content?.buchung_overline_de, content?.buchung_overline_en) ||
+                (lang === "de" ? "Online-Buchung" : "Online booking")
+              }
+              className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+            />
           </div>
           <h1
             className="font-display leading-[0.92] tracking-tight max-w-4xl"
             style={{ fontSize: "clamp(2.6rem, 6vw, 5.6rem)" }}
           >
-            {lang === "de" ? (
-              <>
-                Such dir dein <span className="font-serif-i text-[#ff5a36]">Paket</span> aus.
-              </>
-            ) : (
-              <>
-                Pick your <span className="font-serif-i text-[#ff5a36]">package</span>.
-              </>
-            )}
+            <Editable
+              path={`buchung_title_${lang}`}
+              value={
+                pick(content?.buchung_title_de, content?.buchung_title_en) ||
+                (lang === "de" ? "Such dir dein Paket aus." : "Pick your package.")
+              }
+              as="span"
+              className="inline"
+            />
           </h1>
-          <p className="mt-6 max-w-2xl text-lg text-[#475569] leading-relaxed font-medium">
-            {lang === "de"
-              ? "Wähle das Paket, das zu dir passt, sag mir deinen Wunschtermin und ich melde mich innerhalb von 24 Stunden zur Bestätigung."
-              : "Choose the package that fits you, tell me your preferred date and I'll get back to you within 24 hours to confirm."}
-          </p>
+          <Editable
+            path={`buchung_intro_${lang}`}
+            value={
+              pick(content?.buchung_intro_de, content?.buchung_intro_en) ||
+              (lang === "de"
+                ? "Wähle das Paket, das zu dir passt, sag mir deinen Wunschtermin und ich melde mich innerhalb von 24 Stunden zur Bestätigung."
+                : "Choose the package that fits you, tell me your preferred date and I'll get back to you within 24 hours to confirm.")
+            }
+            as="p"
+            multiline
+            className="mt-6 max-w-2xl text-lg text-[#475569] leading-relaxed font-medium block"
+          />
         </div>
       </section>
 
@@ -143,73 +158,71 @@ export default function BuchungPage() {
       <section className="pb-16 md:pb-20">
         <div className="container-x px-5 md:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            {packages.map((pkg, i) => {
-              const isSelected = selected === pkg.slug;
-              const dark = (pkg.color_class || "").includes("ff5a36");
-              return (
-                <motion.button
-                  key={pkg.slug}
-                  type="button"
-                  onClick={() => setSelected(pkg.slug)}
-                  data-testid={`package-${pkg.slug}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-40px" }}
-                  transition={{ duration: 0.4, delay: i * 0.06 }}
-                  className={`relative text-left p-6 md:p-7 rounded-3xl border-2 transition-all duration-300 ${
-                    isSelected
-                      ? "border-[#ff5a36] -translate-y-1 shadow-lg shadow-[#ff5a36]/15"
-                      : "border-transparent hover:-translate-y-0.5"
-                  } ${dark ? "bg-[#ff5a36] text-white" : "bg-white text-[#0f172a]"}`}
-                >
-                  {pkg.popular && (
-                    <span className="absolute -top-2.5 left-6 inline-flex items-center gap-1 bg-[#0f172a] text-white text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full">
-                      <Sparkles size={10} /> Beliebt
-                    </span>
-                  )}
-                  <div className="text-[10px] font-semibold tracking-widest uppercase opacity-75">
-                    {pkg.service_type === "vku" ? "VKU" : "Fahrlektion"}
-                  </div>
-                  <h3 className="font-display text-2xl md:text-3xl tracking-tight mt-2">
-                    {pick(pkg.title_de, pkg.title_en)}
-                  </h3>
-                  <p className={`mt-2 text-sm ${dark ? "text-white/80" : "text-[#475569]"} font-medium`}>
-                    {pick(pkg.subtitle_de, pkg.subtitle_en)}
-                  </p>
-                  <div className="mt-5 flex items-baseline gap-2">
-                    <span className="font-display text-4xl tracking-tight">{formatPrice(pkg.price_chf)}</span>
-                    {pkg.original_price_chf && pkg.original_price_chf > pkg.price_chf && (
-                      <span className={`text-xs line-through ${dark ? "text-white/60" : "text-[#94a3b8]"}`}>
-                        {formatPrice(pkg.original_price_chf)}
-                      </span>
-                    )}
-                  </div>
-                  <ul className="mt-5 space-y-2">
-                    {(pick(pkg.features_de, pkg.features_en) || []).slice(0, 4).map((f, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm font-medium">
-                        <Check size={14} className={`shrink-0 mt-0.5 ${dark ? "text-white" : "text-[#ff5a36]"}`} />
-                        <span className={dark ? "text-white/90" : "text-[#475569]"}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {pkg.highlight_de && (
-                    <div
-                      className={`mt-5 text-xs font-semibold tracking-widest uppercase inline-block px-2.5 py-1 rounded-full ${
-                        dark ? "bg-white/15 text-white" : "bg-[#fef3c7] text-[#92400e]"
-                      }`}
-                    >
-                      {pick(pkg.highlight_de, pkg.highlight_en)}
-                    </div>
-                  )}
-                  {isSelected && (
-                    <div className={`mt-5 inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase ${dark ? "text-white" : "text-[#ff5a36]"}`}>
-                      <Check size={12} /> Ausgewählt
-                    </div>
-                  )}
-                </motion.button>
-              );
-            })}
+            {packages.map((pkg, i) => (
+              <motion.div
+                key={pkg.slug}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+              >
+                <EditablePackageCard
+                  pkg={pkg}
+                  index={i}
+                  isSelected={selected === pkg.slug}
+                  onSelect={setSelected}
+                  onPatched={(updated) =>
+                    setPackages((cur) => cur.map((p) => (p.slug === updated.slug ? updated : p)))
+                  }
+                  onRemoved={(slug) => {
+                    setPackages((cur) => cur.filter((p) => p.slug !== slug));
+                    if (selected === slug) setSelected(packages[0]?.slug || null);
+                  }}
+                />
+              </motion.div>
+            ))}
           </div>
+          {editMode && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={async () => {
+                  setCreatingPackage(true);
+                  try {
+                    const slug = `paket-${Date.now()}`;
+                    const r = await api.post("/packages", {
+                      slug,
+                      title_de: "Neues Paket",
+                      title_en: "New package",
+                      subtitle_de: "Kurzbeschreibung…",
+                      subtitle_en: "Short description…",
+                      service_type: "auto",
+                      lesson_count: 1,
+                      duration_minutes: 50,
+                      price_chf: 100,
+                      features_de: ["Feature 1", "Feature 2"],
+                      features_en: ["Feature 1", "Feature 2"],
+                      color_class: "bg-[#dbeafe]",
+                      active: true,
+                      order: packages.length,
+                    });
+                    setPackages((cur) => [...cur, r.data]);
+                    toast.success("Paket erstellt");
+                  } catch (err) {
+                    toast.error(formatApiError(err));
+                  } finally {
+                    setCreatingPackage(false);
+                  }
+                }}
+                disabled={creatingPackage}
+                data-testid="package-add"
+                className="btn-accent text-sm"
+              >
+                {creatingPackage ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Neues Paket
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

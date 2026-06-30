@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import Editable from "@/components/edit/Editable";
+import CantonWappen from "@/components/site/CantonWappen";
 
 export default function Pricing({ data }) {
   const { lang, pick, t } = useLang();
@@ -61,11 +62,18 @@ export default function Pricing({ data }) {
                   className="absolute -top-3 left-7 tag tag-accent"
                 />
               )}
-              <Editable
-                path={`pricing.plans.${i}.region_${lang}`}
-                value={pick(p.region_de, p.region_en)}
-                className={`text-[10px] tracking-widest uppercase font-semibold mb-2 block ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}
-              />
+              <div className="flex items-center gap-2 mb-2">
+                <CantonWappen
+                  code={p.canton_code}
+                  region={p.region_de || p.region_en}
+                  size="w-5 h-5"
+                />
+                <Editable
+                  path={`pricing.plans.${i}.region_${lang}`}
+                  value={pick(p.region_de, p.region_en)}
+                  className={`text-[10px] tracking-widest uppercase font-semibold block ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}
+                />
+              </div>
               <Editable
                 path={`pricing.plans.${i}.name_${lang}`}
                 value={pick(p.name_de, p.name_en)}

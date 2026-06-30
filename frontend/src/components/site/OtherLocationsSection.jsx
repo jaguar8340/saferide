@@ -7,6 +7,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError, resolveUrl } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import CantonWappen from "@/components/site/CantonWappen";
 
 /**
  * Card that links to another location landing page. In admin edit mode
@@ -71,7 +72,8 @@ function OtherLocationCard({ loc, onLocalImageUpdate }) {
             {loc.name}
           </div>
         )}
-        <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-white/95 backdrop-blur text-[#0f172a] rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-widest uppercase">
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 bg-white/95 backdrop-blur text-[#0f172a] rounded-full pl-1.5 pr-2.5 py-1 text-[10px] font-semibold tracking-widest uppercase">
+          <CantonWappen code={loc.canton} size="w-3.5 h-3.5" />
           {loc.canton}
         </span>
         {editMode && (

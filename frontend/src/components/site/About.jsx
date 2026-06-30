@@ -3,6 +3,7 @@ import { Sparkles } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
+import CertificatesDialog from "@/components/site/CertificatesDialog";
 
 export default function About({ data }) {
   const { lang, pick, t } = useLang();
@@ -80,6 +81,8 @@ export default function About({ data }) {
                 </div>
               ))}
             </div>
+
+            <CertificatesDialog />
           </motion.div>
 
           <motion.div

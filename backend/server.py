@@ -722,6 +722,17 @@ class BookingCreate(BaseModel):
     message: Optional[str] = Field(default=None, max_length=2000)
 
 
+class CertificateCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    title_de: str = Field(min_length=1, max_length=200)
+    title_en: str = Field(min_length=1, max_length=200)
+    image_url: str = Field(min_length=1, max_length=600)
+
+
+class CertificatePatch(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
 # ---------- App ----------
 app = FastAPI(title="Fahrschule Safe Ride API")
 api = APIRouter(prefix="/api")
@@ -844,6 +855,44 @@ async def startup_event():
 
     # Index for bookings (queryable by created_at).
     await db.bookings.create_index("created_at")
+
+    # Seed certificates (diplomas) — only on first install.
+    if await db.certificates.count_documents({}) == 0:
+        seeds = [
+            {
+                "id": str(uuid.uuid4()),
+                "title_de": "Eidgenoessischer Fachausweis Fahrlehrer:in",
+                "title_en": "Swiss Federal Diploma Driving Instructor",
+                "image_url": "https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=900",
+                "year": "2014",
+                "order": 0,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title_de": "Berufsbewilligung Strassenverkehrsamt SZ",
+                "title_en": "Professional license SZ road traffic office",
+                "image_url": "https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=900",
+                "year": "2014",
+                "order": 1,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title_de": "Weiterbildung ADHS & Neurodivergenz",
+                "title_en": "Further training ADHD & neurodiversity",
+                "image_url": "https://images.pexels.com/photos/4173251/pexels-photo-4173251.jpeg?auto=compress&cs=tinysrgb&w=900",
+                "year": "2018",
+                "order": 2,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title_de": "Mental-Coaching Zertifikat",
+                "title_en": "Mental coaching certificate",
+                "image_url": "https://images.pexels.com/photos/3760529/pexels-photo-3760529.jpeg?auto=compress&cs=tinysrgb&w=900",
+                "year": "2020",
+                "order": 3,
+            },
+        ]
+        await db.certificates.insert_many(seeds)
 
 
 # ---------- Auth Routes ----------
@@ -1283,6 +1332,41 @@ async def delete_booking(booking_id: str, admin=Depends(get_current_admin)):
     res = await db.bookings.delete_one({"id": booking_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    return {"ok": True}
+
+
+# ---------- Certificates / Diplomas ----------
+@api.get("/certificates")
+async def list_certificates():
+    items = await db.certificates.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+    return items
+
+
+@api.post("/certificates")
+async def create_certificate(payload: CertificateCreate, admin=Depends(get_current_admin)):
+    body = payload.model_dump()
+    body["id"] = str(uuid.uuid4())
+    body.setdefault("order", await db.certificates.count_documents({}))
+    await db.certificates.insert_one(body)
+    return {k: v for k, v in body.items() if k != "_id"}
+
+
+@api.patch("/certificates/{cert_id}")
+async def update_certificate(cert_id: str, payload: CertificatePatch, admin=Depends(get_current_admin)):
+    set_ops = payload.model_dump(exclude_unset=True)
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Leere Aktualisierung")
+    res = await db.certificates.update_one({"id": cert_id}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Zertifikat nicht gefunden")
+    return await db.certificates.find_one({"id": cert_id}, {"_id": 0})
+
+
+@api.delete("/certificates/{cert_id}")
+async def delete_certificate(cert_id: str, admin=Depends(get_current_admin)):
+    res = await db.certificates.delete_one({"id": cert_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Zertifikat nicht gefunden")
     return {"ok": True}
 
 

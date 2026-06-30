@@ -1,0 +1,75 @@
+{
+  "summary": "Iteration 12 testing complete. Backend pytest: 9/9 PASSED (100%) covering Certificates CRUD + auth gates, Package PATCH (title_de + price_chf via extra='allow'), Package POST/DELETE auth gates and admin flow. Frontend Playwright: most features pass (Cantonal Wappen on homepage Pricing + OtherLocations + LocPrices via inline SVG; Gallery uniform aspect-square; Diplome modal with 4 default certificates; inline package title edit fires PATCH 200; popular toggle fires PATCH 200; default 10er-karte selection; non-admin booking POST → 200). ONE FRONTEND BUG FOUND: the +Paket admin add button (data-testid='package-add') does NOT fire a POST /api/packages – click is visible & reachable but no network call leaves the page. Hero-overline editable selector ([data-cms-path='buchung_overline_de']) not present – inline-editing of the buchung_overline/title/intro could not be exercised via that selector. Cleanup performed (probelektion title restored, no orphan paket-* packages, QA booking deleted).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "BuchungPage +Paket button",
+        "issue": "Clicking [data-testid='package-add'] in admin edit mode does NOT fire POST /api/packages. The button is rendered, visible, enabled, and clickable; force-click does not raise — but no network request is initiated and no toast appears. Backend endpoint works (verified by pytest test_admin_create_then_delete_package). Likely an event-handler wiring issue in BuchungPage.jsx around line 187–224 — possibly the onClick is being shadowed by the visual editor's wrapper, or `creatingPackage` is stuck, or the api.post promise is being swallowed. Suggest: (a) add console.log inside the onClick, (b) verify `api` import resolves to the same base as PATCH calls (which do work), (c) confirm `disabled={creatingPackage}` is not stuck true after a failed previous click.",
+        "selector": "[data-testid='package-add']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "BuchungPage hero overline/title editable selector",
+        "issue": "Spec asked for inline-editing of buchung_overline_de / title / intro on /buchung. Could not locate any element with data-cms-path='buchung_overline_de' or data-cms-key='buchung_overline_de'. Either the Editable wrapper is mounted under a different attribute, or the testid/path was renamed. Please confirm and expose a stable selector so admin/QA can target the overline field.",
+        "selector": "[data-cms-path='buchung_overline_de']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "CertificatesDialog",
+        "issues": [
+          "Radix DialogContent missing aria-describedby — console warns 'Missing `Description` or `aria-describedby={undefined}` for {DialogContent}'. Non-blocking but should be silenced by adding <DialogDescription> or aria-describedby={undefined} explicitly."
+        ]
+      },
+      {
+        "screen": "Buchung — react hydration",
+        "issues": [
+          "Existing console warning '<span> cannot be a child of <option>' still floods the console on /buchung (same as iteration 11 finding). The visual-editor decorator wraps option text in <span>."
+        ]
+      },
+      {
+        "screen": "Pricing cards — Wappen distribution",
+        "issues": [
+          "All 4 homepage pricing cards display canton wappen — but cards 0–2 all show 'SZ' and only card 3 shows 'GR'. Spec did say 'any of SZ/ZH/SG/GR', so this passes; however visually three identical SZ shields next to each other looks like a duplication. Consider varying or removing the shield on cards where canton is not meaningful (e.g. on VKU which is bound to Lachen/Einsiedeln)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration12.py",
+    "/app/test_reports/pytest/it12_results.xml"
+  ],
+  "action_items": [
+    "FIX +Paket button: investigate why clicking [data-testid='package-add'] does not trigger POST /api/packages — Playwright force-click sees the button visible but no network leaves the page. Add a console.log in the onClick to confirm it runs; also verify `creatingPackage` state isn't stuck and the api import resolves.",
+    "Expose a stable selector for the buchung hero overline/title/intro inline-editable (data-cms-path='buchung_overline_de') – currently no such element on /buchung.",
+    "Add aria-describedby (or <DialogDescription>) to CertificatesDialog to silence the Radix accessibility console warning."
+  ],
+  "critical_code_review_comments": [
+    "BuchungPage.jsx:187–224 the +Paket onClick is async-arrow defined inline; if the inner api.post throws synchronously (e.g. SSR/visual-editor context), nothing is logged. Wrap with explicit console.error in catch and verify in browser devtools.",
+    "EditablePackageCard PATCH path works (verified: PATCH /api/packages/probelektion-50 200 fires on blur, and PATCH /api/packages/5er-karte 200 fires on popular-toggle). Good.",
+    "Certificates routes: GET public, POST/PATCH/DELETE require Bearer — all verified. 4 defaults seeded (Eidg. Fachausweis Fahrlehrer:in, Berufsbewilligung Strassenverkehrsamt SZ, Weiterbildung ADHS & Neurodivergenz, Mental-Coaching Zertifikat). Note: actual titles are LONGER than the spec wording — token-match used in tests.",
+    "CantonWappen inline-SVG render verified on /, /fahrschule-einsiedeln Pricing & OtherLocations cards. data-testid 'canton-wappen-{SZ|ZH|SG|GR}' attached correctly with an <svg> child.",
+    "Gallery: every [data-testid^='gallery-item-'] has class 'aspect-square', none has col-span-2 or row-span-2 — uniform grid confirmed (6 items in 2-col mobile / 3-col tablet / 4-col desktop equivalents).",
+    "CertificatesDialog: opens via [data-testid='certificates-open'], renders [data-testid='certificates-dialog'] with exactly 4 cards (certificate-0..3) each containing a non-empty <img src> (Pexels URLs). Closes via Esc. ✓",
+    "Selection logic on packages still relies on CSS class only (no aria-pressed / role=radio) — repeat of iter11 a11y comment.",
+    "Hydration warning about <span> in <option> persists — fix recommended in iter11 still pending."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration12.py (new)",
+    "/app/test_reports/iteration_12.json (new)",
+    "/app/test_reports/pytest/it12_results.xml (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "85%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (verified via POST /api/auth/login)",
+  "seed_data_creation": "1 QA booking created during Playwright non-admin submission and DELETED via admin endpoint immediately after — verified 0 TestQA bookings remain. 1 certificate created/patched/deleted by pytest within test_admin_create_patch_delete_certificate, verified absent after teardown. 1 QA package (qa-test-paket-*) created/deleted by pytest, verified absent after teardown. probelektion-50 title was modified during Playwright admin test to 'ProbelektionQA' and RESTORED to 'Probelektion' (price 50 unchanged). 5er-karte popular toggled twice and ended at False (original state).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend env: today=2026-06-30, use 2027+ for date fields. Admin edit-mode toggle on /buchung uses buttons 'Live' (label) / 'BEARBEITEN' (when active). Inline package title editing IS working (PATCH fires on blur via contenteditable). Popular toggle IS working. The +Paket button has the data-testid but the onClick does NOT fire a network request — needs main-agent debug. There is NO element with data-cms-path='buchung_overline_de' on /buchung — main agent must expose one or rename selector before next QA. Certificates default seeded titles are longer than spec wording (e.g. 'Eidgenoessischer Fachausweis Fahrlehrer:in') — tests use token-match.",
+  "rca of the issue": "Frontend bug only: BuchungPage +Paket button click does not generate any network traffic. Repro: login admin → /buchung → click 'Live' to enable edit mode → click [data-testid='package-add'] → wait 4s → no POST /api/packages observed. Backend POST /api/packages itself works (verified by pytest creating slug 'qa-test-paket-*' end-to-end). RCA hypothesis: (a) the inline async-arrow onClick is being shadowed by the visual-editor wrapper element so React's synthetic click isn't reaching it; or (b) `creatingPackage` state stuck true blocking subsequent attempts; or (c) the api.post promise throws synchronously without logging. Mitigation: add explicit console.log/console.error in onClick body, confirm `api` import works (it does for PATCH calls in same file), and consider lifting the onClick to a named function outside the JSX to ensure no closure/HMR issue."
+}

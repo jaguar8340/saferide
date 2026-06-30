@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import Editable from "@/components/edit/Editable";
+import CantonWappen from "@/components/site/CantonWappen";
 
 export default function LocPrices({ loc, updateField }) {
   const { lang, pick } = useLang();
@@ -12,8 +13,9 @@ export default function LocPrices({ loc, updateField }) {
         <div className="max-w-2xl mb-10">
           <div className="flex items-center gap-2 mb-4">
             <span className="dot-accent" />
+            <CantonWappen code={loc.canton} size="w-4 h-4" />
             <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-              CHF · Preise
+              CHF · Preise {loc.canton ? `· Kanton ${loc.canton}` : ""}
             </span>
           </div>
           <Editable
