@@ -285,7 +285,14 @@ export default function LocationPage() {
               </div>
             </div>
             <div className="lg:col-span-5">
-              <NadineIntroCard data={content?.nadine} />
+              <EditableImage
+                path="hero_image_url"
+                src={loc.hero_image_url}
+                onUpdate={updateField}
+                alt={loc.name}
+                className="block rounded-3xl overflow-hidden border border-[#e2e8f0]"
+                imgClassName="w-full h-[320px] md:h-[460px] object-cover"
+              />
             </div>
           </div>
         </div>
@@ -353,6 +360,9 @@ export default function LocationPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-8">
+                <NadineIntroCard data={content?.nadine} />
+              </div>
             </div>
           </div>
         </div>
@@ -445,7 +455,7 @@ export default function LocationPage() {
             ))}
           </div>
 
-          <div className="mt-10 max-w-3xl" data-testid="loc-routes-outro">
+          <div className="mt-10" data-testid="loc-routes-outro">
             <Editable
               path={`exam_routes_outro_${lang}`}
               value={pick(loc.exam_routes_outro_de, loc.exam_routes_outro_en)}

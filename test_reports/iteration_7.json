@@ -1,0 +1,27 @@
+{
+  "summary": "Iteration 7 layout corrections verified end-to-end. (1) Hero right column on /fahrschule-einsiedeln, /fahrschule-horgen, /fahrschule-pfaeffikon-sz shows EditableImage on hero_image_url with NO nadine-intro-card inside the first <section>. (2) The nadine-intro-card now lives inside the SECOND <section> (Warum + Ideal-for) in the right column, DOM order confirms it appears AFTER the ideal-for <ul> (compareDocumentPosition & 4 == true on all 3 samples). (3) [data-testid=loc-routes-outro] className === 'mt-10' (no 'max-w-3xl') on all 3 samples – paragraph stretches to full container width. All 11 location slugs return HTTP 200 from /api/locations/{slug}. Admin PATCH persistence verified for both content.nadine.intro_text_de and exam_routes_outro_de (PATCH → GET → restore). 'Bild ersetzen' overlay button on the hero EditableImage is visible in edit mode (confirmed via button list scrape). Visual screenshot also confirms layout: hero image top-right, Nadine card below ideal-for list, full-width outro under routes grid.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration7_layout.py",
+    "/app/test_reports/pytest/it7_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LocationPage.jsx is now 971 lines – consider splitting into Hero/Why/Routes/Meet/Prices/Gallery/Reviews/FAQ/CTA subcomponents to stay under the 700-line guideline. Not blocking, but recommended for maintainability."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration7_layout.py (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – Bearer token via /api/auth/login access_token",
+  "seed_data_creation": "None. PATCH tests use append-and-restore pattern on nadine.intro_text_de and einsiedeln.exam_routes_outro_de.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Auth contract: POST /api/auth/login returns {access_token,...}; send as Authorization: Bearer <token> on PATCH. Section indices on LocationPage (DOM order): 0=Hero, 1=Why+Ideal+NadineCard, 2=Routes, 3=Meet+Map, 4=WhySafeRide(dark), 5=Prices, 6=Gallery, 7=GoogleReviews, 8=OtherRegions, 9=FAQ, 10=CTA. 11 location slugs present. Pages spot-checked: einsiedeln, horgen, pfaeffikon-sz.",
+  "rca of the issue": "N/A – no bugs found this iteration. Implementation in /app/frontend/src/pages/LocationPage.jsx matches spec exactly: hero (line 287-296) renders <EditableImage path='hero_image_url' …/>; NadineIntroCard is rendered at line 363-365 inside the lg:col-span-6 right column of the 'Why + Ideal-for' section, after the <ul> at lines 340-362; routes outro div (line 458) uses className='mt-10' only."
+}
