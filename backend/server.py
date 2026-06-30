@@ -19,7 +19,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 import requests
 
-from default_pages import DEFAULT_ABLAUF, DEFAULT_VKU, DEFAULT_LOCATIONS
+from default_pages import DEFAULT_ABLAUF, DEFAULT_VKU, DEFAULT_LOCATIONS, DEFAULT_IMPRESSUM, DEFAULT_DATENSCHUTZ
 
 
 # ---------- MongoDB ----------
@@ -414,6 +414,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     },
     "ablauf": DEFAULT_ABLAUF,
     "vku": DEFAULT_VKU,
+    "impressum": DEFAULT_IMPRESSUM,
+    "datenschutz": DEFAULT_DATENSCHUTZ,
 }
 
 
@@ -921,8 +923,10 @@ async def sitemap_xml(request: "Request"):
     now = _dt.now(timezone.utc).strftime("%Y-%m-%d")
     static_urls = [
         (f"{base}/", "1.0", "weekly"),
-        (f"{base}/ablauf", "0.9", "monthly"),
-        (f"{base}/vku", "0.9", "weekly"),
+        (f"{base}/ablauf-zum-fuehrerschein", "0.9", "monthly"),
+        (f"{base}/vku-unterricht", "0.9", "weekly"),
+        (f"{base}/impressum", "0.3", "yearly"),
+        (f"{base}/datenschutz", "0.3", "yearly"),
     ]
     loc_docs = await db.locations.find({}, {"slug": 1, "_id": 0}).sort("order", 1).to_list(200)
     loc_urls = [(f"{base}/fahrschule-{d['slug']}", "0.85", "monthly") for d in loc_docs]

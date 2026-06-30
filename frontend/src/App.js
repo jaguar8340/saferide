@@ -7,6 +7,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AblaufPage from "@/pages/AblaufPage";
 import VkuPage from "@/pages/VkuPage";
 import LocationPage from "@/pages/LocationPage";
+import LegalPage from "@/pages/LegalPage";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EditProvider } from "@/contexts/EditContext";
@@ -46,7 +47,17 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/ablauf" element={<AblaufPage />} />
+                <Route path="/ablauf-zum-fuehrerschein" element={<AblaufPage />} />
                 <Route path="/vku" element={<VkuPage />} />
+                <Route path="/vku-unterricht" element={<VkuPage />} />
+                <Route
+                  path="/impressum"
+                  element={<LegalPage pageKey="impressum" titleFallback={{ de: "Impressum", en: "Imprint" }} />}
+                />
+                <Route
+                  path="/datenschutz"
+                  element={<LegalPage pageKey="datenschutz" titleFallback={{ de: "Datenschutz", en: "Privacy" }} />}
+                />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"

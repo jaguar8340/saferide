@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration 9 – SEO route aliases + editable Impressum/Datenschutz legal pages. ALL TESTS PASS. Backend pytest 13/13: GET /api/sitemap.xml contains /ablauf-zum-fuehrerschein, /vku-unterricht, /impressum, /datenschutz, homepage and all 11 fahrschule-* location URLs. GET /api/content has top-level 'impressum' (5 sections, title_de='Impressum', title_en='Imprint') and 'datenschutz' (6 sections, title_de='Datenschutzerklärung', title_en='Privacy policy'). PATCH /api/content with dot key 'impressum.title_de' updates globally and restores. PATCH requires auth (401/403 without token). All 7 frontend routes return 200 with React SPA shell (/, /ablauf, /ablauf-zum-fuehrerschein, /vku, /vku-unterricht, /impressum, /datenschutz, /fahrschule-einsiedeln). Frontend Playwright 9/9: /impressum renders [data-testid='impressum-page'], overline 'Rechtliches' (CSS-uppercased), H1 'Impressum', sections 0-4. /datenschutz renders [data-testid='datenschutz-page'], overline 'Datenschutz', H1 'Datenschutzerklärung', sections 0-5. Language toggle DE→EN on /impressum changes H1 to 'Imprint' and section-0 h2 to 'Responsible for the content'. Both old (/ablauf, /vku) and new (/ablauf-zum-fuehrerschein, /vku-unterricht) routes render the correct ablauf-page / vku-page. Footer links on / and /fahrschule-einsiedeln have data-testid='footer-impressum-link' (href=/impressum) and data-testid='footer-datenschutz-link' (href=/datenschutz); clicking navigates correctly. Admin inline editing: After login (saferide_admin_token in localStorage) and toggling 'Bearbeiten' on toolbar, the H1 becomes contentEditable with data-edit-path='impressum.title_de'. Editing 'Impressum'→'Impressum TEST' on blur triggered PATCH /api/content with body {\"impressum.title_de\":\"Impressum TEST\"}; reload showed 'Impressum TEST' persisted. Restored to 'Impressum' via API. '+ Abschnitt' add button increased sections 5→6 (PATCH impressum.sections sent the full new array). impressum-section-remove-5 removed it (6→5). Final DB state verified: 5 sections, title_de='Impressum'.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9.py",
+    "/app/test_reports/pytest/it9_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Editable.jsx only renders the data-edit-path attribute when editMode is true (line 43-45 short-circuit returns plain <Tag>). This is correct for production but means data-edit-path selectors are NOT testable from public/non-admin sessions – future testing agents must inject the saferide_admin_token into localStorage AND toggle the 'Bearbeiten' button before asserting on data-edit-path.",
+    "LegalPage.removeSection uses native window.confirm() – Playwright must pre-attach a dialog handler (page.on('dialog', d => d.accept())) before clicking impressum-section-remove-N, consistent with the same pattern flagged for LocFaq in iteration_8. Consider replacing with a Radix AlertDialog for better UX and testability.",
+    "Sitemap_xml correctly exposes the long SEO paths (/ablauf-zum-fuehrerschein, /vku-unterricht) while header navigation still uses short paths (/ablauf, /vku). Both paths render the same component because App.js routes both. Recommend adding a single canonical <link rel='canonical'> in AblaufPage/VkuPage pointing to the long SEO URL to avoid duplicate-content SEO penalty.",
+    "LegalPage.jsx (149 lines) is well-sized. Backend default_pages.py is now 583 lines – still under the 700-line threshold but approaching it; consider splitting DEFAULT_LOCATIONS into its own file if more legal/regional pages are added."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration9.py (new)",
+    "/app/test_reports/iteration_9.json (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – POST /api/auth/login returns {access_token}. Frontend stores it in localStorage under key 'saferide_admin_token'. AdminToolbar renders only when /api/auth/me returns admin role. Edit mode is toggled via [data-testid='toolbar-toggle-edit'] (text 'Vorschau'→'Bearbeiten').",
+  "seed_data_creation": "None. PATCH test 'impressum.title_de'→'Impressum TEST' was restored via direct API. +Abschnitt added section 6 then removed via impressum-section-remove-5. Final verified DB state: impressum.sections has 5 entries, title_de='Impressum'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Editable.jsx returns plain <Tag>(no data-edit-path) when editMode=false. To assert inline-editing behavior, log in via API, inject localStorage.setItem('saferide_admin_token', token), then click [data-testid='toolbar-toggle-edit'] which toggles between 'Vorschau' (preview/off) and 'Bearbeiten' (edit/on). When on, contentEditable spans appear with data-edit-path attribute. The native confirm() in LegalPage.removeSection and LocFaq.removeFaq needs page.on('dialog', d => d.accept()). All 11 location slugs: einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil. Legal data-testids: impressum-page, impressum-section-0..4, impressum-section-add, impressum-section-remove-N, datenschutz-page, datenschutz-section-0..5, datenschutz-section-add, datenschutz-section-remove-N, footer-impressum-link, footer-datenschutz-link.",
+  "rca of the issue": "N/A – no functional bugs found. Initial Playwright failures using [data-edit-path='...'] selectors as a non-admin were a tester-side issue (Editable.jsx intentionally omits the attribute outside edit mode). Fixed by switching public-page assertions to <h1>/data-testid based selectors, and admin assertions to inject the JWT into localStorage + toggle edit mode."
+}

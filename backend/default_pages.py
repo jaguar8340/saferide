@@ -476,3 +476,107 @@ def _build_location(loc):
 
 
 DEFAULT_LOCATIONS = [_build_location(loc) for loc in _LOCATIONS_RAW]
+
+
+
+# ---------- Legal: Impressum & Datenschutz ----------
+
+DEFAULT_IMPRESSUM = {
+    "overline_de": "Rechtliches",
+    "overline_en": "Legal",
+    "title_de": "Impressum",
+    "title_en": "Imprint",
+    "intro_de": "Angaben gemäss schweizerischem Obligationenrecht und Telekommunikationsgesetz.",
+    "intro_en": "Information in accordance with Swiss Code of Obligations and Telecommunications Act.",
+    "sections": [
+        {
+            "id": "imp1",
+            "title_de": "Verantwortlich für den Inhalt",
+            "title_en": "Responsible for the content",
+            "body_de": "Fahrschule Safe Ride\nNadine Stäubli\nBahnhofstrasse 1\n8853 Lachen\nSchweiz",
+            "body_en": "Fahrschule Safe Ride\nNadine Stäubli\nBahnhofstrasse 1\n8853 Lachen\nSwitzerland",
+        },
+        {
+            "id": "imp2",
+            "title_de": "Kontakt",
+            "title_en": "Contact",
+            "body_de": "Telefon: +41 79 585 00 85\nE-Mail: info@fahrschule-saferide.ch\nWebsite: www.fahrschule-saferide.ch",
+            "body_en": "Phone: +41 79 585 00 85\nEmail: info@fahrschule-saferide.ch\nWebsite: www.fahrschule-saferide.ch",
+        },
+        {
+            "id": "imp3",
+            "title_de": "Berufsbezeichnung & Bewilligung",
+            "title_en": "Professional title & authorisation",
+            "body_de": "Diplomierte Fahrlehrerin · Eidgenössischer Fachausweis\nBerufsbewilligung erteilt durch das Strassenverkehrsamt des Kantons Schwyz.",
+            "body_en": "Certified driving instructor · Swiss Federal Diploma\nProfessional licence issued by the Road Traffic Office of the Canton of Schwyz.",
+        },
+        {
+            "id": "imp4",
+            "title_de": "Haftungsausschluss",
+            "title_en": "Disclaimer",
+            "body_de": "Alle Texte und Links wurden sorgfältig geprüft. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte kann jedoch keine Gewähr übernommen werden. Haftungsansprüche gegen die Autorin wegen Schäden materieller oder immaterieller Art, die aus dem Zugriff oder der Nutzung der Informationen entstehen, sind ausgeschlossen.",
+            "body_en": "All texts and links have been carefully checked. However, no liability is assumed for the accuracy, completeness or up-to-dateness of the content. Liability claims against the author for damages of a material or immaterial nature resulting from access to or use of the information are excluded.",
+        },
+        {
+            "id": "imp5",
+            "title_de": "Urheberrecht",
+            "title_en": "Copyright",
+            "body_de": "Alle auf dieser Website veröffentlichten Inhalte (Texte, Bilder, Videos, Grafiken) unterliegen dem Schweizerischen Urheberrecht. Eine Verwendung ohne ausdrückliche schriftliche Zustimmung ist untersagt.",
+            "body_en": "All content published on this website (texts, images, videos, graphics) is subject to Swiss copyright law. Any use without explicit written consent is prohibited.",
+        },
+    ],
+}
+
+
+DEFAULT_DATENSCHUTZ = {
+    "overline_de": "Datenschutz",
+    "overline_en": "Privacy",
+    "title_de": "Datenschutzerklärung",
+    "title_en": "Privacy policy",
+    "intro_de": "Wir nehmen den Schutz deiner persönlichen Daten ernst und halten uns an das Schweizerische Datenschutzgesetz (DSG) sowie die EU-Datenschutz-Grundverordnung (DSGVO).",
+    "intro_en": "We take the protection of your personal data seriously and comply with the Swiss Data Protection Act (DSG) and the EU General Data Protection Regulation (GDPR).",
+    "sections": [
+        {
+            "id": "ds1",
+            "title_de": "Verantwortliche Stelle",
+            "title_en": "Controller",
+            "body_de": "Fahrschule Safe Ride · Nadine Stäubli\nBahnhofstrasse 1, 8853 Lachen\ninfo@fahrschule-saferide.ch",
+            "body_en": "Fahrschule Safe Ride · Nadine Stäubli\nBahnhofstrasse 1, 8853 Lachen\ninfo@fahrschule-saferide.ch",
+        },
+        {
+            "id": "ds2",
+            "title_de": "Welche Daten erfassen wir?",
+            "title_en": "Which data do we collect?",
+            "body_de": "Beim Ausfüllen des Kontaktformulars erfassen wir: Vor- und Nachname, E-Mail-Adresse, Telefonnummer und deine Nachricht. Diese Angaben verwenden wir ausschliesslich, um deine Anfrage zu beantworten und die Fahrausbildung zu koordinieren.",
+            "body_en": "When you complete the contact form, we collect: first and last name, email address, phone number and your message. We use this information solely to respond to your enquiry and coordinate your driving education.",
+        },
+        {
+            "id": "ds3",
+            "title_de": "Cookies & Tracking",
+            "title_en": "Cookies & tracking",
+            "body_de": "Diese Website verwendet ausschliesslich technisch notwendige Cookies. Wir setzen keine Werbe- oder Tracking-Cookies ein und übermitteln keine Daten an Drittanbieter wie Google Analytics oder Meta.",
+            "body_en": "This website uses only technically necessary cookies. We do not use advertising or tracking cookies and do not share data with third-party providers such as Google Analytics or Meta.",
+        },
+        {
+            "id": "ds4",
+            "title_de": "Weitergabe von Daten",
+            "title_en": "Sharing of data",
+            "body_de": "Deine Daten werden NICHT an Dritte verkauft oder weitergegeben. Eine Übermittlung erfolgt nur, wenn dies gesetzlich vorgeschrieben ist (z.B. an das Strassenverkehrsamt zur Anmeldung der praktischen Prüfung).",
+            "body_en": "Your data will NOT be sold or shared with third parties. Transfer only occurs where legally required (e.g. to the road traffic office for registering the practical exam).",
+        },
+        {
+            "id": "ds5",
+            "title_de": "Deine Rechte",
+            "title_en": "Your rights",
+            "body_de": "Du hast jederzeit das Recht auf Auskunft, Berichtigung, Löschung oder Einschränkung der Verarbeitung deiner personenbezogenen Daten. Sende uns einfach eine kurze Mail an info@fahrschule-saferide.ch.",
+            "body_en": "You always have the right to access, correct, delete or restrict the processing of your personal data. Simply send a short email to info@fahrschule-saferide.ch.",
+        },
+        {
+            "id": "ds6",
+            "title_de": "Speicherdauer",
+            "title_en": "Retention period",
+            "body_de": "Anfragen aus dem Kontaktformular werden für maximal 24 Monate aufbewahrt und anschliessend automatisch gelöscht. Daten zur Fahrausbildung werden gemäss gesetzlichen Vorgaben für 10 Jahre archiviert.",
+            "body_en": "Contact form enquiries are kept for a maximum of 24 months and then automatically deleted. Driving education data is archived for 10 years in accordance with statutory requirements.",
+        },
+    ],
+}
