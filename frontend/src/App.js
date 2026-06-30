@@ -11,6 +11,7 @@ import LegalPage from "@/pages/LegalPage";
 import BlogList from "@/pages/BlogList";
 import BlogPost from "@/pages/BlogPost";
 import BuchungPage from "@/pages/BuchungPage";
+import PartnerPage from "@/pages/PartnerPage";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EditProvider } from "@/contexts/EditContext";
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/buchung" element={<BuchungPage />} />
+                <Route path="/partner" element={<PartnerPage />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"

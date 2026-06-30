@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Award, Plus, Trash2, Loader2, ImagePlus, X } from "lucide-react";
+import { Award, Plus, Trash2, Loader2, ImagePlus, X, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,6 +26,7 @@ export default function CertificatesDialog() {
   const [items, setItems] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(null);
+  const [zoomIndex, setZoomIndex] = useState(null); // null | index
   const fileRef = useRef(null);
 
   const load = async () => {
@@ -40,6 +41,22 @@ export default function CertificatesDialog() {
   useEffect(() => {
     if (open && items === null) load();
   }, [open, items]);
+
+  // Keyboard navigation for the lightbox.
+  useEffect(() => {
+    if (zoomIndex === null || !items) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setZoomIndex(null);
+      } else if (e.key === "ArrowRight") {
+        setZoomIndex((i) => (i === items.length - 1 ? 0 : i + 1));
+      } else if (e.key === "ArrowLeft") {
+        setZoomIndex((i) => (i === 0 ? items.length - 1 : i - 1));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoomIndex, items]);
 
   const upload = async (e) => {
     const file = e.target.files?.[0];
@@ -185,17 +202,27 @@ export default function CertificatesDialog() {
                   transition={{ duration: 0.3, delay: i * 0.04 }}
                   className="relative bg-white border border-[#e2e8f0] rounded-3xl overflow-hidden group"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-[#fbf9f6]">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#fbf9f6] cursor-zoom-in" onClick={(e) => { if (editMode) return; e.stopPropagation(); setZoomIndex(i); }}>
                     <img
                       src={resolveUrl(c.image_url)}
                       alt={pick(c.title_de, c.title_en)}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
+                    {!editMode && (
+                      <div className="absolute inset-0 flex items-end justify-end p-3 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span
+                          data-testid={`certificate-zoom-${i}`}
+                          className="inline-flex items-center gap-1 bg-white/95 backdrop-blur text-[#0f172a] text-[10px] font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full"
+                        >
+                          <ZoomIn size={11} /> Vollansicht
+                        </span>
+                      </div>
+                    )}
                     {editMode && (
                       <button
                         type="button"
-                        onClick={() => remove(c.id)}
+                        onClick={(e) => { e.stopPropagation(); remove(c.id); }}
                         disabled={busy === c.id}
                         data-testid={`certificate-remove-${c.id}`}
                         className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#ff5a36] text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100"
@@ -254,6 +281,85 @@ export default function CertificatesDialog() {
           </div>
         )}
       </DialogContent>
+
+      {/* Full-screen lightbox for zoomed certificate */}
+      <AnimatePresence>
+        {zoomIndex !== null && items && items[zoomIndex] && (
+          <motion.div
+            data-testid="certificate-lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomIndex(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 md:p-10 cursor-zoom-out"
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomIndex(null);
+              }}
+              data-testid="certificate-lightbox-close"
+              className="absolute top-5 right-5 inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
+              aria-label="Schliessen"
+            >
+              <X size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomIndex((i) => (i === 0 ? items.length - 1 : i - 1));
+              }}
+              data-testid="certificate-lightbox-prev"
+              className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
+              aria-label="Vorheriges Diplom"
+            >
+              <span className="font-display text-2xl leading-none -mt-0.5">‹</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomIndex((i) => (i === items.length - 1 ? 0 : i + 1));
+              }}
+              data-testid="certificate-lightbox-next"
+              className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
+              aria-label="Nächstes Diplom"
+            >
+              <span className="font-display text-2xl leading-none -mt-0.5">›</span>
+            </button>
+            <motion.img
+              key={items[zoomIndex].id}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              src={resolveUrl(items[zoomIndex].image_url)}
+              alt={pick(items[zoomIndex].title_de, items[zoomIndex].title_en)}
+              data-testid="certificate-lightbox-image"
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[85vh] max-w-[92vw] object-contain rounded-lg shadow-2xl"
+            />
+            <div
+              data-testid="certificate-lightbox-caption"
+              className="mt-5 text-white text-sm font-medium tracking-wide flex items-center gap-3"
+            >
+              <span className="font-display text-lg">
+                {pick(items[zoomIndex].title_de, items[zoomIndex].title_en)}
+              </span>
+              {items[zoomIndex].year && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold tracking-widest uppercase text-[#ff5a36]">
+                  <Award size={11} /> {items[zoomIndex].year}
+                </span>
+              )}
+              <span className="text-xs text-white/50 ml-2">
+                {zoomIndex + 1} / {items.length}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Dialog>
   );
 }

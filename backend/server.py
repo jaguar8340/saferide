@@ -733,6 +733,16 @@ class CertificatePatch(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class PartnerCreate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    slug: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+
+
+class PartnerPatch(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
 # ---------- App ----------
 app = FastAPI(title="Fahrschule Safe Ride API")
 api = APIRouter(prefix="/api")
@@ -893,6 +903,85 @@ async def startup_event():
             },
         ]
         await db.certificates.insert_many(seeds)
+
+    # Seed partners (one document per slug).
+    await db.partners.create_index("slug", unique=True)
+    if await db.partners.count_documents({}) == 0:
+        partner_seeds = [
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "driveswiss-ag",
+                "name": "DRIVESWISS AG",
+                "category_de": "Weiterbildung Fahrlehrer:innen",
+                "category_en": "Driving instructor further training",
+                "description_de": "Schweizweit fuehrender Anbieter fuer Weiterbildung von Fahrlehrer:innen. Safe Ride absolviert dort regelmaessig Module zur Verkehrspsychologie und Neurodivergenz.",
+                "description_en": "Switzerland's leading provider for the continuing education of driving instructors. Safe Ride regularly completes modules on traffic psychology and neurodiversity here.",
+                "logo_url": "",
+                "website_url": "https://www.driveswiss.ch/",
+                "order": 0,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "asa",
+                "name": "asa - Vereinigung der Strassenverkehrsaemter",
+                "category_de": "Behoerden-Partner",
+                "category_en": "Authority partner",
+                "description_de": "Die asa ist die offizielle Vereinigung der Schweizer Strassenverkehrsaemter und stellt sicher, dass alle Fahrlehrerbewilligungen und Pruefungen schweizweit einheitlichen Standards entsprechen.",
+                "description_en": "The asa is the official Swiss association of road traffic offices, ensuring that all driving instructor licences and exams comply with nationwide standards.",
+                "logo_url": "",
+                "website_url": "https://www.asa.ch/",
+                "order": 1,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "samariter-lachen",
+                "name": "Samariterverein Lachen",
+                "category_de": "Nothelferkurs-Partner",
+                "category_en": "First-aid course partner",
+                "description_de": "Zertifizierter Anbieter des gesetzlich vorgeschriebenen Nothelferkurses. Safe Ride vermittelt dich auf Wunsch direkt zu einem freien Kurstermin.",
+                "description_en": "Certified provider of the legally required first-aid course. On request Safe Ride arranges a slot for you directly.",
+                "logo_url": "",
+                "website_url": "https://www.samariter-lachen.ch/",
+                "order": 2,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "audi-zentrum",
+                "name": "Audi Zentrum March",
+                "category_de": "Fahrzeug-Partner",
+                "category_en": "Vehicle partner",
+                "description_de": "Service- und Wartungspartner fuer die Safe-Ride-Fahrzeuge. Garantiert technische Topqualitaet von Audi S3 und Co.",
+                "description_en": "Service and maintenance partner for the Safe Ride fleet. Guarantees top technical quality for the Audi S3 and others.",
+                "logo_url": "",
+                "website_url": "https://www.audi.ch/",
+                "order": 3,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "sfv",
+                "name": "Schweizerischer Fahrlehrerverband SFV",
+                "category_de": "Berufsverband",
+                "category_en": "Professional association",
+                "description_de": "Berufsverband der Schweizer Fahrlehrer:innen mit ueber 3'500 Mitgliedern. Safe Ride ist seit 2014 Mitglied und engagiert sich fuer hoechste Ausbildungsqualitaet.",
+                "description_en": "Professional association of Swiss driving instructors with over 3,500 members. Safe Ride has been a member since 2014 and is committed to the highest training quality.",
+                "logo_url": "",
+                "website_url": "https://www.fahrlehrerverband.ch/",
+                "order": 4,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "sgs",
+                "name": "SGS Schweiz",
+                "category_de": "Zertifizierungs-Partner",
+                "category_en": "Certification partner",
+                "description_de": "Unabhaengige Zertifizierungsstelle. Pruefte und auditierte die Mental-Coaching-Ausbildung von Safe Ride.",
+                "description_en": "Independent certification body. Audited and certified Safe Ride's mental coaching qualification.",
+                "logo_url": "",
+                "website_url": "https://www.sgs.ch/",
+                "order": 5,
+            },
+        ]
+        await db.partners.insert_many(partner_seeds)
 
 
 # ---------- Auth Routes ----------
@@ -1370,6 +1459,44 @@ async def delete_certificate(cert_id: str, admin=Depends(get_current_admin)):
     return {"ok": True}
 
 
+# ---------- Partners ----------
+@api.get("/partners")
+async def list_partners():
+    items = await db.partners.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+    return items
+
+
+@api.post("/partners")
+async def create_partner(payload: PartnerCreate, admin=Depends(get_current_admin)):
+    body = payload.model_dump()
+    body["slug"] = body["slug"].lower().strip()
+    if await db.partners.find_one({"slug": body["slug"]}):
+        raise HTTPException(status_code=409, detail="Slug existiert bereits")
+    body["id"] = str(uuid.uuid4())
+    body.setdefault("order", await db.partners.count_documents({}))
+    await db.partners.insert_one(body)
+    return {k: v for k, v in body.items() if k != "_id"}
+
+
+@api.patch("/partners/{slug}")
+async def update_partner(slug: str, payload: PartnerPatch, admin=Depends(get_current_admin)):
+    set_ops = payload.model_dump(exclude_unset=True)
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Leere Aktualisierung")
+    res = await db.partners.update_one({"slug": slug}, {"$set": set_ops})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Partner nicht gefunden")
+    return await db.partners.find_one({"slug": slug}, {"_id": 0})
+
+
+@api.delete("/partners/{slug}")
+async def delete_partner(slug: str, admin=Depends(get_current_admin)):
+    res = await db.partners.delete_one({"slug": slug})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Partner nicht gefunden")
+    return {"ok": True}
+
+
 # ---------- SEO: sitemap.xml ----------
 def _public_base_url(request: "Request") -> str:
     """Derive the absolute public base URL the visitor used to reach this API.
@@ -1412,6 +1539,7 @@ async def sitemap_xml(request: "Request"):
     # Blog index page.
     static_urls.append((f"{base}/blog", "0.8", "weekly"))
     static_urls.append((f"{base}/buchung", "0.95", "weekly"))
+    static_urls.append((f"{base}/partner", "0.6", "monthly"))
 
     urls_xml = "".join(
         f"<url><loc>{u}</loc><lastmod>{now}</lastmod><changefreq>{f}</changefreq><priority>{p}</priority></url>"

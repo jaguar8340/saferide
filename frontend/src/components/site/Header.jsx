@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import BrandLogo from "@/components/site/BrandLogo";
+import TopContactBar from "@/components/site/TopContactBar";
 
 const sections = [
   { id: "about", key: "about" },
@@ -17,6 +18,7 @@ const extraLinks = [
   { to: "/ablauf", label_de: "Ablauf", label_en: "Process" },
   { to: "/vku", label_de: "VKU", label_en: "VKU" },
   { to: "/blog", label_de: "Blog", label_en: "Blog" },
+  { to: "/partner", label_de: "Partner", label_en: "Partners" },
   { to: "/buchung", label_de: "Buchen", label_en: "Book", primary: true },
 ];
 
@@ -57,10 +59,11 @@ export default function Header() {
       data-testid="site-header"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         opaque
-          ? "bg-[#fbf9f6]/90 backdrop-blur-md border-b border-[#e2e8f0]"
+          ? "bg-[#fbf9f6]/95 backdrop-blur-md border-b border-[#e2e8f0]"
           : "bg-transparent"
       }`}
     >
+      <TopContactBar />
       <div className="container-x flex items-center justify-between px-5 md:px-8 lg:px-12 h-16 md:h-18">
         <a
           href="#top"

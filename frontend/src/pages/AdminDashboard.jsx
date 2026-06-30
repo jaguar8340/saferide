@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map } from "lucide-react";
+import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -8,10 +8,22 @@ import TestimonialsManager from "@/components/admin/TestimonialsManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import SubmissionsViewer from "@/components/admin/SubmissionsViewer";
 import PagesManager from "@/components/admin/PagesManager";
+import {
+  BlogManager,
+  BookingsManager,
+  PackagesManager,
+  CertificatesManager,
+  PartnersManager,
+} from "@/components/admin/EntityManagers";
 
 const TABS = [
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
   { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
+  { id: "blog", icon: BookOpen, key: "blog", label_de: "Blog", label_en: "Blog" },
+  { id: "bookings", icon: Calendar, key: "bookings", label_de: "Buchungen", label_en: "Bookings" },
+  { id: "packages", icon: Package, key: "packages", label_de: "Pakete", label_en: "Packages" },
+  { id: "certificates", icon: Award, key: "certificates", label_de: "Diplome", label_en: "Certificates" },
+  { id: "partners", icon: Users, key: "partners", label_de: "Partner", label_en: "Partners" },
   { id: "testimonials", icon: MessageSquare, key: "testimonials" },
   { id: "gallery", icon: ImageIcon, key: "gallery" },
   { id: "submissions", icon: Inbox, key: "submissions" },
@@ -104,6 +116,11 @@ export default function AdminDashboard() {
         <main className="flex-1 p-5 md:p-8 overflow-x-hidden">
           {tab === "content" && <ContentEditor />}
           {tab === "pages" && <PagesManager />}
+          {tab === "blog" && <BlogManager />}
+          {tab === "bookings" && <BookingsManager />}
+          {tab === "packages" && <PackagesManager />}
+          {tab === "certificates" && <CertificatesManager />}
+          {tab === "partners" && <PartnersManager />}
           {tab === "testimonials" && <TestimonialsManager />}
           {tab === "gallery" && <GalleryManager />}
           {tab === "submissions" && <SubmissionsViewer />}
