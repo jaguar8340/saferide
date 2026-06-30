@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -18,7 +18,21 @@ const TABS = [
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { t } = useLang();
-  const [tab, setTab] = useState("content");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const initial = params.get("tab");
+  const [tab, setTab] = useState(
+    TABS.some((tb) => tb.id === initial) ? initial : "content",
+  );
+
+  useEffect(() => {
+    const next = new URLSearchParams(location.search);
+    if (next.get("tab") !== tab) {
+      next.set("tab", tab);
+      navigate(`?${next.toString()}`, { replace: true });
+    }
+  }, [tab, location.search, navigate]);
 
   return (
     <div

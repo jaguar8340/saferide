@@ -230,6 +230,27 @@ select {
   background-color: var(--sr-accent);
 }
 
+/* Inline editable text indicator */
+.editable-text {
+  position: relative;
+  cursor: text;
+  outline: none;
+  transition: box-shadow 150ms ease, background-color 150ms ease;
+  border-radius: 0.25rem;
+}
+.editable-text:hover {
+  box-shadow: 0 0 0 2px rgba(255, 90, 54, 0.25);
+}
+.editable-text:focus {
+  box-shadow: 0 0 0 2px rgba(255, 90, 54, 0.75);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+.editable-text:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.5;
+  font-style: italic;
+}
+
 @keyframes pulse-accent {
   0%, 100% {
     opacity: 1;

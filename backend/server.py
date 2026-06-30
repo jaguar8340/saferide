@@ -565,6 +565,22 @@ async def update_content(body: Dict[str, Any], admin=Depends(get_current_admin))
     return _clean(doc)
 
 
+@api.patch("/content")
+async def patch_content(updates: Dict[str, Any], admin=Depends(get_current_admin)):
+    """
+    Partial update of site content using dot-notation paths.
+    Body example: {"hero.title_de": "Neuer Titel", "services.0.title_de": "Foo"}
+    """
+    if not updates:
+        raise HTTPException(status_code=400, detail="Keine Updates angegeben")
+    set_ops = {k: v for k, v in updates.items() if k != "_id" and k != "id"}
+    if not set_ops:
+        raise HTTPException(status_code=400, detail="Keine gültigen Felder")
+    await db.site_content.update_one({"id": "main"}, {"$set": set_ops}, upsert=True)
+    doc = await db.site_content.find_one({"id": "main"})
+    return _clean(doc)
+
+
 # ---------- Testimonials ----------
 @api.get("/testimonials", response_model=List[Testimonial])
 async def list_testimonials():

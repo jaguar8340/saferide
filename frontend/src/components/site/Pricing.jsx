@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import Editable from "@/components/edit/Editable";
 
 export default function Pricing({ data }) {
-  const { pick, t } = useLang();
+  const { lang, pick, t } = useLang();
   if (!data) return null;
 
   return (
@@ -20,21 +21,20 @@ export default function Pricing({ data }) {
               CHF · Preise
             </span>
           </div>
-          <h2
-            className="font-display leading-[0.98] tracking-tight"
+          <Editable
+            path={`pricing.title_${lang}`}
+            value={pick(data.title_de, data.title_en)}
+            as="h2"
+            className="font-display leading-[0.98] tracking-tight block"
             style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-          >
-            {pick(data.title_de, data.title_en).split(" ").map((w, i, arr) =>
-              i === arr.length - 1 ? (
-                <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
-              ) : (
-                <span key={i}>{w} </span>
-              ),
-            )}
-          </h2>
-          <p className="mt-5 text-lg text-[#475569] leading-relaxed font-medium">
-            {pick(data.subtitle_de, data.subtitle_en)}
-          </p>
+          />
+          <Editable
+            path={`pricing.subtitle_${lang}`}
+            value={pick(data.subtitle_de, data.subtitle_en)}
+            as="p"
+            multiline
+            className="mt-5 text-lg text-[#475569] leading-relaxed font-medium block"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -53,30 +53,30 @@ export default function Pricing({ data }) {
               }`}
             >
               {p.highlight && (
-                <span className="absolute -top-3 left-7 tag tag-accent">
-                  Beliebt
-                </span>
+                <span className="absolute -top-3 left-7 tag tag-accent">Beliebt</span>
               )}
-              <div className={`text-[10px] tracking-widest uppercase font-semibold mb-2 ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}>
-                {pick(p.region_de, p.region_en)}
-              </div>
-              <div className="font-display text-xl">
-                {pick(p.name_de, p.name_en)}
-              </div>
-              <div className={`text-xs mt-1 ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}>
-                {pick(p.duration_de, p.duration_en)}
-              </div>
-              <div className="font-display text-5xl mt-7 tracking-tighter">
-                {p.price.split(" ").map((part, idx) =>
-                  idx === 0 ? (
-                    <span key={idx} className={`text-base align-top mr-1 ${p.highlight ? "text-white/50" : "text-[#94a3b8]"}`}>
-                      {part}
-                    </span>
-                  ) : (
-                    <span key={idx}>{part}</span>
-                  ),
-                )}
-              </div>
+              <Editable
+                path={`pricing.plans.${i}.region_${lang}`}
+                value={pick(p.region_de, p.region_en)}
+                className={`text-[10px] tracking-widest uppercase font-semibold mb-2 block ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}
+              />
+              <Editable
+                path={`pricing.plans.${i}.name_${lang}`}
+                value={pick(p.name_de, p.name_en)}
+                as="div"
+                className="font-display text-xl"
+              />
+              <Editable
+                path={`pricing.plans.${i}.duration_${lang}`}
+                value={pick(p.duration_de, p.duration_en)}
+                className={`text-xs mt-1 block ${p.highlight ? "text-white/60" : "text-[#94a3b8]"}`}
+              />
+              <Editable
+                path={`pricing.plans.${i}.price`}
+                value={p.price}
+                as="div"
+                className="font-display text-5xl mt-7 tracking-tighter"
+              />
               <a
                 href="#contact"
                 onClick={(e) => {
@@ -94,9 +94,13 @@ export default function Pricing({ data }) {
           ))}
         </div>
 
-        <p className="mt-10 text-sm text-[#475569] max-w-3xl leading-relaxed font-medium">
-          {pick(data.note_de, data.note_en)}
-        </p>
+        <Editable
+          path={`pricing.note_${lang}`}
+          value={pick(data.note_de, data.note_en)}
+          as="p"
+          multiline
+          className="mt-10 text-sm text-[#475569] max-w-3xl leading-relaxed font-medium block"
+        />
       </div>
     </section>
   );

@@ -1,10 +1,62 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, Plus, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
+import { useEdit } from "@/contexts/EditContext";
+import { api, formatApiError } from "@/lib/api";
+import Editable from "@/components/edit/Editable";
 
 export default function Testimonials({ items }) {
-  const { pick, t } = useLang();
-  if (!items?.length) return null;
+  const { lang, pick, t } = useLang();
+  const { editMode, reloadTestimonials } = useEdit();
+  const [busy, setBusy] = useState(null);
+  const [adding, setAdding] = useState(false);
+
+  if (!items?.length && !editMode) return null;
+
+  const updateField = async (id, field, value) => {
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    try {
+      await api.put(`/testimonials/${id}`, { ...it, [field]: value });
+      await reloadTestimonials();
+    } catch (err) {
+      toast.error(formatApiError(err));
+    }
+  };
+
+  const remove = async (id) => {
+    if (!confirm("Bewertung wirklich löschen?")) return;
+    setBusy(id);
+    try {
+      await api.delete(`/testimonials/${id}`);
+      await reloadTestimonials();
+    } catch (err) {
+      toast.error(formatApiError(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const addNew = async () => {
+    setAdding(true);
+    try {
+      const today = new Date().toLocaleDateString("de-CH", { month: "long", year: "numeric" });
+      await api.post("/testimonials", {
+        name: "Neue Bewertung",
+        rating: 5,
+        date: today,
+        text_de: "Klicken zum Bearbeiten…",
+        text_en: "Click to edit…",
+      });
+      await reloadTestimonials();
+    } catch (err) {
+      toast.error(formatApiError(err));
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <section
@@ -34,14 +86,27 @@ export default function Testimonials({ items }) {
               )}
             </h2>
           </div>
-          <div className="flex items-center gap-3 bg-[#fbf9f6] rounded-full px-5 py-3 text-sm">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} className="text-[#ff5a36]" fill="#ff5a36" />
-              ))}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-[#fbf9f6] rounded-full px-5 py-3 text-sm">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={14} className="text-[#ff5a36]" fill="#ff5a36" />
+                ))}
+              </div>
+              <span className="font-semibold text-[#0f172a]">5.0</span>
+              <span className="text-[#475569]">· {t.reviews.rating}</span>
             </div>
-            <span className="font-semibold text-[#0f172a]">5.0</span>
-            <span className="text-[#475569]">· {t.reviews.rating}</span>
+            {editMode && (
+              <button
+                onClick={addNew}
+                disabled={adding}
+                data-testid="reviews-add-btn"
+                className="btn-accent text-sm py-2.5 px-4 disabled:opacity-60"
+              >
+                {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Neu
+              </button>
+            )}
           </div>
         </div>
 
@@ -60,19 +125,68 @@ export default function Testimonials({ items }) {
                   : "bg-[#fbf9f6] text-[#0f172a] border-[#e2e8f0]"
               }`}
             >
+              {editMode && (
+                <button
+                  onClick={() => remove(r.id)}
+                  disabled={busy === r.id}
+                  data-testid={`review-delete-${r.id}`}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/90 text-[#0f172a] hover:bg-[#ff5a36] hover:text-white inline-flex items-center justify-center transition-colors"
+                  aria-label="Löschen"
+                >
+                  {busy === r.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                </button>
+              )}
               <Quote
                 size={24}
                 className={i === 0 ? "text-white/50 mb-4" : "text-[#ff5a36] mb-4"}
               />
-              <p className="leading-relaxed font-medium text-base">
-                &ldquo;{pick(r.text_de, r.text_en || r.text_de)}&rdquo;
-              </p>
+              {editMode ? (
+                <textarea
+                  defaultValue={pick(r.text_de, r.text_en || r.text_de)}
+                  onBlur={(e) => updateField(r.id, `text_${lang}`, e.target.value)}
+                  data-testid={`review-text-${r.id}`}
+                  rows={4}
+                  className={`w-full bg-transparent leading-relaxed font-medium text-base resize-y focus:outline-none rounded-md p-2 -m-2 ${
+                    i === 0
+                      ? "text-white placeholder:text-white/50 focus:bg-white/10"
+                      : "text-[#0f172a] focus:bg-white"
+                  }`}
+                />
+              ) : (
+                <p className="leading-relaxed font-medium text-base">
+                  &ldquo;{pick(r.text_de, r.text_en || r.text_de)}&rdquo;
+                </p>
+              )}
               <div className={`mt-6 pt-5 border-t flex items-center justify-between ${i === 0 ? "border-white/20" : "border-[#e2e8f0]"}`}>
                 <div>
-                  <div className="font-semibold text-base">{r.name}</div>
-                  <div className={`text-[10px] tracking-widest uppercase mt-1 font-semibold ${i === 0 ? "text-white/60" : "text-[#94a3b8]"}`}>
-                    {r.date}
-                  </div>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      defaultValue={r.name}
+                      onBlur={(e) => updateField(r.id, "name", e.target.value)}
+                      data-testid={`review-name-${r.id}`}
+                      className={`font-semibold text-base bg-transparent focus:outline-none rounded-md px-2 -mx-2 ${
+                        i === 0 ? "text-white focus:bg-white/10" : "text-[#0f172a] focus:bg-white"
+                      }`}
+                    />
+                  ) : (
+                    <div className="font-semibold text-base">{r.name}</div>
+                  )}
+                  {editMode ? (
+                    <input
+                      type="text"
+                      defaultValue={r.date}
+                      onBlur={(e) => updateField(r.id, "date", e.target.value)}
+                      data-testid={`review-date-${r.id}`}
+                      className={`text-[10px] tracking-widest uppercase mt-1 font-semibold bg-transparent focus:outline-none rounded-md px-2 -mx-2 max-w-[10rem] ${
+                        i === 0 ? "text-white/70 focus:bg-white/10" : "text-[#94a3b8] focus:bg-white"
+                      }`}
+                    />
+                  ) : (
+                    <div className={`text-[10px] tracking-widest uppercase mt-1 font-semibold ${i === 0 ? "text-white/60" : "text-[#94a3b8]"}`}>
+                      {r.date}
+                    </div>
+                  )}
                 </div>
                 <div className="flex">
                   {[...Array(r.rating || 5)].map((_, idx) => (

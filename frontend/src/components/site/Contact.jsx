@@ -4,9 +4,10 @@ import { Phone, Mail, MapPin, Clock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/contexts/LanguageContext";
 import { api, formatApiError } from "@/lib/api";
+import Editable from "@/components/edit/Editable";
 
 export default function Contact({ data }) {
-  const { t, pick } = useLang();
+  const { lang, t, pick } = useLang();
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -69,10 +70,34 @@ export default function Contact({ data }) {
             </p>
 
             <div className="mt-10 space-y-4">
-              <InfoRow icon={Phone} label="Tel" value={data.phone} href={`tel:${(data.phone || "").replace(/\s/g, "")}`} testid="contact-phone" />
-              <InfoRow icon={Mail} label="E-Mail" value={data.email} href={`mailto:${data.email}`} testid="contact-email" />
-              <InfoRow icon={MapPin} label={t.contact.address} value={pick(data.address_de, data.address_en)} />
-              <InfoRow icon={Clock} label={t.contact.hours} value={pick(data.hours_de, data.hours_en)} />
+              <InfoRow
+                icon={Phone}
+                label="Tel"
+                path="contact.phone"
+                value={data.phone}
+                href={`tel:${(data.phone || "").replace(/\s/g, "")}`}
+                testid="contact-phone"
+              />
+              <InfoRow
+                icon={Mail}
+                label="E-Mail"
+                path="contact.email"
+                value={data.email}
+                href={`mailto:${data.email}`}
+                testid="contact-email"
+              />
+              <InfoRow
+                icon={MapPin}
+                label={t.contact.address}
+                path={`contact.address_${lang}`}
+                value={pick(data.address_de, data.address_en)}
+              />
+              <InfoRow
+                icon={Clock}
+                label={t.contact.hours}
+                path={`contact.hours_${lang}`}
+                value={pick(data.hours_de, data.hours_en)}
+              />
             </div>
           </motion.div>
 
@@ -124,24 +149,31 @@ export default function Contact({ data }) {
   );
 }
 
-function InfoRow({ icon: Icon, label, value, href, testid }) {
-  const inner = (
-    <>
+function InfoRow({ icon: Icon, label, value, href, testid, path }) {
+  return (
+    <div className="flex items-start gap-4" data-testid={testid}>
       <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[#e2e8f0] text-[#ff5a36] shrink-0">
         <Icon size={15} />
       </span>
       <div>
         <div className="text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8]">{label}</div>
-        <div className="text-[#0f172a] mt-1 font-semibold">{value}</div>
+        {href ? (
+          <a href={href} className="block mt-1">
+            <Editable
+              path={path}
+              value={value}
+              className="text-[#0f172a] font-semibold hover:text-[#ff5a36] transition-colors"
+            />
+          </a>
+        ) : (
+          <Editable
+            path={path}
+            value={value}
+            className="text-[#0f172a] mt-1 font-semibold block"
+          />
+        )}
       </div>
-    </>
-  );
-  return href ? (
-    <a href={href} data-testid={testid} className="flex items-start gap-4 group hover:opacity-80 transition-opacity">
-      {inner}
-    </a>
-  ) : (
-    <div data-testid={testid} className="flex items-start gap-4">{inner}</div>
+    </div>
   );
 }
 

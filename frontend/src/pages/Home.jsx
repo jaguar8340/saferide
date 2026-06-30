@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import { useLang } from "@/contexts/LanguageContext";
+import { useEdit } from "@/contexts/EditContext";
 import Header from "@/components/site/Header";
 import Hero from "@/components/site/Hero";
 import Marquee from "@/components/site/Marquee";
@@ -12,24 +10,10 @@ import Gallery from "@/components/site/Gallery";
 import Testimonials from "@/components/site/Testimonials";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
+import AdminToolbar from "@/components/edit/AdminToolbar";
 
 export default function Home() {
-  useLang();
-  const [content, setContent] = useState(null);
-  const [testimonials, setTestimonials] = useState([]);
-  const [gallery, setGallery] = useState([]);
-
-  useEffect(() => {
-    Promise.all([
-      api.get("/content"),
-      api.get("/testimonials"),
-      api.get("/gallery"),
-    ]).then(([c, t, g]) => {
-      setContent(c.data);
-      setTestimonials(t.data);
-      setGallery(g.data);
-    });
-  }, []);
+  const { content, testimonials, gallery } = useEdit();
 
   if (!content) {
     return (
@@ -57,6 +41,7 @@ export default function Home() {
       <Testimonials items={testimonials} />
       <Contact data={content.contact} />
       <Footer data={content.contact} />
+      <AdminToolbar />
     </main>
   );
 }

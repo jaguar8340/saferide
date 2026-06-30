@@ -10,10 +10,10 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import Editable from "@/components/edit/Editable";
 
 const ICONS = { Car, Truck, BookOpen, Brain, Heart, ShieldCheck, Sparkles };
 
-// Bento variants - one card per row is colored for personality
 const VARIANTS = [
   { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#fef3c7]", iconFg: "text-[#0f172a]" },
   { bg: "bg-[#ff5a36]", fg: "text-white", iconBg: "bg-white/15", iconFg: "text-white" },
@@ -24,7 +24,7 @@ const VARIANTS = [
 ];
 
 export default function Services({ items }) {
-  const { pick, t } = useLang();
+  const { lang, pick, t } = useLang();
 
   return (
     <section
@@ -47,9 +47,7 @@ export default function Services({ items }) {
             >
               {t.services.title.split(" ").map((w, i, arr) =>
                 i === arr.length - 1 ? (
-                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">
-                    {w}
-                  </span>
+                  <span key={i} className="font-serif-i text-[#ff5a36] font-normal">{w}</span>
                 ) : (
                   <span key={i}>{w} </span>
                 ),
@@ -85,12 +83,19 @@ export default function Services({ items }) {
                     {String(i + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
                   </span>
                 </div>
-                <h3 className="font-display text-2xl leading-tight mb-3">
-                  {pick(s.title_de, s.title_en)}
-                </h3>
-                <p className="text-base leading-relaxed opacity-90 font-medium">
-                  {pick(s.description_de, s.description_en)}
-                </p>
+                <Editable
+                  path={`services.${i}.title_${lang}`}
+                  value={pick(s.title_de, s.title_en)}
+                  as="h3"
+                  className="font-display text-2xl leading-tight mb-3 block"
+                />
+                <Editable
+                  path={`services.${i}.description_${lang}`}
+                  value={pick(s.description_de, s.description_en)}
+                  as="p"
+                  multiline
+                  className="text-base leading-relaxed opacity-90 font-medium block"
+                />
                 <ArrowUpRight
                   size={20}
                   className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity"

@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
+import Editable from "@/components/edit/Editable";
+import EditableImage from "@/components/edit/EditableImage";
 
 export default function Fleet({ items }) {
-  const { pick, t } = useLang();
+  const { lang, pick, t } = useLang();
 
   return (
     <section
@@ -46,25 +48,38 @@ export default function Fleet({ items }) {
               className="group bg-[#1e293b] rounded-3xl overflow-hidden border border-white/10 hover:border-[#ff5a36] transition-colors"
             >
               <div className="relative h-72 overflow-hidden">
-                <img
+                <EditableImage
+                  path={`fleet.${i}.image_url`}
                   src={f.image_url}
                   alt={f.name}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="block w-full h-full"
+                  imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
-                  <span className="tag tag-accent">{f.spec}</span>
+                <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-none">
+                  <Editable
+                    path={`fleet.${i}.spec`}
+                    value={f.spec}
+                    className="tag tag-accent pointer-events-auto"
+                  />
                   <span className="text-xs font-semibold text-white/70 tabular-nums bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                 </div>
               </div>
               <div className="p-6 md:p-7">
-                <h3 className="font-display text-2xl md:text-3xl tracking-tight">
-                  {f.name}
-                </h3>
-                <p className="mt-3 text-white/70 leading-relaxed font-medium text-sm">
-                  {pick(f.description_de, f.description_en)}
-                </p>
+                <Editable
+                  path={`fleet.${i}.name`}
+                  value={f.name}
+                  as="h3"
+                  className="font-display text-2xl md:text-3xl tracking-tight block"
+                />
+                <Editable
+                  path={`fleet.${i}.description_${lang}`}
+                  value={pick(f.description_de, f.description_en)}
+                  as="p"
+                  multiline
+                  className="mt-3 text-white/70 leading-relaxed font-medium text-sm block"
+                />
               </div>
             </motion.div>
           ))}

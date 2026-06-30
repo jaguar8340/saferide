@@ -1,17 +1,20 @@
 import { ArrowRight, Phone, Star, MapPin } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import { useEdit } from "@/contexts/EditContext";
+import Editable from "@/components/edit/Editable";
+import EditableImage from "@/components/edit/EditableImage";
 
 export default function Hero({ data }) {
-  const { pick, t } = useLang();
+  const { lang, pick, t } = useLang();
+  const { content } = useEdit();
   if (!data) return null;
+
+  const phone = content?.contact?.phone || "079 585 00 85";
 
   const scroll = (id) => (e) => {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const highlight = pick(data.highlight_de, data.highlight_en) || "";
-  const highlightParts = highlight.replace(/\./g, "").trim().split(/\s+/);
 
   return (
     <section
@@ -24,34 +27,39 @@ export default function Hero({ data }) {
           <div className="lg:col-span-7">
             <div className="flex items-center gap-2 mb-6">
               <span className="dot-accent animate-pulse-accent" />
-              <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-                {pick(data.overline_de, data.overline_en)}
-              </span>
+              <Editable
+                path={`hero.overline_${lang}`}
+                value={pick(data.overline_de, data.overline_en)}
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+              />
             </div>
 
             <h1
               className="font-display leading-[0.92] text-[#0f172a]"
               style={{ fontSize: "clamp(2.6rem, 6.8vw, 6.5rem)" }}
             >
-              {pick(data.title_de, data.title_en)}
+              <Editable
+                path={`hero.title_${lang}`}
+                value={pick(data.title_de, data.title_en)}
+                as="span"
+                className="inline-block"
+              />
               <br />
-              {highlightParts.map((w, i) => (
-                <span key={i}>
-                  {i === 1 ? (
-                    <span className="font-serif-i text-[#ff5a36] font-normal">
-                      {w}
-                    </span>
-                  ) : (
-                    <span>{w}</span>
-                  )}
-                  {i < highlightParts.length - 1 ? " " : "."}
-                </span>
-              ))}
+              <Editable
+                path={`hero.highlight_${lang}`}
+                value={pick(data.highlight_de, data.highlight_en)}
+                as="span"
+                className="inline-block font-serif-i text-[#ff5a36] font-normal"
+              />
             </h1>
 
-            <p className="mt-7 max-w-xl text-lg md:text-xl text-[#475569] leading-relaxed font-medium">
-              {pick(data.subtitle_de, data.subtitle_en)}
-            </p>
+            <Editable
+              path={`hero.subtitle_${lang}`}
+              value={pick(data.subtitle_de, data.subtitle_en)}
+              as="p"
+              multiline
+              className="mt-7 max-w-xl text-lg md:text-xl text-[#475569] leading-relaxed font-medium"
+            />
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <a
@@ -60,7 +68,10 @@ export default function Hero({ data }) {
                 data-testid="hero-cta-primary"
                 className="btn-accent"
               >
-                {pick(data.cta_primary_de, data.cta_primary_en)}
+                <Editable
+                  path={`hero.cta_primary_${lang}`}
+                  value={pick(data.cta_primary_de, data.cta_primary_en)}
+                />
                 <ArrowRight size={16} />
               </a>
               <a
@@ -69,7 +80,10 @@ export default function Hero({ data }) {
                 data-testid="hero-cta-secondary"
                 className="btn-ghost"
               >
-                {pick(data.cta_secondary_de, data.cta_secondary_en)}
+                <Editable
+                  path={`hero.cta_secondary_${lang}`}
+                  value={pick(data.cta_secondary_de, data.cta_secondary_en)}
+                />
               </a>
             </div>
 
@@ -91,20 +105,20 @@ export default function Hero({ data }) {
           </div>
 
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-[#e2e8f0]">
-              <img
-                src={data.image_url}
-                alt="Safe Ride"
-                className="w-full h-[440px] md:h-[540px] object-cover"
-              />
-              <div className="absolute top-4 left-4 flex gap-2">
-                <span className="tag tag-accent">Live</span>
-                <span className="tag tag-light">Saison 2026</span>
-              </div>
+            <EditableImage
+              path="hero.image_url"
+              src={data.image_url}
+              alt="Safe Ride"
+              className="block rounded-3xl overflow-hidden border border-[#e2e8f0]"
+              imgClassName="w-full h-[440px] md:h-[540px] object-cover"
+            />
+            <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
+              <span className="tag tag-accent">Live</span>
+              <span className="tag tag-light">Saison 2026</span>
             </div>
 
             <a
-              href="tel:+41795850085"
+              href={`tel:${phone.replace(/\s/g, "")}`}
               data-testid="hero-phone"
               className="absolute -bottom-5 left-5 right-5 md:left-auto md:-right-3 md:max-w-[260px] flex items-center gap-3 bg-[#0f172a] text-white rounded-2xl p-4 hover:bg-[#ff5a36] transition-colors group"
             >
@@ -115,9 +129,7 @@ export default function Hero({ data }) {
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-white/60">
                   Call Nadine
                 </span>
-                <span className="font-semibold tracking-tight">
-                  079 585 00 85
-                </span>
+                <span className="font-semibold tracking-tight">{phone}</span>
               </div>
             </a>
           </div>
