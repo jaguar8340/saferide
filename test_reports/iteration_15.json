@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration 15 — full backend regression sweep after server.py refactor into routers/. 36/36 pytest tests PASSED (100%) covering every endpoint in the review request: health, auth (login + me + wrong-password + no-token), content (GET + PATCH with restore + auth enforcement), testimonials (GET + admin CRUD + auth enforcement), gallery (GET + admin CRUD + auth enforcement), contact (public POST + admin list + mark-read + delete), upload (admin POST PNG → returns {path,url,kind:image}; GET /api/files/{path} serves PNG with image content-type; 404 on missing path; 401/403 without auth), locations (11 entries; einsiedeln has hero_title_de, faqs>=15, exam_routes; POST/PATCH/DELETE require auth; duplicate slug → 409), blog (public list + single by slug + admin list requires auth + CRUD + 409 dup), packages (public list + admin requires auth + CRUD + 409 dup), bookings (public POST returns {ok,id}; invalid package_slug → 404; list requires auth; admin PATCH status + DELETE), certificates (GET + admin CRUD), partners (>=6 entries + admin CRUD + 409 dup), sitemap.xml (valid XML with <urlset>; contains /, /ablauf-zum-fuehrerschein, /vku-unterricht, /impressum, /datenschutz, /blog, /buchung, /partner AND exactly 11 /fahrschule-* URLs). No regressions detected. Refactor is behaviour-preserving.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration15_refactor.py",
+    "/app/test_reports/pytest/it15_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now a clean 76-line entry: load_dotenv → APIRouter(prefix='/api') → 11 router includes → CORS middleware → startup seed → shutdown close. No hidden behaviour changes. Good separation of concerns.",
+    "routers/sitemap.py composes URLs from a runtime _public_base_url() (X-Forwarded-* aware) plus DB-backed locations + published blog posts. Filtering published posts via routers.blog.is_post_published keeps the rule in one place.",
+    "routers/uploads.py correctly relies on core/storage.put_object/get_object and persists a metadata document in db.files. Auth enforced via Depends(get_current_admin).",
+    "All POST endpoints that have a unique slug (locations, blog, packages, partners) consistently return 409 on duplicate. Confirmed end-to-end.",
+    "routers/contact.py mark-read returns {ok:true} without echoing the updated submission — minor UX nicety would be to return the patched doc (non-blocking; matches prior contract).",
+    "Minor: PUT /api/content is still present alongside PATCH but was not part of the review request — both are wired correctly.",
+    "models/schemas.py keeps Pydantic V2 ConfigDict(extra='allow') on documents that carry CMS-style nested keys (locations, blog, packages, certificates, partners). Pragmatic and correct."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration15_refactor.py (new)",
+    "/app/test_reports/iteration_15.json (new)",
+    "/app/test_reports/pytest/it15_results.xml (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "n/a (skipped per request)" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (login verified, access_token returned, user.role=='admin')",
+  "seed_data_creation": "All test docs prefixed TEST_/test-*-<uuid> and DELETE'd at end of their own tests: 1 testimonial, 1 gallery item, 1 contact submission, 1 location, 1 blog post, 1 package, 1 booking, 1 certificate, 1 partner. PNG upload writes a real object into Emergent storage + db.files; not deleted (uploads endpoint has no DELETE in current API surface — same as prior iterations).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend refactor verified clean. Test file /app/backend/tests/test_iteration15_refactor.py is the new canonical regression suite covering all 11 routers. Run with: pytest /app/backend/tests/test_iteration15_refactor.py -v. Notes: (a) bookings.preferred_date must be in the future (used 2027-09-15); (b) packages POST requires title_de + title_en + price_chf; (c) blog POST requires title_de + title_en + slug; (d) /api/files/{path} accepts paths containing slashes (path:path); (e) admin endpoints return 401 when no Authorization header (not 403); (f) /api/content PATCH uses dot-notation keys like 'hero.title_de'. No file-cleanup endpoint exists; minimal PNG residue from upload tests is acceptable.",
+  "rca of the issue": "No issues found. The refactor from monolithic server.py to core/+models/+seeds/+routers/ preserves all behaviour, URLs, status codes, auth guards, and seed contents. Every endpoint enumerated in the review request returns the same shapes and codes as before."
+}
