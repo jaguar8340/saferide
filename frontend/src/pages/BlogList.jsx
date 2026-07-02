@@ -116,7 +116,7 @@ export default function BlogList() {
       <Seo
         title={lang === "de" ? "Blog · Safe Ride – Tipps zum Führerausweis" : "Blog · Safe Ride – Driving licence tips"}
         description={lang === "de"
-          ? "Tipps, Erfahrungen und Geschichten rund um den Schweizer Führerausweis – von der Probelektion bis zur Prüfung. Geschrieben von Fahrlehrerin Nadine Stäubli."
+          ? "Tipps, Erfahrungen und Geschichten rund um den Schweizer Führerausweis – von der ersten Lektion bis zur Prüfung. Geschrieben von Fahrlehrerin Nadine Stäubli."
           : "Tips, experiences and stories around the Swiss driving licence – from your first lesson to the exam. Written by driving instructor Nadine Stäubli."}
         path="/blog"
         lang={lang}

@@ -1,0 +1,68 @@
+{
+  "summary": "Frontend smoke + regression for iteration_17 (5 requested changes). 22 of 26 checks PASS. Emergent badge removal, nav pruning (no Bewertungen/Galerie), Probelektion→Lektion on DE, SocialFeed section (6 IG + 3 TT tiles with edit overlays in CMS edit mode), coral gradient on WhySafeRide, warm sunset-band gradient on Pricing 'Beliebt' card all confirmed. Regression clean for admin login, buchung form end-to-end, sitemap, location JSON-LD, blog post, WhatsApp FAB. 4 issues found: 3× residual 'trial lesson' EN copy, 1× 'Probelektion' still visible on all location pages (from location FAQ seed), 1× broken IG tile image (404) + duplicate IG tile in seeds.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "SocialFeed / seeds",
+        "issue": "6th Instagram tile image returns HTTP 404 (https://images.pexels.com/photos/38637/car-vehicle-blue-luxury-38637.jpeg). Renders as broken image with alt='Instagram 6' visible in the DOM.",
+        "selector": "[data-testid='instagram-tile-5'] img",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "SocialFeed / seeds",
+        "issue": "IG tile 4 and IG tile 5 use the exact same Pexels URL (pexels-photo-1592384.jpeg) – duplicate placeholder looks unprofessional in default state before Nadine replaces via CMS.",
+        "selector": "[data-testid='instagram-tile-3'] img, [data-testid='instagram-tile-4'] img",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Probelektion → Lektion (EN copy)",
+        "issue": "3 EN string literals were not migrated. They only appear when language toggle is EN. Requirement says 'trial lesson' should not exist anywhere.",
+        "affected_selectors": [
+          "/app/frontend/src/components/site/WhatsAppFab.jsx:14 – { id: 's1', text: \"I'd like to book a trial lesson.\" } → should be 'I'd like to book a lesson.'",
+          "/app/frontend/src/components/site/HomeFaq.jsx:70 – 'Everything you want to know before your first trial lesson – answered short and honest.' → drop 'trial'",
+          "/app/frontend/src/pages/BuchungPage.jsx:155 – SEO meta description contains 'Packages for car, trial lesson and mental coaching from CHF 90 per lesson.' → 'Packages for car, single lesson and mental coaching…'"
+        ]
+      },
+      {
+        "flow": "Probelektion → Lektion (Location page FAQ)",
+        "issue": "The location FAQ (rendered inside /fahrschule-einsiedeln and presumably all 10 other location pages) still says 'Wie melde ich mich für eine Probelektion an?'. This text comes from location seed data (locations FAQ) that was NOT patched in iteration_17. Rename it to e.g. 'Wie melde ich mich für eine Lektion an?' on backend/seeds and PATCH /api/locations for all 11 locations.",
+        "affected_selectors": [
+          "/fahrschule-einsiedeln  DOM: span.font-display containing 'Probelektion'",
+          "likely /app/backend/seeds/*.py or the seed JSON for location.faqs"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_17.json"
+  ],
+  "action_items": [
+    "Replace EN string 'trial lesson' → 'lesson' in WhatsAppFab.jsx (l.14), HomeFaq.jsx (l.70) and BuchungPage.jsx meta description (l.155).",
+    "Update location FAQ 'Probelektion' → 'Lektion' in the location seed data + PATCH each of the 11 locations (or run seed reload) so /fahrschule-* pages don't display the old wording.",
+    "Fix the broken IG tile #6 URL in /app/backend/seeds/defaults.py (ig6 → replace 404 URL) and de-duplicate ig4/ig5. Then PATCH social.instagram_tiles via /api/content.",
+    "OPTIONAL: Backend has no changes to test per request, so no backend action items."
+  ],
+  "critical_code_review_comments": [
+    "SocialFeed.jsx: view-mode falls back to hiding empty tiles which is nice, but the seed data currently ships a broken 404 image – prefer using placeholder images from customer-assets.emergentagent.com (which is preconnected in index.html) instead of random Pexels IDs that may disappear.",
+    "The English translation coverage was incomplete for iteration_17 – only DE strings were verified during implementation. Suggest adding a quick E2E check that toggles EN and greps for 'trial lesson' / 'Probelektion' whenever this string migration is performed.",
+    "Location page FAQ data lives in a separate collection from content.json and was silently missed – consider a centralised 'copy audit' script that greps DB + code for legacy strings after global rename."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (skipped per request)",
+    "frontend": "85% (22/26 checks pass, 4 issues)"
+  },
+  "test_credentials": "Admin admin@saferide.ch / SafeRide2026! – login OK, /admin gate OK, edit mode toggles correctly.",
+  "seed_data_creation": "Created 1 TEST booking (name='TEST SmokeUser', email='test-smoke-iter17@example.com', date=2026-08-15, msg='TEST_iteration_17 booking smoke test') via /api/bookings 200 – can be deleted via admin CMS.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "SocialFeed section /home works fully in DE and EN, edit mode wires EditableImage properly on all 9 tiles (6 IG + 3 TT). WhySafeRide bg-sunset-soft = linear-gradient(#fff6ef → #ffe9d8 → #ffe4d6). Pricing 'Beliebt' bg-sunset-band = linear-gradient(135deg, #ff5a36 → #ff8c42 → #ffb56b). Buchung submit works but note client-side date must be today or later (July 2, 2026 baseline). WhatsApp FAB visible bottom-right (28px inset). Sitemap /api/sitemap.xml has 22 <loc> entries (11 locations x 2 lang alternates). If main agent fixes the 4 items above, re-run only: 1) grep body.innerText for 'Probelektion' on /fahrschule-einsiedeln, 2) toggle EN and grep body.innerText for 'trial lesson' on / and /buchung and via WhatsApp FAB, 3) verify all 6 IG tile <img> naturalWidth > 0.",
+  "rca of the issue": "The iteration_17 content patch touched 11 keys in content.json (hero.cta_*, ablauf.outro_*, homepage_faqs[5], why_safe_ride.pillars[0/4], why_safe_ride.cta_*, plus new 'social' key) but did NOT touch (a) English string literals inside JSX components (WhatsAppFab, HomeFaq, BuchungPage meta), and (b) location.faqs which live in a separate mongo collection (db.locations). Both gaps produce visible 'Probelektion' / 'trial lesson' occurrences that violate the acceptance criteria. Reproduction: (1) toggle EN on /, open WhatsApp FAB → first item still 'I'd like to book a trial lesson.', scroll to FAQ heading area → 'first trial lesson'. (2) visit /fahrschule-einsiedeln → the FAQ section shows 'Wie melde ich mich für eine Probelektion an?'. Mitigation: E1 should (a) rename literals in the 3 JSX files, (b) rename 'Probelektion' → 'Lektion' in the location seed (likely /app/backend/seeds/locations.py or similar) and either re-run seeding or PATCH each of the 11 location docs via /api/locations/{slug}."
+}

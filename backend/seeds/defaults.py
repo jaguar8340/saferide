@@ -23,8 +23,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "highlight_en": "Different. Better. Bolder.",
         "subtitle_de": "Moderne und professionelle Fahrstunden mit Herz – in den Regionen Zürich, Schwyz, St. Gallen und Graubünden.",
         "subtitle_en": "Modern and professional driving lessons with heart – in the regions of Zurich, Schwyz, St. Gallen and Graubünden.",
-        "cta_primary_de": "Jetzt Probelektion anfragen",
-        "cta_primary_en": "Request a trial lesson",
+        "cta_primary_de": "Jetzt Lektion anfragen",
+        "cta_primary_en": "Request a lesson",
         "cta_secondary_de": "Mehr erfahren",
         "cta_secondary_en": "Learn more",
         "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg",
@@ -54,8 +54,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
                 "icon": "Heart",
                 "title_de": "Persönlich. Echt. Auf Augenhöhe.",
                 "title_en": "Personal. Real. On equal terms.",
-                "body_de": "Ich bin keine anonyme Fahrschule mit fünfzehn Lehrern und einer Hotline. Ich bin Nadine – und ich kenne jeden meiner Fahrschüler:innen mit Namen, weiss um deine Stärken und deine Baustellen, deine Lieblingsstrecken und deine Fahrlieder. Bei mir bekommst du keine Lehrer-Rotation, keine Sätze wie \"Hat dir das Kollege X nicht so erklärt?\" – sondern eine durchgehende Begleitung von der ersten Probelektion bis zum Tag, an dem du den Ausweis in der Hand hältst. Das schafft Vertrauen. Und Vertrauen ist genau das, was hinter dem Steuer den Unterschied macht.",
-                "body_en": "I am not an anonymous school with fifteen instructors and a hotline. I am Nadine – and I know every one of my students by name, I know your strengths and your sticking points, your favourite routes and your driving songs. With me you get no instructor rotation, no \"Didn't colleague X explain it differently?\" – just one consistent guide from your first trial lesson to the day you hold the licence in your hand. That builds trust. And trust is exactly what makes the difference behind the wheel."
+                "body_de": "Ich bin keine anonyme Fahrschule mit fünfzehn Lehrern und einer Hotline. Ich bin Nadine – und ich kenne jeden meiner Fahrschüler:innen mit Namen, weiss um deine Stärken und deine Baustellen, deine Lieblingsstrecken und deine Fahrlieder. Bei mir bekommst du keine Lehrer-Rotation, keine Sätze wie \"Hat dir das Kollege X nicht so erklärt?\" – sondern eine durchgehende Begleitung von der ersten Lektion bis zum Tag, an dem du den Ausweis in der Hand hältst. Das schafft Vertrauen. Und Vertrauen ist genau das, was hinter dem Steuer den Unterschied macht.",
+                "body_en": "I am not an anonymous school with fifteen instructors and a hotline. I am Nadine – and I know every one of my students by name, I know your strengths and your sticking points, your favourite routes and your driving songs. With me you get no instructor rotation, no \"Didn't colleague X explain it differently?\" – just one consistent guide from your first lesson to the day you hold the licence in your hand. That builds trust. And trust is exactly what makes the difference behind the wheel."
             },
             {
                 "id": "wp2",
@@ -86,8 +86,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
                 "icon": "MapPin",
                 "title_de": "11 Standorte in 4 Kantonen",
                 "title_en": "11 locations across 4 cantons",
-                "body_de": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Probelektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
-                "body_en": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur and Lenzerheide – wherever you live, study or work, I come to you. You don't lose time on long drives to some central driving-school office. We start where it makes sense for you: at the station, in front of your school, at your workplace. That is the difference between half a \"trial lesson with stress because I still have to get to uni\" and a proper 50-minute session in which you actually take something away."
+                "body_de": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Lektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
+                "body_en": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur and Lenzerheide – wherever you live, study or work, I come to you. You don't lose time on long drives to some central driving-school office. We start where it makes sense for you: at the station, in front of your school, at your workplace. That is the difference between half a \"lesson with stress because I still have to get to uni\" and a proper 50-minute session in which you actually take something away."
             },
             {
                 "id": "wp6",
@@ -100,8 +100,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         ],
         "closing_de": "Das ist Safe Ride. Keine Marketing-Floskel. Sondern eine ehrliche, persönliche, moderne Fahrschule, die genau das tut, was sie auf der Verpackung verspricht: dich sicher, entspannt und in deinem eigenen Tempo zum Ausweis bringen.",
         "closing_en": "That is Safe Ride. Not a marketing phrase, but an honest, personal, modern driving school that does exactly what it promises: bring you safely, relaxed and at your own pace to the licence.",
-        "cta_de": "Probelektion sichern",
-        "cta_en": "Book a trial lesson"
+        "cta_de": "Lektion sichern",
+        "cta_en": "Book a lesson"
     },
     "homepage_faqs": [
         {
@@ -143,8 +143,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
             "id": "hf6",
             "question_de": "Wie schnell kann ich starten?",
             "question_en": "How quickly can I start?",
-            "answer_de": "In der Regel hast du innerhalb von 7 Tagen einen Termin für deine Probelektion. Schreib einfach eine kurze Nachricht – ich antworte am gleichen Tag.",
-            "answer_en": "Usually you have a slot for your trial lesson within 7 days. Just send a short message – I reply the same day."
+            "answer_de": "In der Regel hast du innerhalb von 7 Tagen einen Termin für deine erste Lektion. Schreib einfach eine kurze Nachricht – ich antworte am gleichen Tag.",
+            "answer_en": "Usually you have a slot for your first lesson within 7 days. Just send a short message – I reply the same day."
         },
         {
             "id": "hf7",
@@ -379,6 +379,31 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "stat2_label_en": "years experience",
     },
     "ablauf": DEFAULT_ABLAUF,
+    "social": {
+        "overline_de": "Social",
+        "overline_en": "Social",
+        "title_de": "Folge uns auf Social Media",
+        "title_en": "Follow us on social media",
+        "subtitle_de": "Hinter-den-Kulissen, Tipps und Prüfungs-Momente – jede Woche neu.",
+        "subtitle_en": "Behind the scenes, tips and exam moments – fresh every week.",
+        "instagram_handle": "@fahrschule.safe.ride",
+        "instagram_url": "https://www.instagram.com/fahrschule.safe.ride/",
+        "tiktok_handle": "@nadine_staeubli",
+        "tiktok_url": "https://www.tiktok.com/@nadine_staeubli",
+        "instagram_tiles": [
+            {"id": "ig1", "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
+            {"id": "ig2", "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
+            {"id": "ig3", "image_url": "https://images.pexels.com/photos/1638459/pexels-photo-1638459.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
+            {"id": "ig4", "image_url": "https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
+            {"id": "ig5", "image_url": "https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
+            {"id": "ig6", "image_url": "https://images.pexels.com/photos/38637/car-vehicle-blue-luxury-38637.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"}
+        ],
+        "tiktok_tiles": [
+            {"id": "tt1", "image_url": "https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"},
+            {"id": "tt2", "image_url": "https://images.pexels.com/photos/1638459/pexels-photo-1638459.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"},
+            {"id": "tt3", "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"}
+        ],
+    },
     "vku": DEFAULT_VKU,
     "impressum": DEFAULT_IMPRESSUM,
     "datenschutz": DEFAULT_DATENSCHUTZ,

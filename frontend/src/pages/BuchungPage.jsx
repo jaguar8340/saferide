@@ -151,7 +151,7 @@ export default function BuchungPage() {
       <Seo
         title={lang === "de" ? "Buchung · Fahrstunden Pakete · Safe Ride" : "Booking · Driving Lesson Packages · Safe Ride"}
         description={lang === "de"
-          ? "Buche jetzt dein Fahrstunden-Paket bei Safe Ride – flexibel, fair und ohne versteckte Kosten. Pakete für PKW, Probelektion und Mental-Coaching ab CHF 90 pro Lektion."
+          ? "Buche jetzt dein Fahrstunden-Paket bei Safe Ride – flexibel, fair und ohne versteckte Kosten. Pakete für PKW, Einzellektionen und Mental-Coaching ab CHF 90 pro Lektion."
           : "Book your driving lesson package at Safe Ride – flexible, fair and without hidden costs. Packages for car, trial lesson and mental coaching from CHF 90 per lesson."}
         path="/buchung"
         lang={lang}

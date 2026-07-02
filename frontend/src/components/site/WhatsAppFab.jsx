@@ -6,7 +6,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 
 const SUGGESTIONS_DE = [
-  { id: "s1", text: "Ich möchte eine Probelektion buchen." },
+  { id: "s1", text: "Ich möchte eine Lektion buchen." },
   { id: "s2", text: "Wann ist der nächste VKU-Kurs?" },
   { id: "s3", text: "Wie viele Lektionen brauche ich bis zur Prüfung?" },
 ];

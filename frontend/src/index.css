@@ -16,6 +16,15 @@
   --sr-cream: #fef3c7;
   --sr-mint: #d1fae5;
   --sr-border: #e2e8f0;
+
+  /* Warmes Farbschema inspiriert von den Fahrschulautos (roter Audi + oranger Rauch) */
+  --sr-blush: #ffe4d6;      /* sehr helle Coral-Wäsche – dezente Section-Backgrounds */
+  --sr-peach: #ffd0b8;      /* helle Pfirsich-Farbe */
+  --sr-amber: #ff8c42;      /* warmes Orange – Sekundär-Akzente */
+  --sr-fire: #e74123;       /* tiefes Rot – Hover-States */
+  --sr-sunset-a: #ff5a36;   /* Gradient Start */
+  --sr-sunset-b: #ff8c42;   /* Gradient Mitte */
+  --sr-sunset-c: #ffb56b;   /* Gradient Ende */
 }
 
 html,
@@ -250,6 +259,42 @@ select {
   height: 0.5rem;
   border-radius: 9999px;
   background-color: var(--sr-accent);
+}
+
+/* --- Warme Farb-Utilities für Sections (Coral/Orange-Familie, inspiriert von den Fahrschulautos) --- */
+.bg-blush {
+  background-color: var(--sr-blush);
+}
+.bg-blush-soft {
+  background: linear-gradient(180deg, var(--sr-blush) 0%, var(--sr-bg) 100%);
+}
+.bg-sunset-band {
+  background: linear-gradient(135deg, var(--sr-sunset-a) 0%, var(--sr-sunset-b) 55%, var(--sr-sunset-c) 100%);
+}
+.bg-sunset-soft {
+  background: linear-gradient(180deg, #fff6ef 0%, #ffe9d8 55%, var(--sr-blush) 100%);
+}
+.ring-accent-soft {
+  box-shadow: 0 0 0 1px var(--sr-border), 0 20px 40px -20px rgba(255, 90, 54, 0.28);
+}
+.icon-bubble-accent {
+  background: linear-gradient(135deg, var(--sr-sunset-a) 0%, var(--sr-amber) 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px -10px rgba(255, 90, 54, 0.55);
+}
+.text-gradient-accent {
+  background: linear-gradient(90deg, var(--sr-accent) 0%, var(--sr-amber) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.border-accent-warm {
+  border-color: var(--sr-accent);
+}
+.divider-sunset {
+  background: linear-gradient(90deg, transparent 0%, var(--sr-accent) 20%, var(--sr-amber) 50%, var(--sr-accent) 80%, transparent 100%);
+  height: 2px;
+  border: none;
 }
 
 /* Inline editable text indicator */

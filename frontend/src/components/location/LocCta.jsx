@@ -26,7 +26,7 @@ export default function LocCta({ loc, updateField, phone }) {
         />
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link to="/#contact" data-testid="loc-cta-bottom" className="btn-accent">
-            {lang === "de" ? "Probelektion anfragen" : "Request lesson"}
+            {lang === "de" ? "Lektion anfragen" : "Request lesson"}
             <ArrowRight size={16} />
           </Link>
           <a

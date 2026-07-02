@@ -204,7 +204,7 @@ export default function AblaufPage() {
                 data-testid="ablauf-cta"
                 className="mt-8 inline-flex items-center gap-2 btn-accent"
               >
-                {lang === "de" ? "Jetzt Probelektion anfragen" : "Request trial lesson"}
+                {lang === "de" ? "Jetzt Lektion anfragen" : "Request a lesson"}
                 <ArrowRight size={16} />
               </Link>
             </div>

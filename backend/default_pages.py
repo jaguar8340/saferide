@@ -54,8 +54,8 @@ DEFAULT_ABLAUF = {
         },
     ],
     "outro_image_url": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80",
-    "outro_de": "Bereit, deinen Weg zum Führerausweis zu starten? Melde dich für eine Probelektion.",
-    "outro_en": "Ready to start your journey to the driving licence? Get in touch for a trial lesson.",
+    "outro_de": "Bereit, deinen Weg zum Führerausweis zu starten? Melde dich für eine Lektion.",
+    "outro_en": "Ready to start your journey to the driving licence? Get in touch for a lesson.",
 }
 
 
@@ -296,8 +296,8 @@ def _generic_faqs(name):
         },
         {
             "id": "f7",
-            "question_de": "Wie melde ich mich für eine Probelektion an?",
-            "question_en": "How do I sign up for a trial lesson?",
+            "question_de": "Wie melde ich mich für eine Lektion an?",
+            "question_en": "How do I sign up for a lesson?",
             "answer_de": "Am einfachsten via WhatsApp (+41 79 585 00 85) oder über das Kontaktformular auf der Startseite. Ich melde mich innerhalb von 24 Stunden bei dir.",
             "answer_en": "Easiest via WhatsApp (+41 79 585 00 85) or the contact form on the homepage. I'll get back to you within 24 hours.",
         },
@@ -681,9 +681,9 @@ DEFAULT_BLOG_POSTS = [
 
 DEFAULT_BOOKING_PACKAGES = [
     {
-        "slug": "probelektion-50",
-        "title_de": "Probelektion",
-        "title_en": "Trial lesson",
+        "slug": "einzellektion-50",
+        "title_de": "Einzellektion",
+        "title_en": "Single lesson",
         "subtitle_de": "50 Minuten · kennenlernen ohne Verpflichtung",
         "subtitle_en": "50 minutes · get to know me with no commitment",
         "service_type": "auto",
@@ -691,8 +691,8 @@ DEFAULT_BOOKING_PACKAGES = [
         "duration_minutes": 50,
         "price_chf": 50,
         "original_price_chf": 110,
-        "highlight_de": "Empfohlen fuer Erstkontakt",
-        "highlight_en": "Recommended for first contact",
+        "highlight_de": "Ideal fuer Erstkontakt",
+        "highlight_en": "Ideal for first contact",
         "features_de": [
             "50 Minuten in einem unserer Fahrzeuge",
             "Treffen am Bahnhof deiner Wahl",

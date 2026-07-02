@@ -28,12 +28,12 @@ const SPANS = [
 ];
 
 const ACCENTS = [
-  { iconBg: "bg-[#fef3c7]", iconFg: "text-[#92400e]" },
-  { iconBg: "bg-[#ff5a36]", iconFg: "text-white", bg: "bg-[#0f172a]", fg: "text-white" },
-  { iconBg: "bg-[#d1fae5]", iconFg: "text-[#065f46]" },
-  { iconBg: "bg-[#dbeafe]", iconFg: "text-[#1d4ed8]" },
-  { iconBg: "bg-[#fce7f3]", iconFg: "text-[#be185d]" },
-  { iconBg: "bg-[#ff5a36]/15", iconFg: "text-[#ff5a36]" },
+  { iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
+  { iconBg: "bg-white", iconFg: "text-[#ff5a36]", bg: "bg-[#0f172a]", fg: "text-white" },
+  { iconBg: "bg-[#ffe4d6]", iconFg: "text-[#e74123]" },
+  { iconBg: "bg-gradient-to-br from-[#e74123] to-[#ff5a36]", iconFg: "text-white" },
+  { iconBg: "bg-[#fff6ef]", iconFg: "text-[#ff5a36]" },
+  { iconBg: "bg-gradient-to-br from-[#ff8c42] to-[#ffb56b]", iconFg: "text-white" },
 ];
 
 export default function WhySafeRide({ data }) {
@@ -68,7 +68,7 @@ export default function WhySafeRide({ data }) {
     <section
       id="why-safe-ride"
       data-testid="why-safe-ride-section"
-      className="section-pad bg-white border-t border-[#e2e8f0]"
+      className="section-pad bg-sunset-soft border-t border-[#e2e8f0]"
     >
       <div className="container-x">
         {/* Header */}

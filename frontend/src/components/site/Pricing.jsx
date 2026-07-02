@@ -51,8 +51,8 @@ export default function Pricing({ data }) {
               transition={{ duration: 0.5, delay: i * 0.07 }}
               className={`relative rounded-3xl p-7 md:p-8 border transition-transform duration-300 hover:-translate-y-1 ${
                 p.highlight
-                  ? "bg-[#0f172a] text-white border-[#0f172a]"
-                  : "bg-white text-[#0f172a] border-[#e2e8f0]"
+                  ? "bg-sunset-band text-white border-transparent ring-accent-soft"
+                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#ff5a36]/40"
               }`}
             >
               {p.highlight && (
@@ -99,7 +99,7 @@ export default function Pricing({ data }) {
                 }}
                 data-testid={`pricing-cta-${i}`}
                 className={`mt-7 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
-                  p.highlight ? "text-[#ff5a36] hover:text-white" : "text-[#0f172a] hover:text-[#ff5a36]"
+                  p.highlight ? "text-white hover:text-[#0f172a]" : "text-[#0f172a] hover:text-[#ff5a36]"
                 }`}
               >
                 <Editable

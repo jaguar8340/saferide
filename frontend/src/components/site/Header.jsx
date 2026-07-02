@@ -10,8 +10,6 @@ const sections = [
   { id: "about", key: "about" },
   { id: "services", key: "services" },
   { id: "pricing", key: "pricing" },
-  { id: "gallery", key: "gallery" },
-  { id: "reviews", key: "reviews" },
 ];
 
 const extraLinks = [

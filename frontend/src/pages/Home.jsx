@@ -12,6 +12,7 @@ import Pricing from "@/components/site/Pricing";
 import Gallery from "@/components/site/Gallery";
 import Testimonials from "@/components/site/Testimonials";
 import HomeFaq from "@/components/site/HomeFaq";
+import SocialFeed from "@/components/site/SocialFeed";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
@@ -94,6 +95,7 @@ export default function Home() {
       <Gallery items={gallery} />
       <Testimonials items={testimonials} />
       <HomeFaq items={content.homepage_faqs || []} />
+      <SocialFeed />
       <Contact data={content.contact} />
       <Footer data={content.contact} />
       <AdminToolbar />

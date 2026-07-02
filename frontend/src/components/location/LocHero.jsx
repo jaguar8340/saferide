@@ -50,7 +50,7 @@ export default function LocHero({ loc, updateField, phone }) {
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to="/#contact" data-testid="loc-cta-primary" className="btn-accent">
-                {lang === "de" ? "Probelektion anfragen" : "Request lesson"}
+                {lang === "de" ? "Lektion anfragen" : "Request lesson"}
                 <ArrowRight size={16} />
               </Link>
               <a href={`tel:${phone.replace(/\s/g, "")}`} className="btn-ghost">

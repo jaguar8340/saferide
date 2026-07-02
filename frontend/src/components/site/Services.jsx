@@ -17,12 +17,12 @@ import SectionTitle from "@/components/site/SectionTitle";
 const ICONS = { Car, Truck, BookOpen, Brain, Heart, ShieldCheck, Sparkles };
 
 const VARIANTS = [
-  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#fef3c7]", iconFg: "text-[#0f172a]" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
   { bg: "bg-[#ff5a36]", fg: "text-white", iconBg: "bg-white/15", iconFg: "text-white" },
-  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#d1fae5]", iconFg: "text-[#065f46]" },
-  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#dbeafe]", iconFg: "text-[#1d4ed8]" },
+  { bg: "bg-[#fff6ef]", fg: "text-[#0f172a]", iconBg: "bg-[#ffe4d6]", iconFg: "text-[#e74123]" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#ff8c42] to-[#ffb56b]", iconFg: "text-white" },
   { bg: "bg-[#0f172a]", fg: "text-white", iconBg: "bg-[#ff5a36]", iconFg: "text-white" },
-  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-[#fce7f3]", iconFg: "text-[#be185d]" },
+  { bg: "bg-[#fff6ef]", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#e74123] to-[#ff5a36]", iconFg: "text-white" },
 ];
 
 export default function Services({ items }) {
