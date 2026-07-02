@@ -67,7 +67,7 @@ export default function HomeFaq({ items = [] }) {
             <p className="mt-6 text-base md:text-lg text-[#475569] leading-relaxed font-medium max-w-md">
               {lang === "de"
                 ? "Alles, was du vor deiner ersten Lektion wissen willst – kurz und ehrlich beantwortet."
-                : "Everything you want to know before your first trial lesson – answered short and honest."}
+                : "Everything you want to know before your first lesson – answered short and honest."}
             </p>
             {editMode && (
               <button

@@ -11,7 +11,7 @@ const SUGGESTIONS_DE = [
   { id: "s3", text: "Wie viele Lektionen brauche ich bis zur Prüfung?" },
 ];
 const SUGGESTIONS_EN = [
-  { id: "s1", text: "I'd like to book a trial lesson." },
+  { id: "s1", text: "I'd like to book a lesson." },
   { id: "s2", text: "When is the next VKU course?" },
   { id: "s3", text: "How many lessons until my exam?" },
 ];

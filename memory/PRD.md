@@ -110,3 +110,9 @@ admin@saferide.ch / SafeRide2026!
   - JSON-LD pro Seite: `FAQPage` (Home + Locations), `LocalBusiness` mit Adresse + Canton (Locations), `BreadcrumbList` (Locations + BlogPost), `HowTo` (Ablauf), `Course` (VKU), `Blog` (BlogList), `BlogPosting` mit Author/Publisher/Image (BlogPost), `ItemList` mit Product+Offer (Buchung), `Organization` mit subOrganization (Partner)
   - Alle 9 Pages (Home, LocationPage, AblaufPage, VkuPage, LegalPage, BlogList, BlogPost, BuchungPage, PartnerPage) verwenden jetzt `<Seo />`
   - Frontend Tests: 75/75 (100%) durch `testing_agent_v3_fork` verifiziert
+- ✅ **UX / Content Polish (DONE 2026-07, Iteration 17)**:
+  - Emergent Badge (unten rechts) entfernt aus `public/index.html`
+  - Top-Menü ohne "Bewertungen" und "Galerie" (Sections existieren weiter, sind nur nicht mehr im Nav verlinkt)
+  - "Probelektion" komplett ersetzt durch "Lektion" (11 Content-Keys, 3 EN-Literale in WhatsAppFab/HomeFaq/BuchungPage, 7 JSX-Code-Änderungen in Location/Ablauf/Blog/Buchung, FAQ[6] in allen 11 Location-Docs, Booking-Package umbenannt: `probelektion-50` → `einzellektion-50` "Einzellektion"/"Single lesson")
+  - **Mehr Farbe** an den Fahrschulautos (coral/orange/rot) orientiert: neue CSS-Tokens `--sr-blush`, `--sr-peach`, `--sr-amber`, `--sr-fire`, `--sr-sunset-a/b/c`; neue Utility-Classes `.bg-blush-soft`, `.bg-sunset-band`, `.bg-sunset-soft`, `.icon-bubble-accent`. WhySafeRide-Section jetzt mit Sunset-Soft-Gradient-BG; Services-Icons + WhySafeRide-Pillars mit Coral-Gradient-Bubbles; Pricing "Beliebt"-Card mit warmem Sunset-Gradient statt Dark-Navy.
+  - **Neue Social-Feed-Section** (`SocialFeed.jsx`) unten auf der Homepage vor Contact: Zwei Karten (Instagram + TikTok), jede mit 6 bzw. 3 CMS-editierbaren Foto-Kacheln, Follow-Buttons zu den echten Profilen. Voll editierbar über Wix-Style CMS (Kachel-Bild + Link-URL). Keine externen Widget-Abos nötig.
