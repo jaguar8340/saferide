@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Instagram, HelpCircle, Sparkles } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
@@ -45,6 +46,38 @@ function toTikTokEmbedSrc(url) {
   const match = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/i);
   if (!match) return null;
   return `https://www.tiktok.com/embed/v2/${match[1]}`;
+}
+
+/**
+ * Renders an embed snippet pasted from Elfsight / Behold / SnapWidget /
+ * any other 3rd-party widget provider. The HTML often ships together
+ * with an inline `<script>` tag which React's `dangerouslySetInnerHTML`
+ * would render as inert text – so we manually re-execute those scripts
+ * after mount. Only reachable via authenticated admin editing, so raw
+ * HTML injection is intentional.
+ */
+function EmbedHtml({ html, platform }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !html) return;
+    ref.current.innerHTML = html;
+    // Re-execute any inline / external <script> tags the widget shipped
+    // (React does NOT run scripts that arrive via innerHTML).
+    ref.current.querySelectorAll("script").forEach((oldScript) => {
+      const newScript = document.createElement("script");
+      Array.from(oldScript.attributes).forEach((a) => newScript.setAttribute(a.name, a.value));
+      newScript.text = oldScript.textContent;
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+  }, [html]);
+  return (
+    <div
+      ref={ref}
+      data-testid={`${platform}-embed-html`}
+      className="social-embed-html w-full"
+      style={{ minHeight: "300px" }}
+    />
+  );
 }
 
 /**
@@ -127,12 +160,14 @@ function SocialTile({ platform, index, tile, aspect, profileUrl, embedFn }) {
 /**
  * Bottom-of-homepage social section. Two cards: Instagram + TikTok.
  * Each card shows the profile handle, a "Follow" CTA that opens the
- * real profile, and a grid of tiles that Nadine fills in via the CMS.
+ * real profile, and one of THREE display modes (in this priority):
  *
- * Tiles can be filled in two ways (per tile):
- *   • paste an Instagram post/reel URL or a TikTok video URL →
- *     the real post is embedded as an iframe (no upload needed)
- *   • upload a screenshot + link URL → static tile linked to the post
+ *   1. `*_embed_html` set → pasted 3rd-party widget code (Elfsight,
+ *      Behold, SnapWidget, …) is rendered raw. This is the "real
+ *      auto-syncing feed" mode – recommended for Nadine.
+ *   2. Individual tiles with `post_url` or `image_url` – manual
+ *      curation (Live-Post iframe or uploaded screenshot).
+ *   3. Empty state – shows a "visit our profile" CTA.
  */
 export default function SocialFeed() {
   const { lang, pick } = useLang();
@@ -149,6 +184,9 @@ export default function SocialFeed() {
   const igUrl = data.instagram_url || "https://www.instagram.com/fahrschule.safe.ride/";
   const ttHandle = data.tiktok_handle || "@nadine_staeubli";
   const ttUrl = data.tiktok_url || "https://www.tiktok.com/@nadine_staeubli";
+
+  const igEmbedHtml = data.instagram_embed_html || "";
+  const ttEmbedHtml = data.tiktok_embed_html || "";
 
   const igTiles = data.instagram_tiles || [];
   const ttTiles = data.tiktok_tiles || [];
@@ -207,23 +245,55 @@ export default function SocialFeed() {
               <div className="font-display text-base mb-2 flex items-center gap-2">
                 <Sparkles size={16} className="text-[#ff5a36]" /> So verlinkst du deine Accounts
               </div>
-              <ol className="list-decimal ml-5 space-y-1 text-[#475569]">
+
+              <div className="mb-4 rounded-lg bg-[#fff6ef] border border-[#ff5a36]/20 p-3">
+                <div className="text-xs font-semibold tracking-widest uppercase text-[#e74123] mb-1">
+                  ⚡ Empfohlen: Auto-syncender Live-Feed
+                </div>
+                <ol className="list-decimal ml-5 space-y-1 text-[#475569] text-[13px]">
+                  <li>
+                    Konto bei einem Widget-Anbieter erstellen:
+                    <ul className="list-disc ml-5 mt-1 text-[12px]">
+                      <li>
+                        <a href="https://elfsight.com/instagram-feed-instashow/" target="_blank" rel="noopener noreferrer" className="text-[#ff5a36] font-semibold hover:underline">
+                          Elfsight
+                        </a>{" "}
+                        – Instagram + TikTok, ~5–10 CHF/Monat, super einfach
+                      </li>
+                      <li>
+                        <a href="https://behold.so/" target="_blank" rel="noopener noreferrer" className="text-[#ff5a36] font-semibold hover:underline">
+                          Behold.so
+                        </a>{" "}
+                        – nur Instagram, KOSTENLOS bis 6 Posts, sehr modern
+                      </li>
+                      <li>
+                        <a href="https://snapwidget.com/" target="_blank" rel="noopener noreferrer" className="text-[#ff5a36] font-semibold hover:underline">
+                          SnapWidget
+                        </a>{" "}
+                        – Instagram + TikTok, kostenlos mit Wasserzeichen
+                      </li>
+                    </ul>
+                  </li>
+                  <li>Deinen Instagram/TikTok-Account (Business/Creator) im Widget-Dashboard verbinden.</li>
+                  <li>Widget-Design anpassen und den <b>Embed-Code kopieren</b> (ein Script + Div-Block).</li>
+                  <li>
+                    Hier einfügen: unter jeder Karte im <b>&quot;⚡ Embed-Code&quot;</b>-Feld ⇩. Speichern → im Live-Modus erscheint der echte Feed.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="text-xs font-semibold tracking-widest uppercase text-[#94a3b8] mb-1">
+                Oder manuell (kein Abo)
+              </div>
+              <ol className="list-decimal ml-5 space-y-1 text-[#475569] text-[13px]">
                 <li>
-                  Ändere <b>Handle</b> und <b>Profil-URL</b> (blaue, editierbare Felder unter dem Instagram- bzw. TikTok-Titel).
+                  <b>Live-Post</b>: Kopiere die URL eines Instagram-Posts (<code className="text-[11px] bg-[#f1f5f9] px-1 py-0.5 rounded">https://www.instagram.com/p/…</code>) oder TikTok-Videos in das <b>&quot;Post-URL&quot;</b>-Feld unter einer Kachel. Der echte Post erscheint automatisch.
                 </li>
                 <li>
-                  Für jede Kachel gibt es <b>zwei Möglichkeiten</b>:
-                  <ul className="list-disc ml-5 mt-1">
-                    <li>
-                      <b>Live-Post (empfohlen)</b>: Kopiere die URL eines Instagram-Posts (<code className="text-[11px] bg-[#f1f5f9] px-1 py-0.5 rounded">https://www.instagram.com/p/…</code>) oder TikTok-Videos (<code className="text-[11px] bg-[#f1f5f9] px-1 py-0.5 rounded">https://www.tiktok.com/@…/video/…</code>) in das "Post-URL"-Feld unter der Kachel. Der echte Post erscheint automatisch.
-                    </li>
-                    <li>
-                      <b>Bild-Upload</b>: Alternativ auf die leere Kachel klicken und einen Screenshot deines Posts hochladen. Trage optional darunter den Link zu deinem Post ein.
-                    </li>
-                  </ul>
+                  <b>Bild-Upload</b>: Alternativ auf die leere Kachel klicken und einen Screenshot deines Posts hochladen. Trage optional darunter den Link zu deinem Post ein.
                 </li>
                 <li>
-                  Leere Kacheln (kein Bild, keine URL) werden im Live-Modus <b>ausgeblendet</b> – keine Sorge um leere Plätze.
+                  Handle und Profil-URL bleiben in beiden Fällen editierbar (blaue Felder).
                 </li>
               </ol>
             </div>
@@ -267,19 +337,45 @@ export default function SocialFeed() {
             </div>
 
             {editMode && (
-              <div className="mb-5 -mt-2">
-                <label className="text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8] block mb-1">
-                  Profil-URL (der "Folgen"-Button verlinkt hierher)
-                </label>
-                <Editable
-                  path="social.instagram_url"
-                  value={igUrl}
-                  className="text-xs text-[#0f172a] block break-all"
-                />
+              <div className="mb-5 -mt-2 space-y-3">
+                <div>
+                  <label className="text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8] block mb-1">
+                    Profil-URL (der &quot;Folgen&quot;-Button verlinkt hierher)
+                  </label>
+                  <Editable
+                    path="social.instagram_url"
+                    value={igUrl}
+                    className="text-xs text-[#0f172a] block break-all"
+                  />
+                </div>
+                <div className="border-t border-[#e2e8f0] pt-3">
+                  <label className="text-[10px] font-semibold tracking-widest uppercase text-[#ff5a36] block mb-1">
+                    ⚡ Embed-Code (Elfsight / Behold / SnapWidget)
+                  </label>
+                  <Editable
+                    path="social.instagram_embed_html"
+                    value={igEmbedHtml}
+                    placeholder="<script src='https://static.elfsight.com/…'></script><div class='elfsight-app-…'></div>"
+                    multiline
+                    className="text-[11px] text-[#0f172a] block break-all font-mono bg-[#f8fafc] rounded p-2 min-h-[3em]"
+                  />
+                  <p className="text-[10px] text-[#94a3b8] mt-1 leading-relaxed">
+                    Wenn ausgefüllt, wird der externe Live-Feed statt der einzelnen Kacheln angezeigt.
+                  </p>
+                </div>
               </div>
             )}
 
-            {igSlots.length === 0 ? (
+            {igEmbedHtml && !editMode ? (
+              <EmbedHtml html={igEmbedHtml} platform="instagram" />
+            ) : igEmbedHtml && editMode ? (
+              <div className="rounded-2xl border-2 border-dashed border-[#ff5a36]/30 bg-[#fff6ef] p-4 text-center text-xs text-[#e74123]">
+                <div className="font-semibold mb-1">Live-Widget aktiv</div>
+                <div className="text-[#475569]">
+                  Der eingebettete Feed wird im Live-Modus angezeigt. Zum Testen: Bearbeiten schließen → &quot;Live&quot;-Button.
+                </div>
+              </div>
+            ) : igSlots.length === 0 ? (
               <EmptyGrid platform="instagram" lang={lang} url={igUrl} />
             ) : (
               <div className="grid grid-cols-3 gap-2 md:gap-3">
@@ -357,19 +453,45 @@ export default function SocialFeed() {
             </div>
 
             {editMode && (
-              <div className="mb-5 -mt-2">
-                <label className="text-[10px] font-semibold tracking-widest uppercase text-white/50 block mb-1">
-                  Profil-URL (der "Folgen"-Button verlinkt hierher)
-                </label>
-                <Editable
-                  path="social.tiktok_url"
-                  value={ttUrl}
-                  className="text-xs text-white block break-all"
-                />
+              <div className="mb-5 -mt-2 space-y-3">
+                <div>
+                  <label className="text-[10px] font-semibold tracking-widest uppercase text-white/50 block mb-1">
+                    Profil-URL (der &quot;Folgen&quot;-Button verlinkt hierher)
+                  </label>
+                  <Editable
+                    path="social.tiktok_url"
+                    value={ttUrl}
+                    className="text-xs text-white block break-all"
+                  />
+                </div>
+                <div className="border-t border-white/10 pt-3">
+                  <label className="text-[10px] font-semibold tracking-widest uppercase text-[#ff8c42] block mb-1">
+                    ⚡ Embed-Code (Elfsight / SnapWidget)
+                  </label>
+                  <Editable
+                    path="social.tiktok_embed_html"
+                    value={ttEmbedHtml}
+                    placeholder="<script src='https://static.elfsight.com/…'></script><div class='elfsight-app-…'></div>"
+                    multiline
+                    className="text-[11px] text-white block break-all font-mono bg-black/30 rounded p-2 min-h-[3em]"
+                  />
+                  <p className="text-[10px] text-white/50 mt-1 leading-relaxed">
+                    Wenn ausgefüllt, wird der externe Live-Feed statt der einzelnen Kacheln angezeigt.
+                  </p>
+                </div>
               </div>
             )}
 
-            {ttSlots.length === 0 ? (
+            {ttEmbedHtml && !editMode ? (
+              <EmbedHtml html={ttEmbedHtml} platform="tiktok" />
+            ) : ttEmbedHtml && editMode ? (
+              <div className="rounded-2xl border-2 border-dashed border-[#ff5a36]/40 bg-white/5 p-4 text-center text-xs text-[#ffb56b]">
+                <div className="font-semibold mb-1">Live-Widget aktiv</div>
+                <div className="text-white/60">
+                  Der eingebettete Feed wird im Live-Modus angezeigt. Zum Testen: Bearbeiten schließen → &quot;Live&quot;-Button.
+                </div>
+              </div>
+            ) : ttSlots.length === 0 ? (
               <EmptyGrid platform="tiktok" lang={lang} url={ttUrl} dark />
             ) : (
               <div className="grid grid-cols-3 gap-2 md:gap-3">
