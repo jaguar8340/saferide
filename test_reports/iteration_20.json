@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only regression for LocGoogleReviews.jsx refactor (widget-vs-manual mutual exclusion). ALL 6 REQUESTED SCENARIOS PASS (100%). (1) WIDGET-ONLY on /fahrschule-siebnen: [data-testid=loc-google-reviews] section present; [data-testid=loc-reviews-embed-html] renders with elfsight-app-{uuid} div and real reviews (Jael Thalmann, Vanessa Jahn, elena v, A.G.); [data-testid=loc-google-reviews-cta] NOT present; body.innerText does NOT contain 'Echte Bewertungen, echte Erfahrungen'; widget's own header 'What Our Customers Say' + '4,9' + '(49)' + 'Bewerten Sie uns auf Google' visually visible in screenshot (though iframe content not in DOM innerText – expected). Neither '60+' nor '49' present in host document innerText, confirming only one header block rendered. (2) SAME CHECK on 4 more slugs /fahrschule-einsiedeln, /fahrschule-chur, /fahrschule-rapperswil, /fahrschule-waedenswil: embed present, cta absent, manual phrase absent, elfsight-app- div rendered on all 4. (3) FALLBACK: PATCH /api/content {reviews_embed_enabled:false} → reload /fahrschule-siebnen → embed gone, [data-testid=loc-google-reviews-cta] visible, 'GOOGLE BEWERTUNGEN' overline visible, '5,0 auf Google – auch von Schüler:innen aus Siebnen' title visible, '60+ 5-Sterne-Bewertungen' badge visible, 'Echte Bewertungen, echte Erfahrungen' subtitle visible, 'Alle Bewertungen auf Google ansehen' CTA button visible – manual block fully re-appears (screenshot confirmed). (4) RESTORE: PATCH {reviews_embed_enabled:true} → reload → widget back, manual gone. Final API state: reviews_embed_enabled=true, html_len=157. (5) HOMEPAGE REGRESSION (during widget=false phase): [data-testid=reviews-embed-html] hidden, 6 manual [data-testid=review-card-0..5] visible ('Was Schüler:innen sagen' section rendered with all 6 cards). (6) NO CONSOLE OVERLAY / no 'Uncaught runtime errors' from LocGoogleReviews refactor. No page errors thrown.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_20.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LocGoogleReviews.jsx correctly implements the mutual-exclusion pattern: single top-level ternary `showEmbed ? <WidgetEmbed/> : <manual fallback>` – impossible to render both. `showEmbed = !!reviewsEmbedHtml.trim() && reviewsEmbedEnabled` handles empty string / whitespace-only HTML the same as disabled state. Good.",
+    "Default-ON semantics preserved via `content?.reviews_embed_enabled !== false` – legacy content docs without the flag still show the widget. Matches homepage WidgetToggle behavior.",
+    "Manual fallback branch still exposes Editable fields (overline/title/subtitle/CTA) and loc-google-reviews-url input in edit mode – confirmed via code review. Since these live inside the else-branch, they're automatically hidden while widget is active, which is the intended behavior. Admin must toggle widget OFF via Startseite → Bewertungen → toggle to edit them – documented in the JSDoc header comment.",
+    "60+ badge on the manual fallback is hardcoded as `globalReviewsCount || '60+'` – if content.google_reviews_count is not set, defaults to '60+'. Not a bug, but noting the widget shows the live count '(49)' which is honest/current, while '60+' is aspirational marketing copy. Consider aligning if desired.",
+    "Elfsight iframe content (widget-rendered headers/reviews) is not accessible via document.body.innerText – all iframe checks must use screenshot verification or count elfsight-app-* divs. Documented for future testing agents."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only per request)",
+    "frontend": "100% (6/6 scenarios pass)"
+  },
+  "test_credentials": "Admin admin@saferide.ch / SafeRide2026! – login OK, JWT issued",
+  "seed_data_creation": "During PATCH fallback test I temporarily set reviews_embed_enabled=false, then restored to true. Final API state verified: {reviews_embed_enabled: true, html_len: 157} – identical to pre-test state. No other content mutated.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "LocGoogleReviews.jsx now has mutual exclusion: widget XOR manual fallback (never both). To toggle: PATCH /api/content with dot-notation `{reviews_embed_enabled: false}` OR via UI at Startseite → Bewertungen → Live-Widget einbetten details → toggle [data-testid=reviews-embed-enabled-toggle]. Widget content lives inside iframe – checks must use screenshot or `.query_selector('[data-testid=loc-reviews-embed-html]')` + inner_html contains 'elfsight-app-'. Location slugs use 'ae' spelling: waedenswil, pfaeffikon-sz, richterswil (not richtersw**y**l). Elfsight bootstrap needs ~8-10s + scroll into view. iteration_19 context still holds – widget toggle, instagram/tiktok toggles all working."
+}
