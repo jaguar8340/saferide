@@ -25,6 +25,12 @@
   --sr-sunset-a: #ff5a36;   /* Gradient Start */
   --sr-sunset-b: #ff8c42;   /* Gradient Mitte */
   --sr-sunset-c: #ffb56b;   /* Gradient Ende */
+
+  /* Elektrisches Blau inspiriert vom blauen Range Rover Sport */
+  --sr-electric: #1e6fff;       /* Signal-Blau, kräftig aber nicht schrill */
+  --sr-electric-deep: #0b4fd8;  /* Dunkleres Blau für Kontraste */
+  --sr-electric-soft: #dbe9ff;  /* Sehr helle Blau-Wäsche für Section-Backgrounds */
+  --sr-electric-glow: rgba(30, 111, 255, 0.35);
 }
 
 html,
@@ -200,6 +206,16 @@ body {
   color: #ffffff;
 }
 
+.tag-electric {
+  background: var(--sr-electric);
+  color: #ffffff;
+}
+
+.tag-amber {
+  background: var(--sr-amber);
+  color: #ffffff;
+}
+
 .tag-cream {
   background: var(--sr-cream);
   color: var(--sr-ink);
@@ -234,7 +250,8 @@ body {
 }
 .input-underline:focus {
   outline: none;
-  border-bottom-color: var(--sr-accent);
+  border-bottom-color: var(--sr-electric);
+  box-shadow: 0 1px 0 var(--sr-electric);
 }
 
 input[type="text"],
@@ -295,6 +312,43 @@ select {
   background: linear-gradient(90deg, transparent 0%, var(--sr-accent) 20%, var(--sr-amber) 50%, var(--sr-accent) 80%, transparent 100%);
   height: 2px;
   border: none;
+}
+
+/* Elektrisches Blau (Range-Rover-Blau) – gezielt eingesetzte Akzent-Utilities */
+.bg-electric {
+  background-color: var(--sr-electric);
+}
+.bg-electric-soft {
+  background-color: var(--sr-electric-soft);
+}
+.text-electric {
+  color: var(--sr-electric);
+}
+.text-electric-deep {
+  color: var(--sr-electric-deep);
+}
+.border-electric {
+  border-color: var(--sr-electric);
+}
+.icon-bubble-electric {
+  background: linear-gradient(135deg, var(--sr-electric) 0%, var(--sr-electric-deep) 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px -10px var(--sr-electric-glow);
+}
+.ring-electric-soft {
+  box-shadow: 0 0 0 1px var(--sr-border), 0 20px 40px -20px var(--sr-electric-glow);
+}
+.divider-dual {
+  background: linear-gradient(90deg, transparent 0%, var(--sr-accent) 22%, transparent 50%, var(--sr-electric) 78%, transparent 100%);
+  height: 2px;
+  border: none;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+.input-electric-focus:focus-within {
+  border-color: var(--sr-electric) !important;
+  box-shadow: 0 0 0 3px var(--sr-electric-glow);
 }
 
 /* Inline editable text indicator */

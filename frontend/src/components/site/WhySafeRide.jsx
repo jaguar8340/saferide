@@ -31,8 +31,8 @@ const ACCENTS = [
   { iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
   { iconBg: "bg-white", iconFg: "text-[#ff5a36]", bg: "bg-[#0f172a]", fg: "text-white" },
   { iconBg: "bg-[#ffe4d6]", iconFg: "text-[#e74123]" },
-  { iconBg: "bg-gradient-to-br from-[#e74123] to-[#ff5a36]", iconFg: "text-white" },
-  { iconBg: "bg-[#fff6ef]", iconFg: "text-[#ff5a36]" },
+  { iconBg: "bg-gradient-to-br from-[#1e6fff] to-[#0b4fd8]", iconFg: "text-white" },
+  { iconBg: "bg-[#dbe9ff]", iconFg: "text-[#1e6fff]" },
   { iconBg: "bg-gradient-to-br from-[#ff8c42] to-[#ffb56b]", iconFg: "text-white" },
 ];
 

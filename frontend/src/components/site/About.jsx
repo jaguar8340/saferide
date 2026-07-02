@@ -57,9 +57,9 @@ export default function About({ data }) {
 
             <div className="mt-10 grid grid-cols-3 gap-3 md:gap-4">
               {[
-                { key: "stat1", v: data.stat1_value, l_de: data.stat1_label_de, l_en: data.stat1_label_en, bg: "bg-[#ff5a36]", fg: "text-white" },
+                { key: "stat1", v: data.stat1_value, l_de: data.stat1_label_de, l_en: data.stat1_label_en, bg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", fg: "text-white" },
                 { key: "stat2", v: data.stat2_value, l_de: data.stat2_label_de, l_en: data.stat2_label_en, bg: "bg-white border border-[#e2e8f0]", fg: "text-[#0f172a]" },
-                { key: "stat3", v: data.stat3_value, l_de: data.stat3_label_de, l_en: data.stat3_label_en, bg: "bg-[#0f172a]", fg: "text-white" },
+                { key: "stat3", v: data.stat3_value, l_de: data.stat3_label_de, l_en: data.stat3_label_en, bg: "bg-gradient-to-br from-[#1e6fff] to-[#0b4fd8]", fg: "text-white" },
               ].map((s, i) => (
                 <div
                   key={s.key}

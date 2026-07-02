@@ -20,9 +20,9 @@ const VARIANTS = [
   { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
   { bg: "bg-[#ff5a36]", fg: "text-white", iconBg: "bg-white/15", iconFg: "text-white" },
   { bg: "bg-[#fff6ef]", fg: "text-[#0f172a]", iconBg: "bg-[#ffe4d6]", iconFg: "text-[#e74123]" },
-  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#ff8c42] to-[#ffb56b]", iconFg: "text-white" },
+  { bg: "bg-white", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#1e6fff] to-[#0b4fd8]", iconFg: "text-white" },
   { bg: "bg-[#0f172a]", fg: "text-white", iconBg: "bg-[#ff5a36]", iconFg: "text-white" },
-  { bg: "bg-[#fff6ef]", fg: "text-[#0f172a]", iconBg: "bg-gradient-to-br from-[#e74123] to-[#ff5a36]", iconFg: "text-white" },
+  { bg: "bg-[#dbe9ff]", fg: "text-[#0f172a]", iconBg: "bg-[#1e6fff]", iconFg: "text-white" },
 ];
 
 export default function Services({ items }) {

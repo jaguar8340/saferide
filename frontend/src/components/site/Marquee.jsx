@@ -52,18 +52,22 @@ export default function Marquee({ de, en }) {
           >
             <span
               className={
-                i % 3 === 1
+                i % 4 === 1
                   ? "font-serif-i text-[#ff5a36] font-normal"
-                  : i % 3 === 2
+                  : i % 4 === 2
                     ? "text-[#ffb56b]"
-                    : ""
+                    : i % 4 === 3
+                      ? "text-[#1e6fff]"
+                      : ""
               }
             >
               {word}
             </span>
             <span
               aria-hidden
-              className={`inline-block w-1.5 h-1.5 rounded-full ${i % 2 === 0 ? "bg-[#ff5a36]" : "bg-[#ff8c42]"}`}
+              className={`inline-block w-1.5 h-1.5 rounded-full ${
+                i % 3 === 0 ? "bg-[#ff5a36]" : i % 3 === 1 ? "bg-[#ff8c42]" : "bg-[#1e6fff]"
+              }`}
             />
           </span>
         ))}

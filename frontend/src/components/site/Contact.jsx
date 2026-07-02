@@ -84,6 +84,7 @@ export default function Contact({ data }) {
                 value={data.phone}
                 href={`tel:${(data.phone || "").replace(/\s/g, "")}`}
                 testid="contact-phone"
+                accent="coral"
               />
               <InfoRow
                 icon={Mail}
@@ -92,18 +93,21 @@ export default function Contact({ data }) {
                 value={data.email}
                 href={`mailto:${data.email}`}
                 testid="contact-email"
+                accent="electric"
               />
               <InfoRow
                 icon={MapPin}
                 label={t.contact.address}
                 path={`contact.address_${lang}`}
                 value={pick(data.address_de, data.address_en)}
+                accent="coral"
               />
               <InfoRow
                 icon={Clock}
                 label={t.contact.hours}
                 path={`contact.hours_${lang}`}
                 value={pick(data.hours_de, data.hours_en)}
+                accent="electric"
               />
             </div>
           </motion.div>
@@ -156,10 +160,13 @@ export default function Contact({ data }) {
   );
 }
 
-function InfoRow({ icon: Icon, label, value, href, testid, path }) {
+function InfoRow({ icon: Icon, label, value, href, testid, path, accent = "coral" }) {
+  const isElectric = accent === "electric";
+  const iconColor = isElectric ? "text-[#1e6fff]" : "text-[#ff5a36]";
+  const hoverColor = isElectric ? "hover:text-[#1e6fff]" : "hover:text-[#ff5a36]";
   return (
     <div className="flex items-start gap-4" data-testid={testid}>
-      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[#e2e8f0] text-[#ff5a36] shrink-0">
+      <span className={`inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[#e2e8f0] shrink-0 ${iconColor}`}>
         <Icon size={15} />
       </span>
       <div>
@@ -169,7 +176,7 @@ function InfoRow({ icon: Icon, label, value, href, testid, path }) {
             <Editable
               path={path}
               value={value}
-              className="text-[#0f172a] font-semibold hover:text-[#ff5a36] transition-colors"
+              className={`text-[#0f172a] font-semibold transition-colors ${hoverColor}`}
             />
           </a>
         ) : (
