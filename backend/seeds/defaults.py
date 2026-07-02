@@ -355,6 +355,7 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     "reviews_rating_value": "5.0",
     "reviews_rating_label_de": "Bewertung auf Google",
     "reviews_rating_label_en": "Rating on Google",
+    "reviews_embed_html": "",
     "footer_tagline_de": "Anders. Besser. Mutiger.",
     "footer_tagline_en": "Different. Better. Bolder.",
     "nav_cta_de": "Anfragen",

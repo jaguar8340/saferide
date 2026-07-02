@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote, Plus, Trash2, Loader2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,34 @@ import { api, formatApiError } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
 import SectionTitle from "@/components/site/SectionTitle";
 import GoogleIcon from "@/components/site/GoogleIcon";
+
+/**
+ * Renders a pasted 3rd-party widget snippet (e.g. Elfsight Google Reviews).
+ * React's `dangerouslySetInnerHTML` renders inline `<script>` tags as inert
+ * text, so we re-execute them manually after mount. Reachable only via
+ * authenticated admin editing – raw HTML injection is intentional.
+ */
+function ReviewsEmbedHtml({ html }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !html) return;
+    ref.current.innerHTML = html;
+    ref.current.querySelectorAll("script").forEach((oldScript) => {
+      const s = document.createElement("script");
+      Array.from(oldScript.attributes).forEach((a) => s.setAttribute(a.name, a.value));
+      s.text = oldScript.textContent;
+      oldScript.parentNode.replaceChild(s, oldScript);
+    });
+  }, [html]);
+  return (
+    <div
+      ref={ref}
+      data-testid="reviews-embed-html"
+      className="reviews-embed-html w-full"
+      style={{ minHeight: "400px" }}
+    />
+  );
+}
 
 export default function Testimonials({ items }) {
   const { lang, pick, t } = useLang();
@@ -19,8 +47,12 @@ export default function Testimonials({ items }) {
   const title = pick(content?.reviews_title_de, content?.reviews_title_en) || t.reviews.title;
   const ratingValue = content?.reviews_rating_value || "5.0";
   const ratingLabel = pick(content?.reviews_rating_label_de, content?.reviews_rating_label_en) || t.reviews.rating;
+  const embedHtml = content?.reviews_embed_html || "";
+  const hasEmbed = !!embedHtml.trim();
 
-  if (!items?.length && !editMode) return null;
+  // In view mode: hide the section only if there is neither an embed widget
+  // nor any manual review card to show.
+  if (!hasEmbed && !items?.length && !editMode) return null;
 
   const updateField = async (id, field, value) => {
     const it = items.find((x) => x.id === id);
@@ -116,7 +148,7 @@ export default function Testimonials({ items }) {
               {lang === "de" ? "Auf Google ansehen" : "View on Google"}
               <ArrowUpRight size={14} />
             </a>
-            {editMode && (
+            {editMode && !hasEmbed && (
               <button
                 onClick={addNew}
                 disabled={adding}
@@ -130,8 +162,42 @@ export default function Testimonials({ items }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {items.map((r, i) => (
+        {/* Edit-mode: embed-code textarea (Elfsight / SnapWidget / …) */}
+        {editMode && (
+          <details className="mb-8 rounded-2xl border border-[#ff5a36]/25 bg-white p-5" open={hasEmbed}>
+            <summary className="cursor-pointer text-sm font-semibold text-[#0f172a] flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md icon-bubble-accent inline-flex items-center justify-center text-[10px]">⚡</span>
+              Live-Widget einbetten (Elfsight Google Reviews, SnapWidget, …)
+            </summary>
+            <div className="mt-3">
+              <Editable
+                path="reviews_embed_html"
+                value={embedHtml}
+                placeholder="<script src='https://elfsightcdn.com/platform.js' async></script><div class='elfsight-app-…' data-elfsight-app-lazy></div>"
+                multiline
+                className="text-[11px] block break-all font-mono text-[#0f172a] bg-[#f8fafc] rounded p-3 min-h-[5em]"
+              />
+              <p className="text-[10px] text-[#94a3b8] mt-2 leading-relaxed">
+                Wenn ausgefüllt, wird der eingebettete Live-Feed statt der einzelnen Bewertungskarten angezeigt. Zum Zurücksetzen: Feld leeren.
+              </p>
+            </div>
+          </details>
+        )}
+
+        {/* Content: embed widget OR manual review cards */}
+        {hasEmbed ? (
+          <div>
+            {editMode && (
+              <div className="mb-6 rounded-2xl border-2 border-dashed border-[#ff5a36]/30 bg-[#fff6ef] p-4 text-center text-xs text-[#e74123]">
+                <div className="font-semibold mb-1">Live-Widget aktiv</div>
+                <div className="text-[#475569]">Der eingebettete Google-Reviews-Feed wird unten angezeigt. Zum Testen: Live-Modus wechseln.</div>
+              </div>
+            )}
+            <ReviewsEmbedHtml html={embedHtml} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {items.map((r, i) => (
             <motion.div
               key={r.id || i}
               data-testid={`review-card-${i}`}
@@ -224,7 +290,8 @@ export default function Testimonials({ items }) {
               </div>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );
