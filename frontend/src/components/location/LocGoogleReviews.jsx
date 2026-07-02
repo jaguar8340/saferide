@@ -3,10 +3,15 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
 import GoogleIcon from "@/components/site/GoogleIcon";
+import WidgetEmbed from "@/components/site/WidgetEmbed";
 
 export default function LocGoogleReviews({ loc, updateField, globalReviewsUrl, globalReviewsCount }) {
   const { lang, pick } = useLang();
-  const { editMode } = useEdit();
+  const { editMode, content } = useEdit();
+
+  const reviewsEmbedHtml = content?.reviews_embed_html || "";
+  const reviewsEmbedEnabled = content?.reviews_embed_enabled !== false; // default ON
+  const showEmbed = !!reviewsEmbedHtml.trim() && reviewsEmbedEnabled;
 
   return (
     <section className="section-pad bg-white border-y border-[#e2e8f0]" data-testid="loc-google-reviews">
@@ -77,6 +82,29 @@ export default function LocGoogleReviews({ loc, updateField, globalReviewsUrl, g
           />
           <ArrowUpRight size={14} />
         </a>
+
+        {/* Live Google-Reviews Widget (Elfsight) – rendered on every location
+            landing page automatically. Uses the SAME embed code that Nadine
+            manages centrally under Startseite → Bewertungen. Hidden when
+            the admin toggles it off or the code is empty. */}
+        {showEmbed && (
+          <div className="mt-12 text-left">
+            <WidgetEmbed
+              html={reviewsEmbedHtml}
+              testid="loc-reviews-embed-html"
+              minHeight={420}
+            />
+          </div>
+        )}
+
+        {editMode && !showEmbed && reviewsEmbedHtml && (
+          <div className="mt-6 rounded-2xl border-2 border-dashed border-amber-400/40 bg-amber-50 text-amber-800 p-4 text-xs text-left">
+            <div className="font-semibold mb-1">Google-Reviews Widget aktuell ausgeschaltet</div>
+            <div>
+              Verwaltet unter <b>Startseite → Bewertungen → Live-Widget einbetten</b>. Toggle dort einschalten, um es hier automatisch anzuzeigen.
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

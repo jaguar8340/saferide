@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote, Plus, Trash2, Loader2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
@@ -6,51 +6,10 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api, formatApiError } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import WidgetToggle from "@/components/edit/WidgetToggle";
+import WidgetEmbed from "@/components/site/WidgetEmbed";
 import SectionTitle from "@/components/site/SectionTitle";
 import GoogleIcon from "@/components/site/GoogleIcon";
-
-/**
- * Renders a pasted 3rd-party widget snippet (e.g. Elfsight Google Reviews).
- * React's `dangerouslySetInnerHTML` renders inline `<script>` tags as inert
- * text, so we re-execute them manually after mount. Reachable only via
- * authenticated admin editing – raw HTML injection is intentional.
- *
- * We guard against double-injection: if `html` didn't change since the last
- * mount, we simply keep the widget as-is (Elfsight's platform.js is not
- * idempotent and complains loudly when bootstrapped twice).
- */
-function ReviewsEmbedHtml({ html }) {
-  const ref = useRef(null);
-  const injectedHtmlRef = useRef(null);
-  useEffect(() => {
-    if (!ref.current || !html) return;
-    if (injectedHtmlRef.current === html) return; // already injected this exact HTML
-    injectedHtmlRef.current = html;
-    try {
-      ref.current.innerHTML = html;
-      ref.current.querySelectorAll("script").forEach((oldScript) => {
-        const s = document.createElement("script");
-        Array.from(oldScript.attributes).forEach((a) => s.setAttribute(a.name, a.value));
-        s.text = oldScript.textContent;
-        oldScript.parentNode.replaceChild(s, oldScript);
-      });
-    } catch (err) {
-      // Widget bootstrap failed – swallow to keep the app running; the widget
-      // shows its own error UI or falls back to a blank space.
-      if (typeof console !== "undefined" && console.warn) {
-        console.warn("Reviews widget bootstrap failed:", err);
-      }
-    }
-  }, [html]);
-  return (
-    <div
-      ref={ref}
-      data-testid="reviews-embed-html"
-      className="reviews-embed-html w-full"
-      style={{ minHeight: "400px" }}
-    />
-  );
-}
 
 export default function Testimonials({ items }) {
   const { lang, pick, t } = useLang();
@@ -63,7 +22,8 @@ export default function Testimonials({ items }) {
   const ratingValue = content?.reviews_rating_value || "5.0";
   const ratingLabel = pick(content?.reviews_rating_label_de, content?.reviews_rating_label_en) || t.reviews.rating;
   const embedHtml = content?.reviews_embed_html || "";
-  const hasEmbed = !!embedHtml.trim();
+  const embedEnabled = content?.reviews_embed_enabled !== false; // default ON
+  const hasEmbed = !!embedHtml.trim() && embedEnabled;
 
   // In view mode: hide the section only if there is neither an embed widget
   // nor any manual review card to show.
@@ -179,12 +139,18 @@ export default function Testimonials({ items }) {
 
         {/* Edit-mode: embed-code textarea (Elfsight / SnapWidget / …) */}
         {editMode && (
-          <details className="mb-8 rounded-2xl border border-[#ff5a36]/25 bg-white p-5" open={hasEmbed}>
+          <details className="mb-8 rounded-2xl border border-[#ff5a36]/25 bg-white p-5" open={hasEmbed || !!embedHtml}>
             <summary className="cursor-pointer text-sm font-semibold text-[#0f172a] flex items-center gap-2">
               <span className="w-6 h-6 rounded-md icon-bubble-accent inline-flex items-center justify-center text-[10px]">⚡</span>
               Live-Widget einbetten (Elfsight Google Reviews, SnapWidget, …)
             </summary>
-            <div className="mt-3">
+            <div className="mt-3 space-y-3">
+              <WidgetToggle
+                path="reviews_embed_enabled"
+                value={content?.reviews_embed_enabled}
+                label="Widget aktiv anzeigen"
+                testid="reviews-embed-enabled-toggle"
+              />
               <Editable
                 path="reviews_embed_html"
                 value={embedHtml}
@@ -192,8 +158,8 @@ export default function Testimonials({ items }) {
                 multiline
                 className="text-[11px] block break-all font-mono text-[#0f172a] bg-[#f8fafc] rounded p-3 min-h-[5em]"
               />
-              <p className="text-[10px] text-[#94a3b8] mt-2 leading-relaxed">
-                Wenn ausgefüllt, wird der eingebettete Live-Feed statt der einzelnen Bewertungskarten angezeigt. Zum Zurücksetzen: Feld leeren.
+              <p className="text-[10px] text-[#94a3b8] leading-relaxed">
+                Toggle AUS = Widget wird versteckt (Code bleibt aber gespeichert). Feld leer = manuelle Bewertungskarten erscheinen wieder.
               </p>
             </div>
           </details>
@@ -208,7 +174,7 @@ export default function Testimonials({ items }) {
                 <div className="text-[#475569]">Der eingebettete Google-Reviews-Feed wird unten angezeigt. Zum Testen: Live-Modus wechseln.</div>
               </div>
             )}
-            <ReviewsEmbedHtml html={embedHtml} />
+            <WidgetEmbed html={embedHtml} testid="reviews-embed-html" minHeight={400} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Instagram, HelpCircle, Sparkles } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
+import WidgetToggle from "@/components/edit/WidgetToggle";
+import WidgetEmbed from "@/components/site/WidgetEmbed";
 import SectionTitle from "@/components/site/SectionTitle";
 
 /**
@@ -59,45 +60,6 @@ function parseUrlLines(text) {
       seen.add(s);
       return true;
     });
-}
-
-/**
- * Renders an embed snippet pasted from Elfsight / Behold / SnapWidget / any
- * other 3rd-party widget provider. React `dangerouslySetInnerHTML` renders
- * inline `<script>` tags as inert text, so we manually re-execute them here
- * after mount. Only reachable via authenticated admin editing, so raw HTML
- * injection is intentional. Guards against double-injection on re-render
- * (many widget bootstrap scripts are NOT idempotent).
- */
-function EmbedHtml({ html, platform }) {
-  const ref = useRef(null);
-  const injectedHtmlRef = useRef(null);
-  useEffect(() => {
-    if (!ref.current || !html) return;
-    if (injectedHtmlRef.current === html) return;
-    injectedHtmlRef.current = html;
-    try {
-      ref.current.innerHTML = html;
-      ref.current.querySelectorAll("script").forEach((oldScript) => {
-        const newScript = document.createElement("script");
-        Array.from(oldScript.attributes).forEach((a) => newScript.setAttribute(a.name, a.value));
-        newScript.text = oldScript.textContent;
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-      });
-    } catch (err) {
-      if (typeof console !== "undefined" && console.warn) {
-        console.warn(`${platform} embed bootstrap failed:`, err);
-      }
-    }
-  }, [html, platform]);
-  return (
-    <div
-      ref={ref}
-      data-testid={`${platform}-embed-html`}
-      className="social-embed-html w-full"
-      style={{ minHeight: "300px" }}
-    />
-  );
 }
 
 /**
@@ -163,6 +125,7 @@ function PlatformCard({
   profileUrl,
   postUrlsText,   // raw multi-line textarea value
   embedHtml,     // widget HTML (Elfsight/Behold/SnapWidget)
+  embedEnabled,  // false when admin turned the widget off explicitly
   aspect,         // tailwind aspect ratio class per tile
   gridCols,       // e.g. "grid-cols-3"
   cardClassName,
@@ -179,6 +142,7 @@ function PlatformCard({
   const { editMode } = useEdit();
   const parsedUrls = parseUrlLines(postUrlsText);
   const embedSrcs = parsedUrls.map(toEmbedFn).filter(Boolean);
+  const activeEmbed = !!embedHtml && embedEnabled !== false;
 
   return (
     <motion.div
@@ -248,11 +212,17 @@ function PlatformCard({
           </div>
 
           {/* 2) The ALTERNATIVE input – paid widget embed code */}
-          <details className="text-[11px]">
+          <details className="text-[11px]" open={!!embedHtml}>
             <summary className={`cursor-pointer font-semibold ${labelMutedClassName} hover:${labelAccentClassName}`}>
               💠 Erweitert: Widget-Embed (Elfsight / Behold / SnapWidget)
             </summary>
-            <div className="mt-2">
+            <div className="mt-2 space-y-2">
+              <WidgetToggle
+                path={`social.${platform}_embed_enabled`}
+                value={embedEnabled}
+                label={`${platform === "instagram" ? "Instagram" : "TikTok"}-Widget aktiv anzeigen`}
+                testid={`${platform}-embed-enabled-toggle`}
+              />
               <Editable
                 path={`social.${platform}_embed_html`}
                 value={embedHtml}
@@ -262,8 +232,8 @@ function PlatformCard({
                   platform === "instagram" ? "text-[#0f172a] bg-[#f8fafc]" : "text-white bg-black/30"
                 }`}
               />
-              <p className={`text-[10px] mt-1 leading-relaxed ${labelMutedClassName}`}>
-                Nur ausfüllen wenn Du ein bezahltes Widget nutzt (~5 CHF/Monat). Überschreibt die Post-URLs oben.
+              <p className={`text-[10px] leading-relaxed ${labelMutedClassName}`}>
+                Toggle AUS = Widget wird versteckt (Code bleibt gespeichert). Wenn Toggle AN und Feld ausgefüllt: überschreibt die Post-URLs oben.
               </p>
             </div>
           </details>
@@ -285,9 +255,9 @@ function PlatformCard({
       )}
 
       {/* Rendering priority: paid widget > multi-line URLs > empty */}
-      {embedHtml && !editMode ? (
-        <EmbedHtml html={embedHtml} platform={platform} />
-      ) : embedHtml && editMode ? (
+      {activeEmbed && !editMode ? (
+        <WidgetEmbed html={embedHtml} testid={`${platform}-embed-html`} minHeight={300} />
+      ) : activeEmbed && editMode ? (
         <div className={`rounded-2xl border-2 border-dashed p-4 text-center text-xs ${
           platform === "instagram"
             ? "border-[#ff5a36]/30 bg-[#fff6ef] text-[#e74123]"
@@ -348,13 +318,16 @@ export default function SocialFeed() {
 
   const igEmbedHtml = data.instagram_embed_html || "";
   const ttEmbedHtml = data.tiktok_embed_html || "";
+  const igEmbedEnabled = data.instagram_embed_enabled !== false; // default ON
+  const ttEmbedEnabled = data.tiktok_embed_enabled !== false;
   const igPostUrls = data.instagram_post_urls || "";
   const ttPostUrls = data.tiktok_post_urls || "";
 
   // Everything in view mode empty → hide the whole section to keep the
-  // homepage tidy while Nadine hasn't linked anything yet.
-  const igEmpty = !igEmbedHtml && parseUrlLines(igPostUrls).length === 0;
-  const ttEmpty = !ttEmbedHtml && parseUrlLines(ttPostUrls).length === 0;
+  // homepage tidy while Nadine hasn't linked anything yet. A widget is only
+  // "active" when its code is filled in AND its enabled-toggle is true.
+  const igEmpty = !(igEmbedHtml && igEmbedEnabled) && parseUrlLines(igPostUrls).length === 0;
+  const ttEmpty = !(ttEmbedHtml && ttEmbedEnabled) && parseUrlLines(ttPostUrls).length === 0;
   if (!editMode && igEmpty && ttEmpty) return null;
 
   return (
@@ -430,6 +403,7 @@ export default function SocialFeed() {
             profileUrl={igUrl}
             postUrlsText={igPostUrls}
             embedHtml={igEmbedHtml}
+            embedEnabled={igEmbedEnabled}
             aspect="aspect-square"
             gridCols="grid-cols-3"
             cardClassName="rounded-3xl bg-white border border-[#e2e8f0] p-6 md:p-8 shadow-sm hover:shadow-xl hover:border-[#ff5a36]/40 transition-all"
@@ -452,6 +426,7 @@ export default function SocialFeed() {
             profileUrl={ttUrl}
             postUrlsText={ttPostUrls}
             embedHtml={ttEmbedHtml}
+            embedEnabled={ttEmbedEnabled}
             aspect="aspect-[9/16]"
             gridCols="grid-cols-3"
             cardClassName="rounded-3xl bg-[#0f172a] text-white border border-[#0f172a] p-6 md:p-8 shadow-sm hover:shadow-xl transition-all"

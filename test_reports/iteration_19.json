@@ -1,0 +1,35 @@
+{
+  "summary": "Frontend-only regression for the 3 CMS widget-toggle features. ALL 6 REQUESTED SCENARIOS PASS (100%). (1) REVIEWS on 4 location pages: [data-testid=loc-google-reviews] present on /fahrschule-waedenswil, /fahrschule-einsiedeln, /fahrschule-chur, /fahrschule-rapperswil; [data-testid=loc-reviews-embed-html] renders and contains the elfsight-app-26818019-3adb-409f-a6d3-a8573ff17f0d div with child iframes; screenshot confirms real Google reviews (Jael Thalmann, Vanessa Jahn, elena v, A.G., Sarah Bernhard) rendered on the location pages under the CTA. (2) REVIEWS TOGGLE: [data-testid=reviews-embed-enabled-toggle] visible in the '⚡ Live-Widget einbetten' details panel with aria-checked=true; click → aria-checked=false; reload homepage → [data-testid=reviews-embed-html] gone, 6 manual review cards reappear ([data-testid=review-card-0..5]) and 'Neu' button ([data-testid=reviews-add-btn]) shown; verified on /fahrschule-waedenswil: loc-google-reviews section still present but loc-reviews-embed-html hidden; click toggle back ON → widget returns on both homepage AND Wädenswil. (3) INSTAGRAM TOGGLE: [data-testid=instagram-embed-enabled-toggle] present in '💠 Erweitert: Widget-Embed' details of instagram-card, aria-checked=true; click OFF → aria-checked=false; in view mode the widget is hidden (section auto-collapses because igEmpty && ttEmpty → returns null per SocialFeed guard). (4) TIKTOK TOGGLE: same behavior via [data-testid=tiktok-embed-enabled-toggle]. Both toggles restore correctly to ON. (5) REGRESSION: 0 non-third-party console errors. No 'Uncaught runtime errors' overlay. Homepage reviews-section + social-feed-section still render after all toggling. (6) FINAL API STATE: reviews_embed_enabled=true (html_len=157), social.instagram_embed_enabled=true (html_len=158), social.tiktok_embed_enabled=true (html_len=158), social has 18 keys (fully restored).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_19.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WidgetEmbed uses injectedHtmlRef guard – prevents double init when React re-renders with the same HTML. Good.",
+    "WidgetToggle correctly treats missing/undefined field value as ON (`value !== false`) so legacy content docs before the migration keep showing widgets by default. This matches the seed defaults which explicitly set the fields to True.",
+    "LocGoogleReviews reads content.reviews_embed_html + reviews_embed_enabled from useEdit() and renders WidgetEmbed with testid='loc-reviews-embed-html' below the CTA button – this is inherited automatically by every location landing page from the shared LocationPage template. No per-location toggle needed – reviews are managed centrally under 'Startseite → Bewertungen → Live-Widget einbetten'. This matches the product requirement exactly.",
+    "SocialFeed has `if (!editMode && igEmpty && ttEmpty) return null` – this correctly hides the entire section when neither platform has active content. When BOTH toggles are OFF and no post URLs configured, the section vanishes in view mode which is the desired UX. In edit mode the section always renders so admins can re-enable.",
+    "BACKEND SHAPE NOTE (informational, not a bug): PUT /api/content does `$set` on the raw body which means passing `{social: {…}}` overwrites the entire social sub-doc. The correct partial-update endpoint is PATCH /api/content with dot-notation keys like `{'social.instagram_embed_enabled': false}`. The WidgetToggle component uses updateField() from EditContext which produces dot-notation PATCH calls, so all UI flows are safe. This is only a concern for external API callers – consider deep-merge on PUT or documentation warning.",
+    "The 4 CORS console errors from widget-data.service.elfsight.com/api/tiktok/profile persist – these are Elfsight-side, expected, and not user-visible. Ignored per iteration_18 context."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only per request)",
+    "frontend": "100% (6/6 scenarios pass)"
+  },
+  "test_credentials": "Admin admin@saferide.ch / SafeRide2026! – login OK",
+  "seed_data_creation": "During testing I inadvertently overwrote the social sub-document via a PUT /api/content call with only 1-2 keys (test scaffolding bug on my side, NOT a product bug). I fully restored it with a PATCH /api/content dot-notation call using values from /app/backend/seeds/defaults.py + the two Elfsight snippets that were present before the test (IG uuid bb124b3e-0d30-418c-bf27-8a6dd1af044c, TT uuid 75ce1d3d-65ca-4836-a225-0cd091e488fb). Verified final state has 18 social keys and all 3 enabled flags = True, matching the pre-test state.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The 3 widget toggles are working end-to-end: (a) Reviews toggle [data-testid=reviews-embed-enabled-toggle] in Testimonials edit panel controls both the homepage widget [data-testid=reviews-embed-html] AND the widget on every location page [data-testid=loc-reviews-embed-html] – LocGoogleReviews subscribes to the SAME content.reviews_embed_html+enabled flag. (b) Instagram/TikTok toggles [data-testid={platform}-embed-enabled-toggle] control [data-testid={platform}-embed-html]. When BOTH social toggles are OFF and neither platform has post URLs, the whole social-feed-section is hidden in view mode (by design, see SocialFeed.jsx line 331). To verify toggles: click via UI (uses updateField→dot-notation PATCH) OR curl PATCH /api/content with dot-notation like `social.instagram_embed_enabled: false`. DO NOT use PUT /api/content with `{social: {...}}` – it will shallow-overwrite the entire social sub-doc. Toolbar toggle text is INVERTED: 'BEARBEITEN' = edit mode ACTIVE (label = what mode you're currently in), 'VORSCHAU' = view mode active. Elfsight bootstrap needs ~8-10s + scroll into view for elfsight-app-{uuid} div to get child iframes.",
+  "rca of the issue": "N/A – no bugs found. Implementation matches spec: (1) reusable WidgetEmbed component with double-injection guard (injectedHtmlRef) covers all 3 embed points; (2) WidgetToggle uses updateField from EditContext → dot-notation PATCH, so no risk of blowing away sibling fields; (3) LocGoogleReviews reads content.reviews_embed_html+enabled via useEdit, so the widget appears on ALL current AND future location pages automatically without any per-location config; (4) SocialFeed uses `data.instagram_embed_enabled !== false` fallback which means content docs missing the flag default to ON – safe migration. Seed defaults in /app/backend/seeds/defaults.py include all 3 new boolean fields set to True as expected."
+}
