@@ -101,17 +101,27 @@ export default function HomeFaq({ items = [] }) {
                       data-testid={`home-faq-toggle-${i}`}
                       className="w-full text-left py-5 md:py-6 flex items-start justify-between gap-4 group"
                     >
-                      <div className="flex-1 min-w-0">
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        <span
+                          aria-hidden
+                          className={`shrink-0 mt-0.5 w-8 h-8 rounded-full inline-flex items-center justify-center font-display text-sm transition-colors ${
+                            open
+                              ? "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42] text-white"
+                              : "bg-[#ffe4d6] text-[#e74123] group-hover:bg-[#ff5a36] group-hover:text-white"
+                          }`}
+                        >
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
                         <Editable
                           path={`homepage_faqs.${i}.question_${lang}`}
                           value={pick(f.question_de, f.question_en)}
                           as="span"
-                          className="font-display text-lg md:text-xl tracking-tight text-[#0f172a] group-hover:text-[#ff5a36] transition-colors block"
+                          className="font-display text-lg md:text-xl tracking-tight text-[#0f172a] group-hover:text-[#ff5a36] transition-colors block flex-1"
                         />
                       </div>
                       <span
-                        className={`shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-full border border-[#e2e8f0] bg-white transition-all ${
-                          open ? "rotate-180 border-[#ff5a36] text-[#ff5a36]" : "text-[#0f172a]"
+                        className={`shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-full border transition-all ${
+                          open ? "rotate-180 border-[#ff5a36] bg-[#ff5a36] text-white" : "border-[#e2e8f0] bg-white text-[#0f172a]"
                         }`}
                       >
                         <ChevronDown size={14} />

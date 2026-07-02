@@ -390,19 +390,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "instagram_url": "https://www.instagram.com/fahrschule.safe.ride/",
         "tiktok_handle": "@nadine_staeubli",
         "tiktok_url": "https://www.tiktok.com/@nadine_staeubli",
-        "instagram_tiles": [
-            {"id": "ig1", "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
-            {"id": "ig2", "image_url": "https://images.pexels.com/photos/28837090/pexels-photo-28837090.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
-            {"id": "ig3", "image_url": "https://images.pexels.com/photos/1638459/pexels-photo-1638459.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
-            {"id": "ig4", "image_url": "https://images.pexels.com/photos/3593924/pexels-photo-3593924.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
-            {"id": "ig5", "image_url": "https://images.pexels.com/photos/4381404/pexels-photo-4381404.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"},
-            {"id": "ig6", "image_url": "https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg", "link_url": "https://www.instagram.com/fahrschule.safe.ride/"}
-        ],
-        "tiktok_tiles": [
-            {"id": "tt1", "image_url": "https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"},
-            {"id": "tt2", "image_url": "https://images.pexels.com/photos/1638459/pexels-photo-1638459.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"},
-            {"id": "tt3", "image_url": "https://images.pexels.com/photos/16613452/pexels-photo-16613452.jpeg", "link_url": "https://www.tiktok.com/@nadine_staeubli"}
-        ],
+        "instagram_tiles": [],
+        "tiktok_tiles": [],
     },
     "vku": DEFAULT_VKU,
     "impressum": DEFAULT_IMPRESSUM,

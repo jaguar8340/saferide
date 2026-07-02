@@ -42,7 +42,7 @@ export default function Marquee({ de, en }) {
   return (
     <section
       data-testid="marquee-section"
-      className="bg-[#0f172a] text-white py-6 md:py-7 overflow-hidden"
+      className="bg-[#0f172a] text-white py-6 md:py-7 overflow-hidden border-y-4 border-[#ff5a36]"
     >
       <FastMarquee speed={45} gradient={false}>
         {items.concat(items).concat(items).map((word, i) => (
@@ -50,10 +50,21 @@ export default function Marquee({ de, en }) {
             key={i}
             className="flex items-center gap-5 px-5 font-display text-3xl md:text-4xl"
           >
-            <span className={i % 3 === 1 ? "font-serif-i text-[#ff5a36] font-normal" : ""}>
+            <span
+              className={
+                i % 3 === 1
+                  ? "font-serif-i text-[#ff5a36] font-normal"
+                  : i % 3 === 2
+                    ? "text-[#ffb56b]"
+                    : ""
+              }
+            >
               {word}
             </span>
-            <span aria-hidden className="inline-block w-1.5 h-1.5 rounded-full bg-[#ff5a36]" />
+            <span
+              aria-hidden
+              className={`inline-block w-1.5 h-1.5 rounded-full ${i % 2 === 0 ? "bg-[#ff5a36]" : "bg-[#ff8c42]"}`}
+            />
           </span>
         ))}
       </FastMarquee>
