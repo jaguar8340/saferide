@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend-only regression to verify the 'Uncaught runtime errors – Script error.' webpack dev-server overlay fix. Waited 15s after DOMContentLoaded for Elfsight platform.js to bootstrap, then inspected the DOM for the overlay iframe and text signature. ALL 6 REQUESTED CHECKS PASS (6/6, 100%). Cross-origin Script error suppression works: no overlay iframe, no 'Uncaught runtime errors' text, no fixed high-z-index element, and NO uncaught page errors from our own code (the only 4 console errors are Elfsight's TikTok CORS fetches which are 3rd-party network noise, filename NOT empty, so unrelated to the fix). Reviews Elfsight widget (.elfsight-app-26818019-3adb-409f-a6d3-a8573ff17f0d) bootstraps correctly after scroll into view and renders 49 real Google reviews with 4.9 average rating (Jael Thalmann, Vanessa Jahn, elena v, A.G., Sarah Bernhard, …). Section header 'Was Schüler:innen sagen' + 5.0-Sterne-Google badge visible. Language toggle DE↔EN works (Hero: 'Fahrschule safe ride / Anders. Besser. Mutiger.' ↔ 'Learn to drive. / Different. Better. Bolder.'). Admin login works, edit mode toolbar visible at bottom-center (BEARBEITEN active, Live/VERWALTUNG/ANFRAGEN pill buttons), '⚡ Live-Widget einbetten' <details open> block shows the elfsight snippet in the multiline Editable, and 'Neu' button is correctly HIDDEN because embed is active. Reviews embed toggle regression: PUT /api/content {reviews_embed_html:''} → manual 6-card review grid reappears (Jael/Vanessa/Luis/Robi/Leonie/Joël) with embed host gone; PUT restore back to Elfsight snippet → widget re-bootstraps with children. No changes required, fix is verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_18.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "public/index.html top-of-<head> handler is correctly placed BEFORE any other script tag and uses capturing-phase (useCapture=true) with stopImmediatePropagation() – matches recommended pattern for suppressing browser-hidden CORS 'Script error.' events without swallowing genuine same-origin errors. The `!e.filename` guard is the correct signature.",
+    "The unhandledrejection handler only matches when reason.message includes 'Script error'. Some 3rd-party CDNs reject with non-Error objects or with the browser-generic 'Script error.'; consider also matching when reason is undefined/null or when the message is exactly '' – but this is defensive and not currently breaking anything.",
+    "ReviewsEmbedHtml + EmbedHtml (SocialFeed) both use `injectedHtmlRef` to skip re-injection when the same HTML string is seen twice. Good idempotency guard. Consider also debouncing rapid content updates via useMemo/hash, but not a bug.",
+    "The Elfsight widget makes cross-origin fetch to widget-data.service.elfsight.com/api/tiktok/profile which the browser blocks with CORS (visible as 4 console errors in ALL sessions). This is Elfsight-side and not user-visible. If it becomes noisy you could add a specific console.error filter but currently it is fine – the overlay does NOT appear from these because CORS fetch errors surface as network errors, not window.onerror.",
+    "The `assets.emergent.sh/scripts/emergent-main.js` <script src> in index.html (line 110) is loaded synchronously – consider `defer` to speed up first paint. Non-blocking issue."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only per request)",
+    "frontend": "100% (6/6 verifications pass)"
+  },
+  "test_credentials": "Admin admin@saferide.ch / SafeRide2026! – login OK",
+  "seed_data_creation": "Temporarily PUT reviews_embed_html='' then restored the original Elfsight snippet (157 chars). Final state = original state.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Cross-origin 'Script error.' suppression in /app/frontend/public/index.html lines 4-27 is working. Verification pattern: (1) load homepage, wait 15s, (2) evaluate for iframes matching /webpack|dev-server|error-overlay/i, (3) evaluate for /Uncaught runtime errors/i in body.innerText, (4) evaluate for fixed position elements with z-index > 2000000000 – all four indicators must be empty/zero. The Elfsight widget is lazy-loaded (data-elfsight-app-lazy) so scrolling into view is needed before elfsight-app-* div gets its children populated; on first-paint the elfsight div has 0 children but scrolling to [data-testid=reviews-section] + wait ~10s produces .elfsight-app child count 1+ and rendered Google review cards. NOTE: 4 CORS console errors from widget-data.service.elfsight.com/api/tiktok/profile are expected 3rd-party network errors and NOT ours (they don't originate from user code). Admin toolbar button [data-testid=toolbar-toggle-edit] label is inverted from intuition: shows 'Bearbeiten' when edit mode IS ON, 'Vorschau' when OFF – so text=BEARBEITEN means edit mode is currently active.",
+  "rca of the issue": "The webpack-dev-server's error overlay listens to window.onerror events. When Elfsight's platform.js (loaded from elfsightcdn.com) throws internal errors during its bootstrap or async data-fetch phase, the browser reports them as 'Script error.' with filename='' due to same-origin-policy protection (the response lacks CORS headers so browsers hide details). Webpack picks these up like any real runtime error and renders the red overlay. The fix installs a capturing-phase window.addEventListener('error', …) BEFORE bundle.js loads, filters events where message==='Script error.' AND !filename (the unmistakable CORS signature), and calls stopImmediatePropagation()+preventDefault() to prevent the webpack-dev-server client from ever seeing them. A twin handler for 'unhandledrejection' events with 'Script error' in the reason.message covers the promise-based bootstrap path. Additionally, ReviewsEmbedHtml + EmbedHtml components track the last-injected HTML in injectedHtmlRef; if the same HTML string is passed again (e.g., after a benign content re-render), the effect returns early — this prevents Elfsight's platform.js from being re-executed and complaining about double-init. Verified in this iteration: overlay does not appear, widget bootstraps, reviews render, no uncaught errors from our own code. Production builds don't include webpack-dev-server so this fix is purely dev/preview – no regression risk to production."
+}

@@ -14,18 +14,33 @@ import GoogleIcon from "@/components/site/GoogleIcon";
  * React's `dangerouslySetInnerHTML` renders inline `<script>` tags as inert
  * text, so we re-execute them manually after mount. Reachable only via
  * authenticated admin editing – raw HTML injection is intentional.
+ *
+ * We guard against double-injection: if `html` didn't change since the last
+ * mount, we simply keep the widget as-is (Elfsight's platform.js is not
+ * idempotent and complains loudly when bootstrapped twice).
  */
 function ReviewsEmbedHtml({ html }) {
   const ref = useRef(null);
+  const injectedHtmlRef = useRef(null);
   useEffect(() => {
     if (!ref.current || !html) return;
-    ref.current.innerHTML = html;
-    ref.current.querySelectorAll("script").forEach((oldScript) => {
-      const s = document.createElement("script");
-      Array.from(oldScript.attributes).forEach((a) => s.setAttribute(a.name, a.value));
-      s.text = oldScript.textContent;
-      oldScript.parentNode.replaceChild(s, oldScript);
-    });
+    if (injectedHtmlRef.current === html) return; // already injected this exact HTML
+    injectedHtmlRef.current = html;
+    try {
+      ref.current.innerHTML = html;
+      ref.current.querySelectorAll("script").forEach((oldScript) => {
+        const s = document.createElement("script");
+        Array.from(oldScript.attributes).forEach((a) => s.setAttribute(a.name, a.value));
+        s.text = oldScript.textContent;
+        oldScript.parentNode.replaceChild(s, oldScript);
+      });
+    } catch (err) {
+      // Widget bootstrap failed – swallow to keep the app running; the widget
+      // shows its own error UI or falls back to a blank space.
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn("Reviews widget bootstrap failed:", err);
+      }
+    }
   }, [html]);
   return (
     <div

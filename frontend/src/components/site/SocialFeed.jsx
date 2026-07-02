@@ -66,20 +66,30 @@ function parseUrlLines(text) {
  * other 3rd-party widget provider. React `dangerouslySetInnerHTML` renders
  * inline `<script>` tags as inert text, so we manually re-execute them here
  * after mount. Only reachable via authenticated admin editing, so raw HTML
- * injection is intentional.
+ * injection is intentional. Guards against double-injection on re-render
+ * (many widget bootstrap scripts are NOT idempotent).
  */
 function EmbedHtml({ html, platform }) {
   const ref = useRef(null);
+  const injectedHtmlRef = useRef(null);
   useEffect(() => {
     if (!ref.current || !html) return;
-    ref.current.innerHTML = html;
-    ref.current.querySelectorAll("script").forEach((oldScript) => {
-      const newScript = document.createElement("script");
-      Array.from(oldScript.attributes).forEach((a) => newScript.setAttribute(a.name, a.value));
-      newScript.text = oldScript.textContent;
-      oldScript.parentNode.replaceChild(newScript, oldScript);
-    });
-  }, [html]);
+    if (injectedHtmlRef.current === html) return;
+    injectedHtmlRef.current = html;
+    try {
+      ref.current.innerHTML = html;
+      ref.current.querySelectorAll("script").forEach((oldScript) => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes).forEach((a) => newScript.setAttribute(a.name, a.value));
+        newScript.text = oldScript.textContent;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+    } catch (err) {
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn(`${platform} embed bootstrap failed:`, err);
+      }
+    }
+  }, [html, platform]);
   return (
     <div
       ref={ref}

@@ -1,6 +1,30 @@
 <!doctype html>
 <html lang="de">
     <head>
+        <script>
+            // Suppress cross-origin "Script error." reports from 3rd-party embed
+            // scripts (Elfsight Google Reviews, TikTok/Instagram embeds, …).
+            // These carry no useful debug info (browser hides them for security)
+            // and only pollute React's dev error overlay. Production is
+            // unaffected because the overlay only exists in dev mode.
+            window.addEventListener(
+                "error",
+                function (e) {
+                    if (e && e.message === "Script error." && !e.filename) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                        return false;
+                    }
+                },
+                true,
+            );
+            window.addEventListener("unhandledrejection", function (e) {
+                var msg = (e && e.reason && e.reason.message) || "";
+                if (typeof msg === "string" && msg.indexOf("Script error") !== -1) {
+                    e.preventDefault();
+                }
+            });
+        </script>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#fbf9f6" />
