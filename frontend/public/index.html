@@ -7,23 +7,45 @@
             // These carry no useful debug info (browser hides them for security)
             // and only pollute React's dev error overlay. Production is
             // unaffected because the overlay only exists in dev mode.
-            window.addEventListener(
-                "error",
-                function (e) {
-                    if (e && e.message === "Script error." && !e.filename) {
-                        e.stopImmediatePropagation();
-                        e.preventDefault();
-                        return false;
-                    }
-                },
-                true,
-            );
-            window.addEventListener("unhandledrejection", function (e) {
-                var msg = (e && e.reason && e.reason.message) || "";
-                if (typeof msg === "string" && msg.indexOf("Script error") !== -1) {
-                    e.preventDefault();
+            (function () {
+                function isThirdPartyScriptError(e) {
+                    if (!e) return false;
+                    var msg = e.message || "";
+                    return typeof msg === "string" && msg.indexOf("Script error") !== -1;
                 }
-            });
+                // Capture-phase listener → fires before webpack-dev-server's
+                // own bubble-phase listener, letting us stop propagation to it.
+                window.addEventListener(
+                    "error",
+                    function (e) {
+                        if (isThirdPartyScriptError(e)) {
+                            e.stopImmediatePropagation();
+                            e.preventDefault();
+                            return false;
+                        }
+                    },
+                    true,
+                );
+                window.addEventListener(
+                    "unhandledrejection",
+                    function (e) {
+                        var msg = (e && e.reason && (e.reason.message || e.reason)) || "";
+                        if (typeof msg === "string" && msg.indexOf("Script error") !== -1) {
+                            e.stopImmediatePropagation();
+                            e.preventDefault();
+                        }
+                    },
+                    true,
+                );
+                // Backup: legacy window.onerror for very old script hosts.
+                var prevOnError = window.onerror;
+                window.onerror = function (msg, url, line, col, err) {
+                    if (typeof msg === "string" && msg.indexOf("Script error") !== -1) {
+                        return true; // handled → don't propagate to overlay
+                    }
+                    return prevOnError ? prevOnError.apply(this, arguments) : false;
+                };
+            })();
         </script>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

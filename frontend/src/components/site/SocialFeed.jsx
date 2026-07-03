@@ -66,9 +66,16 @@ function parseUrlLines(text) {
  * Render a single iframe embed tile for a validated post URL.
  */
 function EmbedTile({ src, index, platform, aspect }) {
+  // TikTok embeds include header (username, logo) + footer (like/share/comments)
+  // around the 9:16 video. Fixed height gives predictable layout regardless of
+  // tile width, avoiding both letterbox and stretched empty space.
+  const isTikTok = platform === "tiktok";
+  const sizing = isTikTok
+    ? "h-[620px]"
+    : aspect; // instagram → aspect-square
   return (
     <div
-      className={`relative ${aspect} rounded-xl overflow-hidden bg-black/5 border border-black/5`}
+      className={`relative ${sizing} rounded-xl overflow-hidden bg-black/5 border border-black/5`}
       data-testid={`${platform}-tile-${index}`}
     >
       <iframe
@@ -84,6 +91,19 @@ function EmbedTile({ src, index, platform, aspect }) {
       />
     </div>
   );
+}
+
+/**
+ * Pick a responsive grid class list that adapts to how many tiles the admin
+ * actually pasted, so a single URL never looks lost in a huge empty column.
+ * TikTok is intentionally capped at 2 columns – the embeds are portrait AND
+ * include TikTok's own chrome, so 3 side-by-side becomes unreadable.
+ */
+function pickGridClass(platform, count) {
+  if (count <= 1) return "grid-cols-1 max-w-[340px] mx-auto";
+  if (platform === "tiktok") return "grid-cols-1 sm:grid-cols-2";
+  if (count === 2) return "grid-cols-1 sm:grid-cols-2";
+  return "grid-cols-2 sm:grid-cols-3";
 }
 
 /**
@@ -126,8 +146,7 @@ function PlatformCard({
   postUrlsText,   // raw multi-line textarea value
   embedHtml,     // widget HTML (Elfsight/Behold/SnapWidget)
   embedEnabled,  // false when admin turned the widget off explicitly
-  aspect,         // tailwind aspect ratio class per tile
-  gridCols,       // e.g. "grid-cols-3"
+  aspect,         // tailwind aspect ratio class per tile (Instagram)
   cardClassName,
   labelClassName,
   labelMutedClassName,
@@ -269,7 +288,7 @@ function PlatformCard({
           </div>
         </div>
       ) : embedSrcs.length > 0 ? (
-        <div className={`grid ${gridCols} gap-2 md:gap-3`}>
+        <div className={`grid ${pickGridClass(platform, embedSrcs.length)} gap-2 md:gap-3`}>
           {embedSrcs.map((src, i) => (
             <EmbedTile key={src + i} src={src} index={i} platform={platform} aspect={aspect} />
           ))}
@@ -405,7 +424,6 @@ export default function SocialFeed() {
             embedHtml={igEmbedHtml}
             embedEnabled={igEmbedEnabled}
             aspect="aspect-square"
-            gridCols="grid-cols-3"
             cardClassName="rounded-3xl bg-white border border-[#e2e8f0] p-6 md:p-8 shadow-sm hover:shadow-xl hover:border-[#ff5a36]/40 transition-all"
             labelClassName="text-[#0f172a]"
             labelMutedClassName="text-[#94a3b8]"
@@ -428,7 +446,6 @@ export default function SocialFeed() {
             embedHtml={ttEmbedHtml}
             embedEnabled={ttEmbedEnabled}
             aspect="aspect-[9/16]"
-            gridCols="grid-cols-3"
             cardClassName="rounded-3xl bg-[#0f172a] text-white border border-[#0f172a] p-6 md:p-8 shadow-sm hover:shadow-xl transition-all"
             labelClassName="text-white"
             labelMutedClassName="text-white/50"
