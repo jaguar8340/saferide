@@ -134,3 +134,11 @@ admin@saferide.ch / SafeRide2026!
   - Scoped CSS in `/app/frontend/src/elegant.css` (nur unter `.elegant-root`): Playfair Display + Cormorant Garamond + Manrope, Champagne-Cream `#faf6f0` + Midnight-Navy `#0d1b2a` + Champagne-Gold `#c9a961`, gold-gerahmte Bilder, römische Nummerierung, Ornament-Divider.
   - Design-Sprache: Luxus-Automobilmarken-Feel, ruhige Motion, sehr grosszügige vertikale Rhythmik, italic Serif-Akzente auf goldenen Punkten & Wörtern.
   - Sektions-Reihenfolge: Hero → About (Portrait-Frame) → Why (Roman-Numeral-Pillars) → Services (Magazin-Index) → Fleet (Luxus-Cards) → Pricing (Featured Gold-Highlight) → Persönlicher Kontakt → Footer.
+  - **User-Feedback 2026-07: Vom Nutzer abgelehnt** ("elegant fällt definitiv weg"). Variante bleibt für Referenz erhalten.
+- ✅ **Vivid (jung, farbig, modern) Design-Variante (DONE 2026-07)** unter `/preview/vivid`:
+  - Dritte vollständig isolierte Alternative, Live-Design unverändert.
+  - Ordner `/app/frontend/src/components/vivid/` (VividPreviewBanner, VividHeader, VividHero, VividAbout, VividWhy, VividServices, VividFleet, VividPricing, VividContact, VividFooter) + Page `/app/frontend/src/pages/VividPreview.jsx`.
+  - Scoped CSS `/app/frontend/src/vivid.css` (nur unter `.vivid-root`): Space Grotesk + Instrument Serif italic + Inter, Bright-Cream `#fef9f4` als Basis (kein Schwarz), Electric-Blue `#3b5bff` + Hot-Pink `#ff3b8b` + Lime-Punch `#c8ff4d` + Sunshine-Yellow `#ffd60a` + Mint & Lavender-Pastels.
+  - Design-Sprache: Neo-Brutalism-Cards mit 2px schwarzem Border und harten Offset-Shadows, sticker-artige rotierte Pill-Badges, Marker-Highlight-Underlines auf Schlüsselwörtern, Blur-Blobs im Hintergrund, spielerische Micro-Rotations, italic Serif-Akzente auf Punkten & Highlight-Wörtern.
+  - Sektions-Reihenfolge: Hero → About (Portrait mit Stickers) → Why (Kaleidoskop-Pillars) → Services (Farb-Grid) → Fleet (Play-Cards) → Pricing (Pink-Featured) → Contact (Lime-Panel) → Footer.
+  - Auch hier: Fixer Preview-Banner (lime) + Rück-Link im Footer. WhatsApp-FAB auf `/preview/*` ausgeblendet.

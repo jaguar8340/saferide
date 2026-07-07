@@ -1,0 +1,261 @@
+/*
+ * Vivid preview theme – SCOPED to `.vivid-root`.
+ * Young, colourful, modern. Bright cream background (NEVER black), electric
+ * accents, playful geometric shapes. Nothing here touches the main site.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap");
+
+.vivid-root {
+  /* Bright, warm cream background — the anti-black */
+  --v-bg: #fef9f4;
+  --v-bg-alt: #fff4e6;
+  --v-surface: #ffffff;
+
+  /* Punchy, saturated palette */
+  --v-blue: #3b5bff;       /* electric primary */
+  --v-blue-deep: #2338d0;
+  --v-pink: #ff3b8b;       /* hot pink secondary */
+  --v-lime: #c8ff4d;       /* lime punch accent */
+  --v-yellow: #ffd60a;     /* sunshine yellow accent */
+  --v-mint: #a3f7bf;       /* soft mint */
+  --v-lavender: #e2d5ff;   /* pale lavender */
+
+  --v-ink: #0a0a1f;
+  --v-ink-soft: #3a3a5a;
+  --v-muted: #7a7a95;
+  --v-border: #ece4d6;
+
+  background: var(--v-bg);
+  color: var(--v-ink);
+  font-family: "Inter", system-ui, sans-serif;
+  min-height: 100vh;
+  letter-spacing: -0.01em;
+}
+
+/* --- Typography ------------------------------------------------------- */
+.vivid-root .font-grotesk {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.vivid-root .font-instrument {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.vivid-root .font-inter {
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* --- Buttons – big pill CTAs ----------------------------------------- */
+.vivid-root .v-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 1rem 1.9rem;
+  border-radius: 9999px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  border: 2px solid transparent;
+  color: #fff;
+  background: var(--v-ink);
+}
+.vivid-root .v-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -8px rgba(10, 10, 31, 0.35);
+}
+.vivid-root .v-btn--blue {
+  background: var(--v-blue);
+}
+.vivid-root .v-btn--pink {
+  background: var(--v-pink);
+}
+.vivid-root .v-btn--lime {
+  background: var(--v-lime);
+  color: var(--v-ink);
+}
+.vivid-root .v-btn--yellow {
+  background: var(--v-yellow);
+  color: var(--v-ink);
+}
+.vivid-root .v-btn--ghost {
+  background: transparent;
+  color: var(--v-ink);
+  border-color: var(--v-ink);
+}
+.vivid-root .v-btn--ghost:hover {
+  background: var(--v-ink);
+  color: #fff;
+}
+
+/* --- Sticker (rotated pill label) ------------------------------------ */
+.vivid-root .v-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  border: 1.5px solid var(--v-ink);
+  background: var(--v-yellow);
+  color: var(--v-ink);
+  transition: transform 0.2s ease;
+}
+.vivid-root .v-sticker:hover {
+  transform: rotate(-2deg) scale(1.06);
+}
+.vivid-root .v-sticker--pink {
+  background: var(--v-pink);
+  color: #fff;
+  border-color: var(--v-ink);
+}
+.vivid-root .v-sticker--lime {
+  background: var(--v-lime);
+  color: var(--v-ink);
+}
+.vivid-root .v-sticker--blue {
+  background: var(--v-blue);
+  color: #fff;
+}
+
+/* --- Cards ----------------------------------------------------------- */
+.vivid-root .v-card {
+  background: var(--v-surface);
+  border: 1.5px solid var(--v-ink);
+  border-radius: 28px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 6px 6px 0 var(--v-ink);
+}
+.vivid-root .v-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0 var(--v-ink);
+}
+.vivid-root .v-card--soft {
+  border-color: var(--v-border);
+  box-shadow: 0 10px 30px -12px rgba(10, 10, 31, 0.12);
+}
+.vivid-root .v-card--soft:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(10, 10, 31, 0.18);
+}
+
+/* --- Blob decorations ------------------------------------------------ */
+.vivid-root .v-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --- Grain overlay for warmth --------------------------------------- */
+.vivid-root .v-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(255, 214, 10, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 59, 139, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* --- Section overline ------------------------------------------------ */
+.vivid-root .v-overline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v-ink);
+  background: var(--v-lime);
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--v-ink);
+}
+
+/* --- Marquee dashed underline for text highlights ------------------- */
+.vivid-root .v-hl-blue,
+.vivid-root .v-hl-pink,
+.vivid-root .v-hl-lime,
+.vivid-root .v-hl-yellow {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.15em;
+}
+.vivid-root .v-hl-blue::before {
+  content: "";
+  position: absolute;
+  left: -0.05em;
+  right: -0.05em;
+  bottom: 0.08em;
+  height: 0.35em;
+  background: var(--v-blue);
+  opacity: 0.85;
+  z-index: -1;
+  border-radius: 4px;
+}
+.vivid-root .v-hl-pink::before {
+  content: "";
+  position: absolute;
+  left: -0.05em;
+  right: -0.05em;
+  bottom: 0.08em;
+  height: 0.35em;
+  background: var(--v-pink);
+  opacity: 0.85;
+  z-index: -1;
+  border-radius: 4px;
+}
+.vivid-root .v-hl-lime::before {
+  content: "";
+  position: absolute;
+  left: -0.05em;
+  right: -0.05em;
+  bottom: 0.08em;
+  height: 0.35em;
+  background: var(--v-lime);
+  z-index: -1;
+  border-radius: 4px;
+}
+.vivid-root .v-hl-yellow::before {
+  content: "";
+  position: absolute;
+  left: -0.05em;
+  right: -0.05em;
+  bottom: 0.08em;
+  height: 0.35em;
+  background: var(--v-yellow);
+  z-index: -1;
+  border-radius: 4px;
+}
+.vivid-root .v-hl-blue,
+.vivid-root .v-hl-pink {
+  color: var(--v-ink);
+}
+
+/* Selection */
+.vivid-root ::selection {
+  background: var(--v-yellow);
+  color: var(--v-ink);
+}
+
+/* Wavy divider */
+.vivid-root .v-wave {
+  height: 12px;
+  background-image: radial-gradient(circle at 8px 12px, var(--v-ink) 4px, transparent 4.5px);
+  background-size: 16px 12px;
+  background-repeat: repeat-x;
+}
