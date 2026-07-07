@@ -122,8 +122,15 @@ admin@saferide.ch / SafeRide2026!
   - Runtime-Error-Overlay-Suppression in `public/index.html` gehärtet: `stopImmediatePropagation` in Capture-Phase + legacy `window.onerror`-Fallback fangen alle Cross-Origin-"Script error."-Meldungen von Elfsight/Instagram/TikTok-Embeds ab.
 - ✅ **Motorsport/Racing Design-Variante (DONE 2026-07)** unter `/preview/sport`:
   - Vollständig isolierte Alternative-Homepage, aktuelles Live-Design bleibt 100% unverändert.
-  - Neuer Ordner `/app/frontend/src/components/sport/` (PreviewBanner, SportHeader, SportHero, SportMarquee, SportStatsBar, SportFleet, SportServices, SportContact, SportFooter) + Page `/app/frontend/src/pages/SportPreview.jsx`.
+  - Neuer Ordner `/app/frontend/src/components/sport/` (PreviewBanner, SportHeader, SportHero, SportMarquee, SportAbout, SportWhy, SportStatsBar, SportServices, SportFleet, SportPricing, SportContact, SportFooter) + Page `/app/frontend/src/pages/SportPreview.jsx`.
   - Scoped CSS in `/app/frontend/src/sport.css` (nur unter `.sport-root` aktiv): Font-Imports Bebas Neue + Outfit + JetBrains Mono, Carbon-Textur, Checker-Pattern, Speedlines, Skew-Buttons.
   - Palette: Deep-Obsidian `#09090b` + Racing-Red `#e11d48` + Pure-White. Diagonale Grid-Clip-Cards, Rev-Counter-Visual, Marquee mit Checkered-Flag-SVGs.
-  - Nutzt CMS-Content read-only via `useEdit()` (Fleet-Bilder werden dynamisch geladen), Kontaktformular postet an gleichen `/api/contact`-Endpoint.
+  - Sektions-Reihenfolge: Hero → Marquee → About (Pilot-Karte) → Why (Data-Cards) → Stats → Services → Fleet → Pricing (Race Packages) → Boxenstopp → Footer.
+  - Nutzt CMS-Content read-only via `useEdit()`, Kontaktformular postet an gleichen `/api/contact`-Endpoint.
   - Fester Preview-Banner mit "Zur Live-Site"-Link + zusätzlicher Rück-Link im Sport-Footer. WhatsApp-FAB auf `/preview/*` deaktiviert.
+- ✅ **Elegant Premium Design-Variante (DONE 2026-07)** unter `/preview/elegant`:
+  - Zweite vollständig isolierte Alternative, Live-Design unverändert.
+  - Ordner `/app/frontend/src/components/elegant/` (ElegantPreviewBanner, ElegantHeader, ElegantHero, ElegantAbout, ElegantWhy, ElegantServices, ElegantFleet, ElegantPricing, ElegantContact, ElegantFooter) + Page `/app/frontend/src/pages/ElegantPreview.jsx`.
+  - Scoped CSS in `/app/frontend/src/elegant.css` (nur unter `.elegant-root`): Playfair Display + Cormorant Garamond + Manrope, Champagne-Cream `#faf6f0` + Midnight-Navy `#0d1b2a` + Champagne-Gold `#c9a961`, gold-gerahmte Bilder, römische Nummerierung, Ornament-Divider.
+  - Design-Sprache: Luxus-Automobilmarken-Feel, ruhige Motion, sehr grosszügige vertikale Rhythmik, italic Serif-Akzente auf goldenen Punkten & Wörtern.
+  - Sektions-Reihenfolge: Hero → About (Portrait-Frame) → Why (Roman-Numeral-Pillars) → Services (Magazin-Index) → Fleet (Luxus-Cards) → Pricing (Featured Gold-Highlight) → Persönlicher Kontakt → Footer.

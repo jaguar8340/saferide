@@ -4,9 +4,12 @@ import PreviewBanner from "@/components/sport/PreviewBanner";
 import SportHeader from "@/components/sport/SportHeader";
 import SportHero from "@/components/sport/SportHero";
 import SportMarquee from "@/components/sport/SportMarquee";
+import SportAbout from "@/components/sport/SportAbout";
+import SportWhy from "@/components/sport/SportWhy";
 import SportStatsBar from "@/components/sport/SportStatsBar";
-import SportFleet from "@/components/sport/SportFleet";
 import SportServices from "@/components/sport/SportServices";
+import SportFleet from "@/components/sport/SportFleet";
+import SportPricing from "@/components/sport/SportPricing";
 import SportContact from "@/components/sport/SportContact";
 import SportFooter from "@/components/sport/SportFooter";
 import "@/sport.css";
@@ -15,11 +18,18 @@ import "@/sport.css";
  * Motorsport / Racing design variant of the homepage. Reachable only via
  * `/preview/sport`. Reuses the CMS content read-only (no editing UI). The
  * original `/` homepage stays 100% untouched.
+ *
+ * Section order (per user brief):
+ *   1. Hero – "Fahrschule saferide"
+ *   2. About – "über mich"
+ *   3. Why – "Warum Fahrschule Saferide"
+ *   4. Services – "was du bekommst"
+ *   5. Fleet – "unsere flotte"
+ *   6. Pricing – "preise"
  */
 export default function SportPreview() {
   const { content } = useEdit();
 
-  // Force <html> lang for consistency with the copy (German content).
   useEffect(() => {
     const prev = document.documentElement.lang;
     document.documentElement.lang = "de";
@@ -47,9 +57,12 @@ export default function SportPreview() {
 
       <SportHero content={content} />
       <SportMarquee />
+      <SportAbout content={content} />
+      <SportWhy content={content} />
       <SportStatsBar />
+      <SportServices content={content} />
       <SportFleet content={content} />
-      <SportServices />
+      <SportPricing content={content} />
       <SportContact />
       <SportFooter />
     </div>

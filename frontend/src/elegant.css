@@ -1,0 +1,206 @@
+/*
+ * Elegant Premium preview theme – SCOPED to `.elegant-root`.
+ * A refined luxury automotive aesthetic: champagne cream + midnight navy +
+ * champagne gold hairlines. Nothing here touches the main site design;
+ * styles only apply inside the ElegantPreview page.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap");
+
+.elegant-root {
+  --el-bg: #faf6f0;
+  --el-surface: #ffffff;
+  --el-cream-warm: #f3ecdf;
+  --el-ink: #0d1b2a;
+  --el-ink-soft: #37475a;
+  --el-ink-muted: #7a8595;
+  --el-warm-muted: #8b8378;
+  --el-gold: #c9a961;
+  --el-gold-deep: #9d823f;
+  --el-gold-soft: rgba(201, 169, 97, 0.15);
+  --el-border: #e5ded1;
+
+  background: var(--el-bg);
+  color: var(--el-ink);
+  font-family: "Manrope", system-ui, sans-serif;
+  min-height: 100vh;
+  letter-spacing: -0.005em;
+  font-weight: 400;
+}
+
+/* --- Typography ------------------------------------------------------- */
+.elegant-root .font-serif {
+  font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  letter-spacing: -0.015em;
+}
+.elegant-root .font-italic-serif {
+  font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.elegant-root .font-manrope {
+  font-family: "Manrope", system-ui, sans-serif;
+}
+
+/* Elegant overline – uppercase tracked caps with hairline on both sides */
+.elegant-root .el-overline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--el-gold-deep);
+  font-weight: 500;
+}
+.elegant-root .el-overline::before,
+.elegant-root .el-overline::after {
+  content: "";
+  width: 32px;
+  height: 1px;
+  background: var(--el-gold);
+}
+.elegant-root .el-overline--start::after {
+  display: none;
+}
+.elegant-root .el-overline--start::before {
+  display: none;
+}
+
+/* --- Buttons ---------------------------------------------------------- */
+.elegant-root .el-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 2rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--el-bg);
+  background: var(--el-ink);
+  border: 1px solid var(--el-ink);
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+.elegant-root .el-btn:hover {
+  background: transparent;
+  color: var(--el-ink);
+  border-color: var(--el-ink);
+}
+.elegant-root .el-btn--gold {
+  background: var(--el-gold);
+  border-color: var(--el-gold);
+  color: var(--el-ink);
+}
+.elegant-root .el-btn--gold:hover {
+  background: var(--el-gold-deep);
+  border-color: var(--el-gold-deep);
+  color: #fff;
+}
+.elegant-root .el-btn--ghost {
+  background: transparent;
+  border-color: var(--el-ink);
+  color: var(--el-ink);
+}
+.elegant-root .el-btn--ghost:hover {
+  background: var(--el-ink);
+  color: #fff;
+}
+
+/* --- Cards ------------------------------------------------------------ */
+.elegant-root .el-card {
+  background: var(--el-surface);
+  border: 1px solid var(--el-border);
+  transition: border-color 0.3s ease, box-shadow 0.35s ease;
+}
+.elegant-root .el-card:hover {
+  border-color: var(--el-gold);
+  box-shadow: 0 30px 60px -30px rgba(13, 27, 42, 0.15);
+}
+
+/* Gold-framed image */
+.elegant-root .el-frame {
+  position: relative;
+  padding: 12px;
+  background: var(--el-surface);
+  border: 1px solid var(--el-border);
+}
+.elegant-root .el-frame::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--el-gold);
+  pointer-events: none;
+}
+
+/* Small decorative ornament between headings & subheadings */
+.elegant-root .el-ornament {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-gold);
+}
+.elegant-root .el-ornament::before,
+.elegant-root .el-ornament::after {
+  content: "";
+  width: 60px;
+  height: 1px;
+  background: currentColor;
+}
+
+/* Section hairline divider */
+.elegant-root .el-divider {
+  height: 1px;
+  background: var(--el-border);
+}
+.elegant-root .el-divider--gold {
+  background: var(--el-gold);
+  opacity: 0.5;
+}
+
+/* Selection */
+.elegant-root ::selection {
+  background: var(--el-gold);
+  color: var(--el-ink);
+}
+
+/* Subtle noise/paper texture (very faint, adds warmth) */
+.elegant-root .el-paper {
+  background-color: var(--el-bg);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(201, 169, 97, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(13, 27, 42, 0.03) 0%, transparent 45%);
+}
+
+/* Vertical serif italic pull-quote style */
+.elegant-root .el-quote-mark {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 6rem;
+  line-height: 1;
+  color: var(--el-gold);
+  opacity: 0.35;
+}
+
+/* Hover underline animation for links */
+.elegant-root .el-link {
+  position: relative;
+  display: inline-block;
+}
+.elegant-root .el-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: var(--el-gold);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s ease;
+}
+.elegant-root .el-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
