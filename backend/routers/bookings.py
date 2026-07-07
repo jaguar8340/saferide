@@ -18,9 +18,19 @@ router = APIRouter(tags=["bookings"])
 
 # ---------- Booking Packages ----------
 @router.get("/packages")
-async def list_packages():
+async def list_packages(canton: str | None = None):
+    """Public list of active packages, optionally filtered by canton code."""
     items = await db.booking_packages.find({}, {"_id": 0}).sort("order", 1).to_list(200)
-    return [p for p in items if p.get("active", True)]
+    active = [p for p in items if p.get("active", True)]
+    if canton:
+        canton = canton.upper().strip()
+        # Empty `cantons` (or missing) → available everywhere.
+        active = [
+            p
+            for p in active
+            if not p.get("cantons") or canton in p.get("cantons", [])
+        ]
+    return active
 
 
 @router.get("/packages/admin")

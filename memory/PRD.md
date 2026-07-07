@@ -117,6 +117,21 @@ admin@saferide.ch / SafeRide2026!
   - **Mehr Farbe** an den Fahrschulautos (coral/orange/rot) orientiert: neue CSS-Tokens `--sr-blush`, `--sr-peach`, `--sr-amber`, `--sr-fire`, `--sr-sunset-a/b/c`; neue Utility-Classes `.bg-blush-soft`, `.bg-sunset-band`, `.bg-sunset-soft`, `.icon-bubble-accent`. WhySafeRide-Section jetzt mit Sunset-Soft-Gradient-BG; Services-Icons + WhySafeRide-Pillars mit Coral-Gradient-Bubbles; Pricing "Beliebt"-Card mit warmem Sunset-Gradient statt Dark-Navy.
   - **Neue Social-Feed-Section** (`SocialFeed.jsx`) unten auf der Homepage vor Contact: Zwei Karten (Instagram + TikTok), jede mit 6 bzw. 3 CMS-editierbaren Foto-Kacheln, Follow-Buttons zu den echten Profilen. Voll editierbar über Wix-Style CMS (Kachel-Bild + Link-URL). Keine externen Widget-Abos nötig.
 - ✅ **Location-Set Erweiterung & UX-Feinschliff (DONE 2026-07)**:
+  - 3 neue Standorte hinzugefügt: Wetzikon (ZH), St. Gallen (SG), Domat/Ems (GR) → 14 total.
+  - Elfsight Google-Reviews-Widget läuft global auf allen Location-Landingpages.
+  - Footer breiter, kleinere Schrift → alle 14 Standorte auf einer Zeile.
+  - Treffpunkte-Sektion: Karte + Foto nebeneinander (neues `meet_image_url` mit Upload-Overlay).
+  - Neue `Speedo.jsx`-Komponente (SVG mit animiertem Nadel-Sweep via IntersectionObserver + easeOutCubic) ersetzt die 3 farbigen Stat-Rechtecke in der Über-mich-Sektion.
+  - "11" → "14 Standorte" in Header, Seeds und DB.
+- ✅ **VKU-Anmeldeformular + Preis-Konsolidierung + Location-Scoping (DONE 2026-07)**:
+  - **VKU-Formular** ersetzt die alte "Achtung: Wichtige Infos"-Sektion auf `/vku-unterricht`. Felder: Vorname, Name, E-Mail, Telefon, Geburtsdatum, Kursauswahl (Dropdown auto-generiert aus `content.vku.months` – jede Session eine Option), Bemerkungen. POST an neues `/api/vku/registrations`.
+  - **Backend**: `models/schemas.py` neue `VkuRegistration`/`VkuRegistrationCreate`, `routers/vku.py` mit POST (public) + GET/PATCH/DELETE (admin), registriert in `server.py`.
+  - **Admin-Tab "VKU-Anmeldungen"** (`components/admin/VkuRegistrationsViewer.jsx`) – Liste mit Ungelesen-Zähler, Detail-Ansicht mit Kurs-Highlight, Löschen, Mark-as-read.
+  - **Preis-Konsolidierung**: Startseite-Preise-Sektion und Buchung-Pakete lesen nun BEIDE aus derselben Quelle (`/api/packages`). `content.pricing.plans` wird ignoriert; nur noch Title/Subtitle/Note editierbar. LocationPage nutzt jetzt `<Pricing lockedCanton={loc.canton}>` statt der alten `<LocPrices>`.
+  - **Kanonische Paketstruktur** (7 Pakete): `pkw-45` (ZH/SZ/SG 90), `pkw-60` (ZH/SZ/SG 120), `pkw-50-gr` (GR 110), `anhaenger-45` (alle 120), `5er-karte` (ZH/SZ/SG 440), `10er-karte` popular (ZH/SZ/SG 850), `vku-8h` (alle 240). Migration in `seeds/startup.py` wipe-t Legacy-Pakete einmalig.
+  - **Kanton-Tabs** auf Startseite + Buchung (ZH/SZ/SG/GR). Location-Landingpages: locked auf loc.canton, keine Tabs. Cards zeigen Kanton-Badges.
+  - **API-Filter** `/api/packages?canton=ZH` – leere `cantons` = überall verfügbar.
+  - **Admin PackagesManager erweitert**: gruppiert nach Kanton-Signatur, Klick-zu-Toggeln Kanton-Pillen pro Paket, Filter-Bar (Alle/ZH/SZ/SG/GR). Zentrale Preisverwaltung ohne Umweg über Standort-spezifische Duplicate.
   - **3 neue Standorte** hinzugefügt in `/app/backend/default_pages.py`: Wetzikon (ZH), St. Gallen (SG), Domat/Ems (GR). Gesamtzahl jetzt 14. Idempotenter Seed fügt sie beim Backend-Start automatisch der Mongo-DB hinzu.
   - **Google-Reviews-Widget** (Elfsight) läuft auf allen Location-Landingpages automatisch via globales `content.reviews_embed_html` + `reviews_embed_enabled` (bereits im Code, verifiziert auf `/fahrschule-altendorf` mit echten Reviews).
   - **Footer** (`/app/frontend/src/components/site/Footer.jsx`): Standorte-Spalte von `md:col-span-5` → `md:col-span-6`, Brand von 4 → 3 Spalten reduziert, Text auf `text-[13px]` verkleinert, `whitespace-nowrap` erzwingt eine Zeile pro Standort. Alle 14 Standorte passen jetzt sauber in 3 Spalten × 5 Reihen.

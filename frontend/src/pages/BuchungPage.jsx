@@ -32,6 +32,7 @@ export default function BuchungPage() {
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [creatingPackage, setCreatingPackage] = useState(false);
+  const [cantonFilter, setCantonFilter] = useState("ZH");
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -226,30 +227,74 @@ export default function BuchungPage() {
       {/* Package selection */}
       <section className="pb-16 md:pb-20">
         <div className="container-x px-5 md:px-8 lg:px-12">
+          {/* Canton filter tabs */}
+          <div className="mb-8 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569] mr-2">
+              {lang === "de" ? "Region:" : "Region:"}
+            </span>
+            <div
+              data-testid="buchung-canton-tabs"
+              className="inline-flex items-center gap-1 p-1 bg-white border border-[#e2e8f0] rounded-full"
+            >
+              {[
+                { code: "ZH", name_de: "Zürich", name_en: "Zurich" },
+                { code: "SZ", name_de: "Schwyz", name_en: "Schwyz" },
+                { code: "SG", name_de: "St. Gallen", name_en: "St. Gallen" },
+                { code: "GR", name_de: "Graubünden", name_en: "Grisons" },
+              ].map((c) => {
+                const active = c.code === cantonFilter;
+                return (
+                  <button
+                    key={c.code}
+                    onClick={() => setCantonFilter(c.code)}
+                    data-testid={`buchung-canton-tab-${c.code}`}
+                    className={`text-xs md:text-sm font-semibold px-4 md:px-5 py-2 rounded-full transition-all ${
+                      active
+                        ? "bg-[#0f172a] text-white shadow-sm"
+                        : "text-[#475569] hover:text-[#0f172a]"
+                    }`}
+                  >
+                    {pick(c.name_de, c.name_en)}
+                    <span className={`ml-1.5 text-[10px] tracking-widest ${active ? "text-white/60" : "text-[#94a3b8]"}`}>
+                      {c.code}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            {packages.map((pkg, i) => (
-              <motion.div
-                key={pkg.slug}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-              >
-                <EditablePackageCard
-                  pkg={pkg}
-                  index={i}
-                  isSelected={selected === pkg.slug}
-                  onSelect={setSelected}
-                  onPatched={(updated) =>
-                    setPackages((cur) => cur.map((p) => (p.slug === updated.slug ? updated : p)))
-                  }
-                  onRemoved={(slug) => {
-                    setPackages((cur) => cur.filter((p) => p.slug !== slug));
-                    if (selected === slug) setSelected(packages[0]?.slug || null);
-                  }}
-                />
-              </motion.div>
-            ))}
+            {packages
+              .filter(
+                (pkg) =>
+                  !pkg.cantons ||
+                  pkg.cantons.length === 0 ||
+                  pkg.cantons.includes(cantonFilter),
+              )
+              .map((pkg, i) => (
+                <motion.div
+                  key={pkg.slug}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.4, delay: i * 0.06 }}
+                >
+                  <EditablePackageCard
+                    pkg={pkg}
+                    index={i}
+                    isSelected={selected === pkg.slug}
+                    onSelect={setSelected}
+                    onPatched={(updated) =>
+                      setPackages((cur) => cur.map((p) => (p.slug === updated.slug ? updated : p)))
+                    }
+                    onRemoved={(slug) => {
+                      setPackages((cur) => cur.filter((p) => p.slug !== slug));
+                      if (selected === slug) setSelected(packages[0]?.slug || null);
+                    }}
+                  />
+                </motion.div>
+              ))}
           </div>
           {editMode && (
             <div className="mt-6 flex justify-center">

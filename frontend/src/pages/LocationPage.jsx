@@ -16,7 +16,7 @@ import LocWhyIdeal from "@/components/location/LocWhyIdeal";
 import LocRoutes from "@/components/location/LocRoutes";
 import LocMeetMap from "@/components/location/LocMeetMap";
 import LocWhySafeRide from "@/components/location/LocWhySafeRide";
-import LocPrices from "@/components/location/LocPrices";
+import Pricing from "@/components/site/Pricing";
 import LocGallery from "@/components/location/LocGallery";
 import LocGoogleReviews from "@/components/location/LocGoogleReviews";
 import LocFaq from "@/components/location/LocFaq";
@@ -203,7 +203,7 @@ export default function LocationPage() {
       <LocRoutes loc={loc} updateField={updateField} />
       <LocMeetMap loc={loc} updateField={updateField} />
       <LocWhySafeRide loc={loc} updateField={updateField} />
-      <LocPrices loc={loc} updateField={updateField} />
+      <Pricing data={content?.pricing} lockedCanton={loc.canton} />
       <LocGallery loc={loc} updateField={updateField} />
       <LocGoogleReviews
         loc={loc}

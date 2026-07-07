@@ -262,6 +262,7 @@ export function BookingsManager() {
 /* ---------------- Packages Manager ---------------- */
 export function PackagesManager() {
   const [items, setItems] = useState(null);
+  const [cantonFilter, setCantonFilter] = useState("all");
   const load = async () => {
     try {
       const r = await api.get("/packages/admin");
@@ -283,6 +284,18 @@ export function PackagesManager() {
       toast.error(formatApiError(e));
     }
   };
+  const toggleCanton = async (pkg, code) => {
+    const current = pkg.cantons || [];
+    const next = current.includes(code)
+      ? current.filter((c) => c !== code)
+      : [...current, code];
+    try {
+      const r = await api.patch(`/packages/${pkg.slug}`, { cantons: next });
+      setItems((cur) => cur.map((p) => (p.slug === pkg.slug ? r.data : p)));
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
   const remove = async (slug) => {
     if (!confirm("Paket löschen?")) return;
     try {
@@ -295,54 +308,137 @@ export function PackagesManager() {
 
   if (items === null) return <Loading />;
 
+  const CANTON_CODES = ["ZH", "SZ", "SG", "GR"];
+  const filtered =
+    cantonFilter === "all"
+      ? items
+      : items.filter(
+          (p) =>
+            !p.cantons || p.cantons.length === 0 || p.cantons.includes(cantonFilter),
+        );
+
+  // Group by canton set signature for a clearer overview
+  const grouped = new Map();
+  for (const p of filtered) {
+    const key =
+      !p.cantons || p.cantons.length === 0
+        ? "Alle Kantone"
+        : [...p.cantons].sort().join(" · ");
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(p);
+  }
+
   return (
-    <Wrapper title="Pakete" subtitle={`${items.length} Pakete · Online-Buchung`}>
+    <Wrapper title="Pakete" subtitle={`${items.length} Pakete · zentrale Preisverwaltung`}>
       <p className="text-sm text-[#475569] mb-4">
-        Bearbeite die Pakete direkt auf der{" "}
+        Zentrales Register — dieselben Pakete erscheinen auf Startseite, Buchung
+        und Standort-Landingpages. Klicke unten auf eine Kanton-Pille, um sie
+        für ein Paket ein-/auszuschalten. Bearbeite Preise & Texte direkt auf
+        der{" "}
         <Link to="/buchung" className="text-[#ff5a36] font-semibold hover:underline" target="_blank">
           /buchung-Seite
-        </Link>{" "}
-        (Inline-Editor) — hier kannst du sie aktivieren/deaktivieren und löschen.
+        </Link>
+        .
       </p>
-      <div className="space-y-3">
-        {items.map((p) => (
-          <Row key={p.slug} testid={`admin-package-row-${p.slug}`}>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${
-                    p.active === false ? "bg-[#94a3b8]" : "bg-[#16a34a]"
-                  }`}
-                />
-                <span className="text-[10px] tracking-widest uppercase text-[#94a3b8]">
-                  {p.service_type || "auto"}
-                  {p.popular && " · beliebt"}
-                </span>
-              </div>
-              <div className="font-display text-lg tracking-tight">{p.title_de}</div>
-              <div className="text-xs text-[#475569] mt-1">
-                CHF {p.price_chf} · {p.lesson_count} Lektion(en) · {p.duration_minutes} min
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => toggleActive(p.slug, !p.active)}
-                data-testid={`admin-package-toggle-${p.slug}`}
-                className={`text-xs font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full ${
-                  p.active === false
-                    ? "bg-white border border-[#e2e8f0]"
-                    : "bg-[#0f172a] text-white"
-                }`}
-              >
-                {p.active === false ? "Inaktiv" : "Aktiv"}
-              </button>
-              <IconBtn label="Löschen" onClick={() => remove(p.slug)} danger>
-                <Trash2 size={13} />
-              </IconBtn>
-            </div>
-          </Row>
+
+      {/* Canton filter */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="text-[10px] tracking-widest uppercase text-[#94a3b8] font-semibold mr-1">
+          Filter:
+        </span>
+        <button
+          onClick={() => setCantonFilter("all")}
+          data-testid="admin-package-filter-all"
+          className={`text-xs font-semibold tracking-wide px-3 py-1.5 rounded-full transition-all ${
+            cantonFilter === "all" ? "bg-[#0f172a] text-white" : "bg-white border border-[#e2e8f0] text-[#475569]"
+          }`}
+        >
+          Alle
+        </button>
+        {CANTON_CODES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCantonFilter(c)}
+            data-testid={`admin-package-filter-${c}`}
+            className={`text-xs font-semibold tracking-wide px-3 py-1.5 rounded-full transition-all ${
+              cantonFilter === c ? "bg-[#0f172a] text-white" : "bg-white border border-[#e2e8f0] text-[#475569]"
+            }`}
+          >
+            {c}
+          </button>
         ))}
       </div>
+
+      {[...grouped.entries()].map(([groupKey, groupItems]) => (
+        <div key={groupKey} className="mb-6">
+          <div className="text-[10px] tracking-[0.2em] uppercase text-[#ff5a36] font-semibold mb-2 pl-2">
+            {groupKey}
+          </div>
+          <div className="space-y-3">
+            {groupItems.map((p) => (
+              <Row key={p.slug} testid={`admin-package-row-${p.slug}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${
+                        p.active === false ? "bg-[#94a3b8]" : "bg-[#16a34a]"
+                      }`}
+                    />
+                    <span className="text-[10px] tracking-widest uppercase text-[#94a3b8]">
+                      {p.service_type || "auto"}
+                      {p.popular && " · beliebt"}
+                    </span>
+                  </div>
+                  <div className="font-display text-lg tracking-tight">{p.title_de}</div>
+                  <div className="text-xs text-[#475569] mt-1">
+                    CHF {p.price_chf} · {p.lesson_count} Lektion(en) · {p.duration_minutes} min
+                  </div>
+                  {/* Canton pills – click to toggle */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    {CANTON_CODES.map((c) => {
+                      const included =
+                        !p.cantons || p.cantons.length === 0 || p.cantons.includes(c);
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => toggleCanton(p, c)}
+                          data-testid={`admin-package-canton-${p.slug}-${c}`}
+                          className={`inline-flex items-center justify-center h-6 min-w-[36px] px-2 rounded-full text-[10px] font-bold tracking-wider transition-all ${
+                            included
+                              ? "bg-[#ff5a36] text-white"
+                              : "bg-[#f1f5f9] text-[#94a3b8] hover:bg-[#e2e8f0]"
+                          }`}
+                          title={`Kanton ${c} ${included ? "entfernen" : "hinzufügen"}`}
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => toggleActive(p.slug, !p.active)}
+                    data-testid={`admin-package-toggle-${p.slug}`}
+                    className={`text-xs font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full ${
+                      p.active === false
+                        ? "bg-white border border-[#e2e8f0]"
+                        : "bg-[#0f172a] text-white"
+                    }`}
+                  >
+                    {p.active === false ? "Inaktiv" : "Aktiv"}
+                  </button>
+                  <IconBtn label="Löschen" onClick={() => remove(p.slug)} danger>
+                    <Trash2 size={13} />
+                  </IconBtn>
+                </div>
+              </Row>
+            ))}
+          </div>
+        </div>
+      ))}
+      {filtered.length === 0 && <EmptyState text="Keine Pakete für diesen Filter." />}
     </Wrapper>
   );
 }

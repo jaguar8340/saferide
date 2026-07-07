@@ -115,6 +115,16 @@ async def run_startup_seeds() -> None:
 
     # ----- Booking packages -----
     await db.booking_packages.create_index("slug", unique=True)
+    # One-time migration to the canonical package set (with cantons).
+    # If the legacy slug "einzellektion-50" still exists AND the new canonical
+    # slug "pkw-45" does not, wipe the collection so the seed loop below
+    # reinserts the canonical list cleanly.
+    if (
+        await db.booking_packages.find_one({"slug": "einzellektion-50"})
+        and not await db.booking_packages.find_one({"slug": "pkw-45"})
+    ):
+        await db.booking_packages.delete_many({})
+        log.info("Migrated booking_packages to canonical (v2) set")
     for default_pkg in DEFAULT_BOOKING_PACKAGES:
         slug = default_pkg["slug"]
         existing = await db.booking_packages.find_one({"slug": slug})
