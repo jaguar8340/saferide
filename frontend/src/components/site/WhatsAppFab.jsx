@@ -55,6 +55,7 @@ export default function WhatsAppFab() {
   }, [open]);
 
   if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/preview/")) return null;
   const rawPhone = content?.contact?.phone || content?.contact?.whatsapp;
   if (!rawPhone) return null;
 

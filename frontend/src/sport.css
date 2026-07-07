@@ -1,0 +1,158 @@
+/*
+ * Sport / Motorsport preview theme – SCOPED to `.sport-root`.
+ * Nothing here touches the main site design; the styles below only apply
+ * inside the SportPreview page.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;800&display=swap");
+
+.sport-root {
+  --sport-bg: #09090b;
+  --sport-surface: #18181b;
+  --sport-carbon: #111113;
+  --sport-border: #27272a;
+  --sport-red: #e11d48;
+  --sport-red-hot: #f43f5e;
+  --sport-red-deep: #be123c;
+  --sport-red-glow: rgba(225, 29, 72, 0.55);
+  --sport-white: #ffffff;
+  --sport-muted: #a1a1aa;
+  --sport-yellow: #facc15;
+
+  background: var(--sport-bg);
+  color: var(--sport-white);
+  font-family: "Outfit", system-ui, sans-serif;
+  min-height: 100vh;
+  letter-spacing: 0;
+}
+
+.sport-root .font-race {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 0.02em;
+}
+.sport-root .font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Carbon-fiber micro texture (pure CSS, no external asset) */
+.sport-carbon {
+  background-color: #0d0d0f;
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.02) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.02) 75%);
+  background-size: 4px 4px;
+  background-position: 0 0, 0 2px, 2px -2px, -2px 0;
+}
+
+/* Checkered flag micro-pattern for accents */
+.sport-checker {
+  background-image:
+    linear-gradient(45deg, #fff 25%, transparent 25%),
+    linear-gradient(-45deg, #fff 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #fff 75%),
+    linear-gradient(-45deg, transparent 75%, #fff 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: #000;
+}
+
+/* Speed-line grid overlay used behind the hero */
+.sport-speedlines {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 78px,
+      rgba(225, 29, 72, 0.1) 78px,
+      rgba(225, 29, 72, 0.1) 80px
+    );
+}
+
+/* Skewed racing button */
+.sport-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.9rem;
+  transform: skewX(-10deg);
+  background: var(--sport-red);
+  color: #fff;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.15em;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
+  border: 1px solid transparent;
+}
+.sport-btn > * {
+  transform: skewX(10deg);
+}
+.sport-btn:hover {
+  background: var(--sport-red-hot);
+  box-shadow: 0 0 24px var(--sport-red-glow);
+  transform: skewX(-10deg) translateX(3px);
+}
+.sport-btn-ghost {
+  background: transparent;
+  border-color: var(--sport-border);
+  color: #fff;
+}
+.sport-btn-ghost:hover {
+  background: rgba(225, 29, 72, 0.08);
+  border-color: var(--sport-red);
+}
+
+/* Diagonal-cut cards (racing car "grid slot") */
+.sport-grid-card {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+}
+
+/* Neon red glow utility */
+.sport-glow-red {
+  box-shadow: 0 0 30px rgba(225, 29, 72, 0.4);
+}
+
+/* Rev-counter tick strip */
+.sport-tick-strip {
+  background: repeating-linear-gradient(
+    90deg,
+    #fff 0,
+    #fff 2px,
+    transparent 2px,
+    transparent 14px
+  );
+}
+
+/* Section overline label style */
+.sport-overline {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--sport-red);
+}
+
+/* Subtle scanline (CRT/telemetry style) */
+.sport-scanlines {
+  position: relative;
+}
+.sport-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 3px,
+    rgba(255, 255, 255, 0.025) 3px,
+    rgba(255, 255, 255, 0.025) 4px
+  );
+  pointer-events: none;
+}
+
+/* Selection */
+.sport-root ::selection {
+  background: var(--sport-red);
+  color: #fff;
+}

@@ -12,6 +12,7 @@ import BlogList from "@/pages/BlogList";
 import BlogPost from "@/pages/BlogPost";
 import BuchungPage from "@/pages/BuchungPage";
 import PartnerPage from "@/pages/PartnerPage";
+import SportPreview from "@/pages/SportPreview";
 import WhatsAppFab from "@/components/site/WhatsAppFab";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -67,6 +68,7 @@ function App() {
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/buchung" element={<BuchungPage />} />
                 <Route path="/partner" element={<PartnerPage />} />
+                <Route path="/preview/sport" element={<SportPreview />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"

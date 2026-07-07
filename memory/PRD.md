@@ -120,3 +120,10 @@ admin@saferide.ch / SafeRide2026!
   - TikTok-Kachel-Layout adaptiv: 1 URL → zentriert, 2 URLs → 2 Spalten, mehr → 2/3-Spalten. Instagram bleibt 3-Spalten-Grid.
   - TikTok-Tile mit fixem `h-[620px]` (statt `aspect-[9/16]`), da TikTok-Embed Chrome (Username/Likes/Hashtags) enthält und sonst abgeschnitten wird.
   - Runtime-Error-Overlay-Suppression in `public/index.html` gehärtet: `stopImmediatePropagation` in Capture-Phase + legacy `window.onerror`-Fallback fangen alle Cross-Origin-"Script error."-Meldungen von Elfsight/Instagram/TikTok-Embeds ab.
+- ✅ **Motorsport/Racing Design-Variante (DONE 2026-07)** unter `/preview/sport`:
+  - Vollständig isolierte Alternative-Homepage, aktuelles Live-Design bleibt 100% unverändert.
+  - Neuer Ordner `/app/frontend/src/components/sport/` (PreviewBanner, SportHeader, SportHero, SportMarquee, SportStatsBar, SportFleet, SportServices, SportContact, SportFooter) + Page `/app/frontend/src/pages/SportPreview.jsx`.
+  - Scoped CSS in `/app/frontend/src/sport.css` (nur unter `.sport-root` aktiv): Font-Imports Bebas Neue + Outfit + JetBrains Mono, Carbon-Textur, Checker-Pattern, Speedlines, Skew-Buttons.
+  - Palette: Deep-Obsidian `#09090b` + Racing-Red `#e11d48` + Pure-White. Diagonale Grid-Clip-Cards, Rev-Counter-Visual, Marquee mit Checkered-Flag-SVGs.
+  - Nutzt CMS-Content read-only via `useEdit()` (Fleet-Bilder werden dynamisch geladen), Kontaktformular postet an gleichen `/api/contact`-Endpoint.
+  - Fester Preview-Banner mit "Zur Live-Site"-Link + zusätzlicher Rück-Link im Sport-Footer. WhatsApp-FAB auf `/preview/*` deaktiviert.
