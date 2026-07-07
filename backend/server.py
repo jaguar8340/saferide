@@ -33,6 +33,7 @@ from routers import (
     sitemap,
     testimonials,
     uploads,
+    vku,
 )
 
 
@@ -51,6 +52,7 @@ api.include_router(blog.router)
 api.include_router(bookings.router)
 api.include_router(entities.router)
 api.include_router(sitemap.router)
+api.include_router(vku.router)
 
 app.include_router(api)
 

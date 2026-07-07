@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users } from "lucide-react";
+import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users, GraduationCap } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -7,6 +7,7 @@ import ContentEditor from "@/components/admin/ContentEditor";
 import TestimonialsManager from "@/components/admin/TestimonialsManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import SubmissionsViewer from "@/components/admin/SubmissionsViewer";
+import VkuRegistrationsViewer from "@/components/admin/VkuRegistrationsViewer";
 import PagesManager from "@/components/admin/PagesManager";
 import {
   BlogManager,
@@ -21,6 +22,7 @@ const TABS = [
   { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
   { id: "blog", icon: BookOpen, key: "blog", label_de: "Blog", label_en: "Blog" },
   { id: "bookings", icon: Calendar, key: "bookings", label_de: "Buchungen", label_en: "Bookings" },
+  { id: "vku_registrations", icon: GraduationCap, key: "vku_registrations", label_de: "VKU-Anmeldungen", label_en: "VKU Registrations" },
   { id: "packages", icon: Package, key: "packages", label_de: "Pakete", label_en: "Packages" },
   { id: "certificates", icon: Award, key: "certificates", label_de: "Diplome", label_en: "Certificates" },
   { id: "partners", icon: Users, key: "partners", label_de: "Partner", label_en: "Partners" },
@@ -118,6 +120,7 @@ export default function AdminDashboard() {
           {tab === "pages" && <PagesManager />}
           {tab === "blog" && <BlogManager />}
           {tab === "bookings" && <BookingsManager />}
+          {tab === "vku_registrations" && <VkuRegistrationsViewer />}
           {tab === "packages" && <PackagesManager />}
           {tab === "certificates" && <CertificatesManager />}
           {tab === "partners" && <PartnersManager />}

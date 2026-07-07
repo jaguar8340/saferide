@@ -124,3 +124,21 @@ class PartnerCreate(BaseModel):
 
 class PartnerPatch(BaseModel):
     model_config = ConfigDict(extra="allow")
+
+
+# ---------- VKU registrations ----------
+class VkuRegistrationCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    phone: str = Field(min_length=3, max_length=40)
+    birth_date: str = Field(min_length=1, max_length=40)
+    course_slot: str = Field(min_length=1, max_length=200)
+    notes: str = Field(default="", max_length=2000)
+
+
+class VkuRegistration(VkuRegistrationCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    read: bool = False

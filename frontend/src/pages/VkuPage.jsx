@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Phone, MapPin, Calendar, AlertCircle, ArrowRight } from "lucide-react";
+import { Phone, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
@@ -11,6 +11,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Seo from "@/components/site/Seo";
+import VkuRegistrationForm from "@/components/site/VkuRegistrationForm";
 
 export default function VkuPage() {
   const { lang, pick } = useLang();
@@ -26,7 +27,6 @@ export default function VkuPage() {
 
   const data = content.vku || {};
   const months = data.months || [];
-  const infoItems = data.info_items || [];
 
   return (
     <main data-testid="vku-page" className="min-h-screen bg-[#fbf9f6] text-[#0f172a] font-sans">
@@ -237,62 +237,21 @@ export default function VkuPage() {
         </div>
       </section>
 
-      {/* Info */}
+      {/* Registration form */}
       <section className="section-pad bg-white border-t border-[#e2e8f0]">
         <div className="container-x px-5 md:px-8 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            <div className="lg:col-span-5">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertCircle size={14} className="text-[#ff5a36]" />
-                <span className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]">
-                  {lang === "de" ? "Achtung" : "Heads up"}
-                </span>
-              </div>
-              <Editable
-                path={`vku.info_title_${lang}`}
-                value={pick(data.info_title_de, data.info_title_en)}
-                as="h2"
-                className="font-display leading-[0.98] tracking-tight block"
-                style={{ fontSize: "clamp(2.1rem, 4.4vw, 4rem)" }}
-              />
-            </div>
-            <ul className="lg:col-span-7 space-y-4">
-              {infoItems.map((it, i) => (
-                <motion.li
-                  key={it.id || i}
-                  data-testid={`vku-info-${i}`}
-                  initial={{ opacity: 0, x: 10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
-                  className="flex items-start gap-4 bg-[#fbf9f6] border border-[#e2e8f0] rounded-2xl p-5"
-                >
-                  <span className="inline-flex shrink-0 items-center justify-center w-9 h-9 rounded-full bg-[#ff5a36] text-white font-display text-base">
-                    {i + 1}
-                  </span>
-                  <Editable
-                    path={`vku.info_items.${i}.text_${lang}`}
-                    value={pick(it.text_de, it.text_en)}
-                    as="p"
-                    multiline
-                    className="text-base font-medium leading-relaxed text-[#0f172a] block flex-1"
-                  />
-                </motion.li>
-              ))}
-            </ul>
+          <div className="max-w-3xl mx-auto">
+            <VkuRegistrationForm months={months} lang={lang} />
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-10 text-center">
             <a
               href={data.cta_link || "tel:+41795850085"}
               data-testid="vku-cta-bottom"
-              className="inline-flex items-center gap-2 btn-accent"
+              className="inline-flex items-center gap-2 btn-ghost text-sm"
             >
-              <Editable
-                path={`vku.cta_label_${lang}`}
-                value={pick(data.cta_label_de, data.cta_label_en)}
-              />
-              <ArrowRight size={14} />
+              {lang === "de" ? "Lieber telefonisch?" : "Prefer to call?"}
+              <Phone size={14} />
             </a>
           </div>
         </div>
