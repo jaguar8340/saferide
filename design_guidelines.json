@@ -1,73 +1,150 @@
 {
-  "theme_and_archetype": {
-    "domain": "Driving School / Education / Personal Brand",
-    "theme": "LIGHT",
-    "archetype": "1 (Organic & Earthy) with Swiss Minimalist influence",
-    "description": "Tasteful, editorial, minimal, premium but understated. A warm and approachable driving school that feels like a Swiss premium design studio built it."
-  },
-  "colors": {
-    "background_base": "bg-stone-50",
-    "background_surface": "bg-white",
-    "text_primary": "text-stone-900",
-    "text_muted": "text-stone-500",
-    "accent_primary": "bg-emerald-800",
-    "accent_hover": "hover:bg-emerald-900",
-    "accent_text": "text-emerald-800",
-    "border_light": "border-stone-200"
-  },
+  "theme": "DARK",
+  "archetype": "2 (Performance Pro)",
+  "design_philosophy": "Motorsport/Racing aesthetics adapted for a premium driving school. Thrilling, technical, fast, but reliable. High contrast, diagonal cuts, aggressive typography, and telemetry-style data display.",
   "typography": {
-    "heading_font": "Fraunces",
-    "body_font": "Manrope",
-    "scale": {
-      "h1": "text-5xl md:text-6xl font-light tracking-tight",
-      "h2": "text-3xl md:text-4xl font-light tracking-tight",
-      "h3": "text-xl md:text-2xl font-normal",
-      "body": "text-base md:text-lg font-light leading-relaxed text-stone-600",
-      "label": "text-xs uppercase tracking-[0.2em] font-medium text-stone-500"
+    "headings": {
+      "font_family": "Bebas Neue",
+      "import_url": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap",
+      "scale": {
+        "h1": "text-6xl sm:text-7xl lg:text-8xl tracking-wider uppercase",
+        "h2": "text-4xl sm:text-5xl lg:text-6xl tracking-wider uppercase",
+        "h3": "text-2xl sm:text-3xl tracking-wide uppercase",
+        "h4": "text-xl sm:text-2xl tracking-wide uppercase"
+      },
+      "usage": "Headers, large marketing copy, call-to-actions."
     },
-    "rules": "No Clash Display or Inter for headings. Use Fraunces for a warm, editorial, premium feel. Manrope for clean, highly legible body text."
+    "body": {
+      "font_family": "Outfit",
+      "import_url": "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap",
+      "scale": {
+        "large": "text-lg sm:text-xl leading-relaxed",
+        "base": "text-base sm:text-lg leading-relaxed",
+        "small": "text-sm leading-normal"
+      },
+      "usage": "Paragraphs, descriptions, standard button text."
+    },
+    "mono": {
+      "font_family": "JetBrains Mono",
+      "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap",
+      "scale": {
+        "stats": "text-3xl sm:text-5xl font-extrabold tracking-tighter",
+        "labels": "text-xs tracking-[0.2em] uppercase"
+      },
+      "usage": "Telemetry data, stat numbers, overlines, technical details."
+    }
   },
-  "spacing_and_layout": {
-    "section_padding": "py-24 md:py-32 px-6 md:px-12",
-    "container": "max-w-7xl mx-auto",
-    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12",
-    "border_radius": "rounded-xl for cards, rounded-full for pills/buttons",
-    "whitespace": "Generous. Allow elements to breathe. Do not cramp content. Follow Swiss grid principles."
+  "color_palette": {
+    "background": {
+      "base": "#09090B",
+      "surface": "#18181B",
+      "carbon": "#111113",
+      "css_var": "bg-zinc-950"
+    },
+    "primary": {
+      "base": "#E11D48",
+      "hover": "#BE123C",
+      "glow": "rgba(225,29,72,0.5)",
+      "css_var": "bg-rose-600"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "inverse": "#000000"
+    },
+    "border": {
+      "subtle": "#27272A",
+      "active": "#E11D48"
+    }
   },
-  "components": {
-    "buttons": "Refined pill shape (rounded-full). Primary: bg-emerald-800 text-white hover:bg-emerald-900. Secondary: border border-stone-300 text-stone-900 hover:border-stone-400 bg-transparent. Subtle transition duration-300.",
-    "cards": "bg-white border border-stone-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300. No aggressive hovers.",
-    "forms": "Minimal editorial forms. Underline inputs only (border-b border-stone-300 bg-transparent rounded-none px-0). No heavy box shadows on inputs.",
-    "navigation": "Sticky, glassmorphism (backdrop-blur-xl bg-white/80) with a 1px bottom border (border-stone-200). Refined and minimal."
+  "visual_enhancers": {
+    "borders": "1px solid borders in neutral colors, switching to primary red on hover/active.",
+    "shadows": {
+      "neon_red": "shadow-[0_0_20px_rgba(225,29,72,0.6)]",
+      "subtle_dark": "shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+    },
+    "shapes": "Diagonal cuts (clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%)), skewed buttons (skew-x-[-10deg]) with counter-skewed text.",
+    "textures": "Carbon fiber backgrounds, racing checkered micro-patterns, speedlines (horizontal fading lines)."
   },
-  "animation": {
-    "philosophy": "Much lighter touch. Subtle fade-in and slide-up on scroll using framer-motion. No rotating blobs, no rotating cards.",
-    "hover_states": "Subtle border/color shifts, maybe a 1px translate-y on cards or button shadows. Keep it elegant."
+  "layout_patterns": {
+    "spacing": "Generous vertical spacing (py-24 to py-32) for sections. Tight horizontal grids for telemetry stats.",
+    "alignment": "Aggressive asymmetrical layouts. Overlapping images over dark structural blocks."
   },
-  "image_urls": [
+  "micro_interactions": {
+    "buttons": "Hovering triggers 'brake-light' red glow (neon_red shadow) and slight forward translation (translate-x-1).",
+    "cards": "Hover scales up slightly, border transitions from subtle grey to racing red.",
+    "scroll": "Framer motion stagger entry from the side (like cars entering a starting grid)."
+  },
+  "media_assets": {
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/596815/pexels-photo-596815.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Dark carbon fiber texture for the main background."
+    },
+    "fleet_audi": {
+      "url": "https://images.unsplash.com/photo-1580446623001-3abf670c5c55?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Red sports car mimicking the Audi S3."
+    },
+    "fleet_range_rover": {
+      "url": "https://images.unsplash.com/photo-1725815761064-b84c3f4f9b94?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "White Range Rover Sport."
+    },
+    "fleet_opel": {
+      "url": "https://images.unsplash.com/photo-1763048243201-c346f3508bb9?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Blue sports car mimicking the Opel OPC."
+    }
+  },
+  "components_blueprint": [
     {
-      "category": "Hero Background",
-      "url": "https://images.unsplash.com/photo-1551952237-954a0e68786c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHxjYXIlMjBvbiUyMHNjZW5pYyUyMHJvYWR8ZW58MHx8fHwxNzgyNzk5MzA2fDA&ixlib=rb-4.1.0&q=85",
-      "description": "Scenic empty road driving, soft lighting"
+      "name": "PreviewBanner",
+      "path": "/app/frontend/src/components/sport/PreviewBanner.jsx",
+      "description": "Fixed top banner (z-[100]) indicating this is the 'Sport/Racing Variante'. Contains a button to route back to '/' (Original Design). Black text on Racing Red background, monospace.",
+      "testid": "preview-banner"
     },
     {
-      "category": "About Nadine / Instructor",
-      "url": "https://images.unsplash.com/photo-1516862523118-a3724eb136d7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxkcml2aW5nJTIwaW5zdHJ1Y3RvcnxlbnwwfHx8fDE3ODI3OTkzMDZ8MA&ixlib=rb-4.1.0&q=85",
-      "description": "Instructor in car"
+      "name": "SportHero",
+      "path": "/app/frontend/src/components/sport/SportHero.jsx",
+      "description": "Massive typography 'Anders. Besser. Mutiger.' in Bebas Neue. Background features carbon fiber texture with subtle horizontal framer-motion speedlines. Includes primary CTA 'Anfragen' and direct call CTA with brake-light glow.",
+      "testid": "sport-hero-section"
     },
     {
-      "category": "Fleet / Interior",
-      "url": "https://images.unsplash.com/photo-1625690180114-5530b1304127?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBjYXIlMjBpbnRlcmlvcnxlbnwwfHx8fDE3ODI3OTkzMDZ8MA&ixlib=rb-4.1.0&q=85",
-      "description": "Modern car interior, black/clean"
+      "name": "SportMarquee",
+      "path": "/app/frontend/src/components/sport/SportMarquee.jsx",
+      "description": "Fast-moving ticker using framer-motion or react-fast-marquee. Red background, black text. Content: Kantone (ZH, SZ, SG, GR) separated by inline SVG checkered flags.",
+      "testid": "sport-marquee"
+    },
+    {
+      "name": "SportStatsBar",
+      "path": "/app/frontend/src/components/sport/SportStatsBar.jsx",
+      "description": "Telemetry-style dashboard. JetBrains Mono font. Deep black container with red accent borders. Shows 11 Standorte, 5.0 Rating, 4 Kantone in digital readout style.",
+      "testid": "sport-stats-bar"
+    },
+    {
+      "name": "SportFleet",
+      "path": "/app/frontend/src/components/sport/SportFleet.jsx",
+      "description": "Starting grid layout. 3 Cars (Audi, Opel, Range Rover) presented in aggressive diagonal-cut cards. Hovering on a card illuminates it and dims the others.",
+      "testid": "sport-fleet-section"
+    },
+    {
+      "name": "SportServices",
+      "path": "/app/frontend/src/components/sport/SportServices.jsx",
+      "description": "Race schedule timeline. Vertical line (track) down the center/left with services branching off. High contrast, structured, technical typography.",
+      "testid": "sport-services-section"
+    },
+    {
+      "name": "SportContact",
+      "path": "/app/frontend/src/components/sport/SportContact.jsx",
+      "description": "Named 'Boxenstopp'. Contact form enclosed in a carbon-fiber styled card with red accents. Input fields are dark zinc with red focus rings.",
+      "testid": "sport-contact-section"
     }
   ],
   "instructions_to_main_agent": [
-    "Discard the previous bold/dynamic design completely.",
-    "Implement a refined, minimal, and warm editorial design using the Stone and Emerald color palette.",
-    "Use Fraunces for all headings, and Manrope for body text.",
-    "Ensure all interactive elements have data-testid attributes.",
-    "Implement the following sections: Hero, Über mich (Nadine), Services (6 cards), Fleet (3 cars), Pricing (4 plans), Gallery, Testimonials, Contact form.",
-    "Build a DE/EN switcher in the header.",
-    "Keep animations strictly to subtle framer-motion fades (e.g. initial={opacity: 0, y: 20} whileInView={opacity: 1, y: 0}). No floating blobs."
+    "1. Do NOT modify the existing components or pages. Build everything for the Motorsport variant inside '/app/frontend/src/components/sport/'.",
+    "2. Create a new page '/app/frontend/src/pages/SportPreview.jsx' and assemble the new components there.",
+    "3. Set up a route in the main App routing for '/preview/sport' pointing to the new SportPreview page.",
+    "4. Update Tailwind config with the requested font imports: Bebas Neue, Outfit, JetBrains Mono.",
+    "5. Use Framer Motion for the staggered grid entries and speedline background animations.",
+    "6. Apply 'data-testid' to all interactive elements as specified.",
+    "7. Implement skewed buttons: A common pattern is wrapping text in a span that counter-skews: <button className='skew-x-[-10deg]'><span className='skew-x-[10deg] inline-block'>Click</span></button>.",
+    "8. Implement Lucide React icons. Avoid using emojis."
   ]
 }
