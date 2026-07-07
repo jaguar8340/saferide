@@ -11,7 +11,14 @@
                 function isThirdPartyScriptError(e) {
                     if (!e) return false;
                     var msg = e.message || "";
-                    return typeof msg === "string" && msg.indexOf("Script error") !== -1;
+                    if (typeof msg !== "string") return false;
+                    // Cross-origin embed errors surface as "Script error." with
+                    // no stack info; the ResizeObserver loop warning is
+                    // harmless but noisy in the dev overlay.
+                    return (
+                        msg.indexOf("Script error") !== -1 ||
+                        msg.indexOf("ResizeObserver loop") !== -1
+                    );
                 }
                 // Capture-phase listener → fires before webpack-dev-server's
                 // own bubble-phase listener, letting us stop propagation to it.
@@ -40,11 +47,65 @@
                 // Backup: legacy window.onerror for very old script hosts.
                 var prevOnError = window.onerror;
                 window.onerror = function (msg, url, line, col, err) {
-                    if (typeof msg === "string" && msg.indexOf("Script error") !== -1) {
+                    if (
+                        typeof msg === "string" &&
+                        (msg.indexOf("Script error") !== -1 ||
+                            msg.indexOf("ResizeObserver loop") !== -1)
+                    ) {
                         return true; // handled → don't propagate to overlay
                     }
                     return prevOnError ? prevOnError.apply(this, arguments) : false;
                 };
+
+                // --- Dev-only fallback -------------------------------------
+                // webpack-dev-server 5 mounts its runtime-error overlay as a
+                // <webpack-dev-server-client-overlay> element attached to
+                // <body> once errors are caught. When the overlay contains a
+                // benign message (Script error / ResizeObserver loop), we
+                // remove it so the user doesn't see a noisy red banner. The
+                // production build never mounts this element.
+                var BENIGN_RE = /(Script error|ResizeObserver loop)/i;
+                function elText(el) {
+                    // For iframes we must inspect the inner document.
+                    if (el.tagName === "IFRAME") {
+                        try {
+                            var doc = el.contentDocument;
+                            if (doc && doc.body) return doc.body.textContent || "";
+                        } catch (_e) {
+                            /* cross-origin – ignore */
+                        }
+                        return "";
+                    }
+                    return (
+                        (el.shadowRoot && el.shadowRoot.textContent) ||
+                        el.textContent ||
+                        ""
+                    );
+                }
+                function nukeBenignOverlay() {
+                    var nodes = document.querySelectorAll(
+                        "webpack-dev-server-client-overlay, #webpack-dev-server-client-overlay, iframe#webpack-dev-server-client-overlay",
+                    );
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (BENIGN_RE.test(elText(nodes[i]))) {
+                            nodes[i].remove();
+                        }
+                    }
+                }
+                function installOverlayObserver() {
+                    if (!document.body) return;
+                    var mo = new MutationObserver(function () {
+                        nukeBenignOverlay();
+                    });
+                    mo.observe(document.body, { childList: true, subtree: true });
+                    // also run periodically as a belt-and-braces safety net
+                    setInterval(nukeBenignOverlay, 500);
+                }
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", installOverlayObserver);
+                } else {
+                    installOverlayObserver();
+                }
             })();
         </script>
         <meta charset="utf-8" />

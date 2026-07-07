@@ -68,14 +68,15 @@ function parseUrlLines(text) {
 function EmbedTile({ src, index, platform, aspect }) {
   // TikTok embeds include header (username, logo) + footer (like/share/comments)
   // around the 9:16 video. Fixed height gives predictable layout regardless of
-  // tile width, avoiding both letterbox and stretched empty space.
+  // tile width. 560px is tuned so the two-tile TikTok row visually matches the
+  // height of the Instagram Behold-widget row next to it.
   const isTikTok = platform === "tiktok";
   const sizing = isTikTok
-    ? "h-[620px]"
+    ? "h-[560px]"
     : aspect; // instagram → aspect-square
   return (
     <div
-      className={`relative ${sizing} rounded-xl overflow-hidden bg-black/5 border border-black/5`}
+      className={`relative ${sizing} rounded-xl overflow-hidden bg-[#f8fafc] border border-[#e2e8f0]`}
       data-testid={`${platform}-tile-${index}`}
     >
       <iframe
@@ -109,14 +110,13 @@ function pickGridClass(platform, count) {
 /**
  * Fallback CTA card shown when a platform has no posts filled in yet.
  */
-function EmptyGrid({ platform, lang, url, dark = false }) {
-  const bg = dark ? "border-white/10 bg-white/5 text-white/70" : "border-[#e2e8f0] bg-[#fbf9f6] text-[#475569]";
+function EmptyGrid({ platform, lang, url }) {
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`rounded-2xl border-2 border-dashed ${bg} py-10 px-6 text-center text-sm font-medium block hover:border-[#ff5a36] transition-colors`}
+      className="rounded-2xl border-2 border-dashed border-[#e2e8f0] bg-[#fbf9f6] text-[#475569] py-10 px-6 text-center text-sm font-medium block hover:border-[#ff5a36] transition-colors"
       data-testid={`${platform}-empty-cta`}
     >
       {lang === "de" ? (
@@ -221,9 +221,7 @@ function PlatformCard({
                   : "https://www.tiktok.com/@…/video/123…\nhttps://www.tiktok.com/@…/video/456…"
               }
               multiline
-              className={`text-[11px] block break-all font-mono rounded p-2 min-h-[4.5em] ${
-                platform === "instagram" ? "text-[#0f172a] bg-[#f8fafc]" : "text-white bg-black/30"
-              }`}
+              className="text-[11px] block break-all font-mono rounded p-2 min-h-[4.5em] text-[#0f172a] bg-[#f8fafc]"
             />
             <p className={`text-[10px] mt-1 leading-relaxed ${labelMutedClassName}`}>
               Kopiere Deine Post-URL aus dem Browser oder aus der App (&quot;Link teilen&quot; → &quot;Link kopieren&quot;), füge sie hier ein und klicke außerhalb → Speichern.
@@ -247,9 +245,7 @@ function PlatformCard({
                 value={embedHtml}
                 placeholder="<script src='https://static.elfsight.com/…'></script><div class='elfsight-app-…'></div>"
                 multiline
-                className={`text-[11px] block break-all font-mono rounded p-2 min-h-[3em] ${
-                  platform === "instagram" ? "text-[#0f172a] bg-[#f8fafc]" : "text-white bg-black/30"
-                }`}
+                className="text-[11px] block break-all font-mono rounded p-2 min-h-[3em] text-[#0f172a] bg-[#f8fafc]"
               />
               <p className={`text-[10px] leading-relaxed ${labelMutedClassName}`}>
                 Toggle AUS = Widget wird versteckt (Code bleibt gespeichert). Wenn Toggle AN und Feld ausgefüllt: überschreibt die Post-URLs oben.
@@ -277,11 +273,7 @@ function PlatformCard({
       {activeEmbed && !editMode ? (
         <WidgetEmbed html={embedHtml} testid={`${platform}-embed-html`} minHeight={300} />
       ) : activeEmbed && editMode ? (
-        <div className={`rounded-2xl border-2 border-dashed p-4 text-center text-xs ${
-          platform === "instagram"
-            ? "border-[#ff5a36]/30 bg-[#fff6ef] text-[#e74123]"
-            : "border-[#ff5a36]/40 bg-white/5 text-[#ffb56b]"
-        }`}>
+        <div className="rounded-2xl border-2 border-dashed border-[#ff5a36]/30 bg-[#fff6ef] text-[#e74123] p-4 text-center text-xs">
           <div className="font-semibold mb-1">Live-Widget aktiv</div>
           <div className={labelMutedClassName}>
             Der eingebettete Feed wird im Live-Modus angezeigt.
@@ -306,7 +298,7 @@ function PlatformCard({
           </div>
         </div>
       ) : (
-        <EmptyGrid platform={platform} lang={lang} url={profileUrl} dark={platform === "tiktok"} />
+        <EmptyGrid platform={platform} lang={lang} url={profileUrl} />
       )}
     </motion.div>
   );
@@ -405,7 +397,7 @@ export default function SocialFeed() {
                   Klicke außerhalb des Felds → gespeichert. Wechsle zu <b>&quot;Live&quot;</b> und dein Feed ist live. 🎉
                 </li>
                 <li className="text-[#94a3b8]">
-                  Selbes Prinzip für TikTok in der schwarzen Karte rechts.
+                  Selbes Prinzip für TikTok in der TikTok-Karte rechts.
                 </li>
               </ol>
               <p className="mt-3 text-[12px] text-[#94a3b8]">
@@ -446,18 +438,18 @@ export default function SocialFeed() {
             embedHtml={ttEmbedHtml}
             embedEnabled={ttEmbedEnabled}
             aspect="aspect-[9/16]"
-            cardClassName="rounded-3xl bg-[#0f172a] text-white border border-[#0f172a] p-6 md:p-8 shadow-sm hover:shadow-xl transition-all"
-            labelClassName="text-white"
-            labelMutedClassName="text-white/50"
-            labelAccentClassName="text-[#ff8c42]"
+            cardClassName="rounded-3xl bg-white border border-[#e2e8f0] p-6 md:p-8 shadow-sm hover:shadow-xl hover:border-[#ff5a36]/40 transition-all"
+            labelClassName="text-[#0f172a]"
+            labelMutedClassName="text-[#94a3b8]"
+            labelAccentClassName="text-[#ff5a36]"
             toEmbedFn={toTikTokEmbedSrc}
             icon={
-              <span className="w-11 h-11 rounded-2xl bg-white text-[#0f172a] inline-flex items-center justify-center shrink-0">
+              <span className="w-11 h-11 rounded-2xl icon-bubble-accent inline-flex items-center justify-center shrink-0">
                 <TikTokIcon size={22} />
               </span>
             }
-            handleColor="text-white/70"
-            followBtnClass="inline-flex items-center gap-1.5 bg-white text-[#0f172a] font-semibold text-xs px-4 py-2 rounded-full hover:bg-[#ff5a36] hover:text-white transition-colors shrink-0"
+            handleColor="text-[#475569]"
+            followBtnClass="btn-accent !py-2 !px-4 !text-xs shrink-0"
             animationDelay={0.1}
             lang={lang}
           />

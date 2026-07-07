@@ -118,8 +118,9 @@ admin@saferide.ch / SafeRide2026!
   - **Neue Social-Feed-Section** (`SocialFeed.jsx`) unten auf der Homepage vor Contact: Zwei Karten (Instagram + TikTok), jede mit 6 bzw. 3 CMS-editierbaren Foto-Kacheln, Follow-Buttons zu den echten Profilen. Voll editierbar über Wix-Style CMS (Kachel-Bild + Link-URL). Keine externen Widget-Abos nötig.
 - ✅ **Social-Feed-Polish (DONE 2026-07)**:
   - TikTok-Kachel-Layout adaptiv: 1 URL → zentriert, 2 URLs → 2 Spalten, mehr → 2/3-Spalten. Instagram bleibt 3-Spalten-Grid.
-  - TikTok-Tile mit fixem `h-[620px]` (statt `aspect-[9/16]`), da TikTok-Embed Chrome (Username/Likes/Hashtags) enthält und sonst abgeschnitten wird.
-  - Runtime-Error-Overlay-Suppression in `public/index.html` gehärtet: `stopImmediatePropagation` in Capture-Phase + legacy `window.onerror`-Fallback fangen alle Cross-Origin-"Script error."-Meldungen von Elfsight/Instagram/TikTok-Embeds ab.
+  - TikTok-Tile mit fixem `h-[560px]` (statt `aspect-[9/16]`), da TikTok-Embed Chrome (Username/Likes/Hashtags) enthält und sonst abgeschnitten wird.
+  - **TikTok-Karte visuell an Instagram angeglichen (2026-07)**: Weisser Karten-Hintergrund statt Navy-Dark, Coral-Icon-Bubble, Coral-`Folgen`-Button, hell-graue Edit-Mode-Inputs — Instagram- und TikTok-Card sind nun optisch identisch.
+  - Runtime-Error-Overlay-Suppression in `public/index.html` gehärtet: Capture-phase `stopImmediatePropagation`, `window.onerror`-Fallback, PLUS `MutationObserver` + periodisches `setInterval(500ms)`, das das webpack-dev-server-`<iframe id="webpack-dev-server-client-overlay">` per `contentDocument.body.textContent`-Check bei "Script error"/"ResizeObserver loop"-Meldungen entfernt (dev-only, Production unbetroffen).
 - ✅ **Motorsport/Racing Design-Variante (DONE 2026-07)** unter `/preview/sport`:
   - Vollständig isolierte Alternative-Homepage, aktuelles Live-Design bleibt 100% unverändert.
   - Neuer Ordner `/app/frontend/src/components/sport/` (PreviewBanner, SportHeader, SportHero, SportMarquee, SportAbout, SportWhy, SportStatsBar, SportServices, SportFleet, SportPricing, SportContact, SportFooter) + Page `/app/frontend/src/pages/SportPreview.jsx`.
