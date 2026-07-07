@@ -122,6 +122,9 @@ _FALLBACK_HERO_IMAGES = {
     "rapperswil": "https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1600",
     "pfaeffikon-sz": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
     "richterswil": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "wetzikon": "https://images.pexels.com/photos/2199293/pexels-photo-2199293.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "st-gallen": "https://images.pexels.com/photos/799443/pexels-photo-799443.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "domat-ems": "https://images.pexels.com/photos/210182/pexels-photo-210182.jpeg?auto=compress&cs=tinysrgb&w=1600",
 }
 
 _LOCATIONS_RAW = [
@@ -245,6 +248,39 @@ _LOCATIONS_RAW = [
         "image": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1600&q=80",
         "meetpoint": "Bahnhof Richterswil · 8805 Richterswil",
         "routes": ["Seestrasse Richtung Wädenswil", "A3 Auffahrt Richterswil", "Wollerau Aufstieg", "Dorfzentrum Richterswil"],
+    },
+    {
+        "slug": "wetzikon",
+        "name": "Wetzikon",
+        "canton": "ZH",
+        "lat": 47.3234,
+        "lon": 8.7986,
+        "highlight": "Zürcher Oberland · Mix aus Landstrassen, Autobahn und Ortskern",
+        "image": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1600&q=80",
+        "meetpoint": "Bahnhof Wetzikon · 8620 Wetzikon",
+        "routes": ["Rapperswilerstrasse Richtung Rüti", "A15 Auffahrt Wetzikon", "Dorfzentrum Wetzikon (Tempo-30-Zone)", "Bachtel-Strecke Richtung Hinwil"],
+    },
+    {
+        "slug": "st-gallen",
+        "name": "St. Gallen",
+        "canton": "SG",
+        "lat": 47.4245,
+        "lon": 9.3767,
+        "highlight": "Kantonshauptstadt · Stadtverkehr, Autobahn und steile Quartierstrassen",
+        "image": "https://images.unsplash.com/photo-1571401835393-8c5f35328320?auto=format&fit=crop&w=1600&q=80",
+        "meetpoint": "Bahnhof St. Gallen · Bahnhofplatz, 9000 St. Gallen",
+        "routes": ["Rosenbergstrasse Richtung Bruggen", "A1 Auffahrt St. Gallen West", "Altstadt St. Gallen (Fussgängerzone-nah)", "Rotmonten-Aufstieg"],
+    },
+    {
+        "slug": "domat-ems",
+        "name": "Domat/Ems",
+        "canton": "GR",
+        "lat": 46.8354,
+        "lon": 9.4489,
+        "highlight": "Bündner Rheintal · Kombination Industriegebiet, Landstrasse und Alpenpass",
+        "image": "https://images.unsplash.com/photo-1539721972319-f0e80a00d424?auto=format&fit=crop&w=1600&q=80",
+        "meetpoint": "Bahnhof Domat/Ems · 7013 Domat/Ems",
+        "routes": ["Kantonsstrasse Richtung Chur", "A13 Auffahrt Ems", "Industriegebiet Ems-Chemie (Rangieren)", "Rheinquai Richtung Reichenau"],
     },
 ]
 

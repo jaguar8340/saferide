@@ -35,7 +35,7 @@ export default function TopContactBar() {
             <Clock size={11} className="text-[#ff5a36]" /> Mo–Fr · 07–21 Uhr
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <MapPin size={11} className="text-[#ff5a36]" /> 11 Standorte · ZH/SZ/SG/GR
+            <MapPin size={11} className="text-[#ff5a36]" /> 14 Standorte · ZH/SZ/SG/GR
           </span>
         </div>
       </div>

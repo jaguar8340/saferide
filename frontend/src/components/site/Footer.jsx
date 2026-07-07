@@ -33,7 +33,7 @@ export default function Footer({ data }) {
       <div className="container-x">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-start">
           {/* Brand */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             <BrandLogo variant="footer" />
             <Editable
               path={`footer_tagline_${lang}`}
@@ -98,20 +98,20 @@ export default function Footer({ data }) {
           </div>
 
           {/* Standorte */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-6">
             <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
               {lang === "de" ? "Standorte" : "Locations"}
             </div>
             <ul
               data-testid="footer-locations-list"
-              className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm font-medium"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2 text-[13px] font-medium"
             >
               {locations.map((loc) => (
                 <li key={loc.slug}>
                   <Link
                     to={`/fahrschule-${loc.slug}`}
                     data-testid={`footer-location-${loc.slug}`}
-                    className="group inline-flex items-center gap-1.5 text-white/80 hover:text-[#ff5a36] transition-colors"
+                    className="group inline-flex items-center gap-1.5 text-white/80 hover:text-[#ff5a36] transition-colors whitespace-nowrap"
                   >
                     <MapPin
                       size={11}

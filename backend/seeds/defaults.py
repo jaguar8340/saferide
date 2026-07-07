@@ -84,8 +84,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
             {
                 "id": "wp5",
                 "icon": "MapPin",
-                "title_de": "11 Standorte in 4 Kantonen",
-                "title_en": "11 locations across 4 cantons",
+                "title_de": "14 Standorte in 4 Kantonen",
+                "title_en": "14 locations across 4 cantons",
                 "body_de": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Lektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
                 "body_en": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur and Lenzerheide – wherever you live, study or work, I come to you. You don't lose time on long drives to some central driving-school office. We start where it makes sense for you: at the station, in front of your school, at your workplace. That is the difference between half a \"lesson with stress because I still have to get to uni\" and a proper 50-minute session in which you actually take something away."
             },
@@ -108,8 +108,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
             "id": "hf1",
             "question_de": "Wo finden die Fahrstunden statt?",
             "question_en": "Where do the lessons take place?",
-            "answer_de": "In 11 Standorten in den Kantonen Zürich, Schwyz, St. Gallen und Graubünden. Wir treffen uns dort, wo es für dich am bequemsten ist – Bahnhof, Schule oder Arbeitsplatz.",
-            "answer_en": "At 11 locations across the cantons of Zurich, Schwyz, St. Gallen and Graubünden. We meet wherever is most convenient for you – station, school or workplace."
+            "answer_de": "In 14 Standorten in den Kantonen Zürich, Schwyz, St. Gallen und Graubünden. Wir treffen uns dort, wo es für dich am bequemsten ist – Bahnhof, Schule oder Arbeitsplatz.",
+            "answer_en": "At 14 locations across the cantons of Zurich, Schwyz, St. Gallen and Graubünden. We meet wherever is most convenient for you – station, school or workplace."
         },
         {
             "id": "hf2",

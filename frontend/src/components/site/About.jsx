@@ -4,6 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import Editable from "@/components/edit/Editable";
 import EditableImage from "@/components/edit/EditableImage";
 import CertificatesDialog from "@/components/site/CertificatesDialog";
+import Speedo from "@/components/site/Speedo";
 
 export default function About({ data }) {
   const { lang, pick, t } = useLang();
@@ -57,26 +58,52 @@ export default function About({ data }) {
 
             <div className="mt-10 grid grid-cols-3 gap-3 md:gap-4">
               {[
-                { key: "stat1", v: data.stat1_value, l_de: data.stat1_label_de, l_en: data.stat1_label_en, bg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", fg: "text-white" },
-                { key: "stat2", v: data.stat2_value, l_de: data.stat2_label_de, l_en: data.stat2_label_en, bg: "bg-white border border-[#e2e8f0]", fg: "text-[#0f172a]" },
-                { key: "stat3", v: data.stat3_value, l_de: data.stat3_label_de, l_en: data.stat3_label_en, bg: "bg-gradient-to-br from-[#1e6fff] to-[#0b4fd8]", fg: "text-white" },
+                {
+                  key: "stat1",
+                  v: data.stat1_value,
+                  l_de: data.stat1_label_de,
+                  l_en: data.stat1_label_en,
+                  progress: 0.86,
+                  color: "#ff5a36",
+                  textColor: "#0f172a",
+                  wrapper:
+                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#ff5a36]/40 transition-colors",
+                },
+                {
+                  key: "stat2",
+                  v: data.stat2_value,
+                  l_de: data.stat2_label_de,
+                  l_en: data.stat2_label_en,
+                  progress: 0.62,
+                  color: "#1e6fff",
+                  textColor: "#0f172a",
+                  wrapper:
+                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#1e6fff]/40 transition-colors",
+                },
+                {
+                  key: "stat3",
+                  v: data.stat3_value,
+                  l_de: data.stat3_label_de,
+                  l_en: data.stat3_label_en,
+                  progress: 0.74,
+                  color: "#ff8c42",
+                  textColor: "#0f172a",
+                  wrapper:
+                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#ff8c42]/40 transition-colors",
+                },
               ].map((s, i) => (
                 <div
                   key={s.key}
                   data-testid={`about-stat-${i}`}
-                  className={`${s.bg} ${s.fg} rounded-2xl p-5`}
+                  className={s.wrapper}
                 >
-                  <Editable
-                    path={`about.${s.key}_value`}
+                  <Speedo
+                    testid={`about-speedo-${i}`}
                     value={s.v}
-                    as="div"
-                    className="font-display text-3xl md:text-4xl leading-none"
-                  />
-                  <Editable
-                    path={`about.${s.key}_label_${lang}`}
-                    value={pick(s.l_de, s.l_en)}
-                    as="div"
-                    className="mt-2 text-[10px] tracking-widest uppercase opacity-80 font-semibold"
+                    label={pick(s.l_de, s.l_en)}
+                    progress={s.progress}
+                    color={s.color}
+                    textColor={s.textColor}
                   />
                 </div>
               ))}
