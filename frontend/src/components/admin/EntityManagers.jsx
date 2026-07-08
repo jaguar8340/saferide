@@ -10,6 +10,7 @@ import {
   Mail,
   Phone,
   Calendar,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError, resolveUrl } from "@/lib/api";
@@ -17,6 +18,10 @@ import { api, formatApiError, resolveUrl } from "@/lib/api";
 /* ---------------- Blog Manager ---------------- */
 export function BlogManager() {
   const [items, setItems] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title_de: "", title_en: "" });
+
   const load = async () => {
     try {
       const r = await api.get("/blog/admin");
@@ -48,10 +53,132 @@ export function BlogManager() {
     }
   };
 
+  const slugify = (s) =>
+    (s || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+
+  const createPost = async (e) => {
+    e?.preventDefault?.();
+    const title_de = form.title_de.trim();
+    const title_en = (form.title_en || form.title_de).trim();
+    if (!title_de) {
+      toast.error("Bitte einen Titel eingeben");
+      return;
+    }
+    const base = slugify(title_de) || "beitrag";
+    const slug = `${base}-${Date.now().toString(36).slice(-4)}`;
+    setCreating(true);
+    try {
+      const r = await api.post("/blog", {
+        slug,
+        title_de,
+        title_en,
+        excerpt_de: "Kurze Zusammenfassung…",
+        excerpt_en: "Short summary…",
+        body_de: "Klicken zum Bearbeiten…",
+        body_en: "Click to edit…",
+        hero_image_url:
+          "https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        author_name: "Nadine Stäubli",
+        author_role_de: "Fahrlehrerin",
+        author_role_en: "Driving instructor",
+        author_image_url: "",
+        author_bio_de: "Über die Autorin…",
+        author_bio_en: "About the author…",
+        categories: [],
+        tags: [],
+        reading_time_min: 3,
+        status: "draft",
+        published_at: new Date().toISOString(),
+      });
+      setItems((cur) => [r.data, ...(cur || [])]);
+      setForm({ title_de: "", title_en: "" });
+      setShowForm(false);
+      toast.success("Beitrag erstellt – jetzt direkt auf der Website bearbeiten");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (items === null) return <Loading />;
 
   return (
-    <Wrapper title="Blog" subtitle={`${items.length} Beiträge`}>
+    <Wrapper
+      title="Blog"
+      subtitle={`${items.length} Beiträge`}
+      right={
+        <button
+          type="button"
+          onClick={() => setShowForm((v) => !v)}
+          data-testid="admin-blog-add-toggle"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90"
+        >
+          <Plus size={12} /> {showForm ? "Abbrechen" : "Neuer Beitrag"}
+        </button>
+      }
+    >
+      <p className="text-sm text-[#475569] mb-4">
+        Neue Beiträge hier hinzufügen — inhaltliche Bearbeitung passiert danach direkt
+        auf der Website über den Inline-Editor.
+      </p>
+
+      {showForm && (
+        <form
+          onSubmit={createPost}
+          data-testid="admin-blog-add-form"
+          className="mb-6 bg-white border-2 border-[#ff5a36]/40 rounded-2xl p-5 md:p-6 space-y-3"
+        >
+          <div>
+            <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+              Titel (Deutsch) *
+            </label>
+            <input
+              type="text"
+              value={form.title_de}
+              onChange={(e) => setForm((f) => ({ ...f, title_de: e.target.value }))}
+              data-testid="admin-blog-add-title-de"
+              placeholder="z. B. So bereitest du dich auf die Theorieprüfung vor"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+              Titel (Englisch) — optional
+            </label>
+            <input
+              type="text"
+              value={form.title_en}
+              onChange={(e) => setForm((f) => ({ ...f, title_en: e.target.value }))}
+              data-testid="admin-blog-add-title-en"
+              placeholder="Optional — wird sonst automatisch dem deutschen Titel entsprechen"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+            />
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={creating}
+              data-testid="admin-blog-add-submit"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+            >
+              {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+              Erstellen
+            </button>
+            <span className="text-xs text-[#475569]">
+              Bild, Text und Details bearbeitest du danach direkt auf der Website.
+            </span>
+          </div>
+        </form>
+      )}
+
       {items.length === 0 ? (
         <EmptyState text="Noch keine Beiträge." />
       ) : (
@@ -604,12 +731,15 @@ export function PartnersManager() {
 }
 
 /* ---------------- Shared UI ---------------- */
-function Wrapper({ title, subtitle, children }) {
+function Wrapper({ title, subtitle, right, children }) {
   return (
     <div className="max-w-6xl">
-      <div className="mb-7">
-        <h2 className="font-display leading-[0.98] tracking-tight text-3xl md:text-4xl">{title}</h2>
-        {subtitle && <p className="text-[#475569] text-sm mt-1 font-medium">{subtitle}</p>}
+      <div className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display leading-[0.98] tracking-tight text-3xl md:text-4xl">{title}</h2>
+          {subtitle && <p className="text-[#475569] text-sm mt-1 font-medium">{subtitle}</p>}
+        </div>
+        {right && <div className="shrink-0">{right}</div>}
       </div>
       {children}
     </div>

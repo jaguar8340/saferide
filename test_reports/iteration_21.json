@@ -1,0 +1,45 @@
+{
+  "summary": "Comprehensive E2E validation of the three P0 fixes reported on Feb 7, 2026. Backend: 9/9 pytest tests PASS in /app/backend/tests/test_p0_fixes.py (admin login, blog POST/GET/DELETE + admin list + unauth 403, package title PATCH accepts spaces & persists, /api/content pricing.note_de accessible). Frontend E2E: (1) P0-FIX 1 (spacebar): confirmed on /buchung with edit mode – typed ' x y z' into package-title-pkw-60, ' a b c' into package-subtitle-pkw-60, ' k m n' into package-highlight-pkw-60. All 3 fields accepted the spaces DURING typing (innerText: 'PKW · 60 Min. x y z', 'Lange Lektion für konzentrierte Übungen a b c', 'HIGHLIGHT… K M N' – highlight uppercased by CSS text-transform but SPACES ARE THERE). After blur→PATCH round-trip AND full page reload, all three values persisted. (2) P0-FIX 2 (homepage insurance): data-testid='pricing-insurance-box' present at bottom of /#pricing, class contains 'border-2 border-[#ff5a36]', ShieldCheck SVG icon present, label 'WICHTIGER HINWEIS', text 'Für Neukund:innen fällt eine einmalige Versicherungspauschale von CHF 120 an (zahlbar bei der zweiten Lektion)…'. (3) P0-FIX 2 (location pages – IMPORTANT NOTE): /fahrschule-waedenswil, /fahrschule-siebnen, /fahrschule-einsiedeln DO show the insurance box, but under testid 'pricing-insurance-box' (not 'loc-price-insurance-box' as the review request specified). This is because LocationPage.jsx uses the shared <Pricing lockedCanton=..> component, not LocPrices.jsx. LocPrices.jsx (where main agent added the 'loc-price-insurance-box' testid) is DEAD CODE – no page imports it. Visually the box is displayed on all location pages so user-facing requirement is met; only the testid is different. (4) P0-FIX 3 (blog CRUD): full flow works – login → /admin?tab=blog → admin-blog-add-toggle opens admin-blog-add-form → filled title → admin-blog-add-submit → POST /api/blog returned 200 with slug, form closed, new row appeared at top, GET /blog/<slug> loads with correct title, deletion via trash icon removed the row (confirm dialog auto-accepted). All test data cleaned up (pkw-45/pkw-60 restored to original values via API). ",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "P0-FIX 2 location page insurance box",
+        "issue": "Review request expects data-testid='loc-price-insurance-box' on /fahrschule-* pages, but that testid comes from LocPrices.jsx which is imported nowhere. LocationPage.jsx line 206 uses <Pricing data={content?.pricing} lockedCanton={loc.canton} /> which renders data-testid='pricing-insurance-box'. Functionally the box IS shown, but the testid does not match the spec. Impact: any downstream code/tests that specifically query 'loc-price-insurance-box' on location pages will find nothing.",
+        "affected_selectors": ["[data-testid='loc-price-insurance-box']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p0_fixes.py",
+    "/app/test_reports/pytest/it21_results.xml"
+  ],
+  "action_items": [
+    "Decide on the loc-price-insurance-box vs pricing-insurance-box duplication: either (a) delete the unused LocPrices.jsx file (dead code) and update any documentation referencing 'loc-price-insurance-box', OR (b) if LocPrices was intended to replace <Pricing lockedCanton> on location pages, wire it into LocationPage.jsx. Currently the insurance box IS visible on location pages via the shared Pricing component, so no user-facing regression, but the review-request-specified testid ('loc-price-insurance-box') is unreachable."
+  ],
+  "critical_code_review_comments": [
+    "EditablePackageCard.jsx – the `if (e.target !== e.currentTarget) return;` guard on line 87 is the correct minimal fix for the nested-contentEditable Space-swallow bug. Verified end-to-end on title/subtitle/highlight.",
+    "LocPrices.jsx is DEAD CODE – no page imports it (grep of /app/frontend/src returns only the file's own export). Either delete it or wire it into LocationPage.jsx. Right now edits to it are invisible to end users.",
+    "BlogManager (EntityManagers.jsx) inline create form works perfectly. Minor nit: the trash button in the row has no aria-label/title (uses only an <IconBtn danger> wrapper), so screen readers/e2e tests must locate it via last-button-in-row heuristic. Consider adding data-testid={`admin-blog-delete-${slug}`} for robustness.",
+    "Pricing.jsx insurance box hard-codes the label ('Wichtiger Hinweis' / 'Important note') outside of the Editable path – admin cannot rename the label. Body text (note_de/note_en) IS editable, which is the important part.",
+    "test_p0_fixes.py added and passes – now serves as a P0-regression fixture for future iterations (blog CRUD, package PATCH with spaces, unauth 403, content pricing.note_de existence)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p0_fixes.py (created)"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9)",
+    "frontend": "P0-FIX 1: 3/3 (title, subtitle, highlight); P0-FIX 2: 1/1 home + 3/3 location pages (box visible, but wrong testid on loc pages); P0-FIX 3: 4/4 (create toggle, form, submit, delete)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – login OK, JWT + httpOnly cookie both issued",
+  "seed_data_creation": "Created a blog post via UI (slug automatisierter-testbeitrag-1783496914-0iud) then deleted it via trash button – verified 200 delete. Package title/subtitle/highlight for pkw-60 temporarily modified to include ' x y z' / ' a b c' / ' k m n' then restored to original values via API PATCH. Also restored pkw-45 title (was 'PKW · 45 Min. a b c' leftover from main agent's manual smoke) back to 'PKW · 45 Min.'. Final /api/packages state verified clean.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P0 fixes on Feb 7, 2026 all functionally verified: (1) space bar now works in EditablePackageCard title/subtitle/feature/highlight thanks to the `if (e.target !== e.currentTarget) return` guard – no need to re-test unless the file is refactored. (2) Insurance info box is rendered on / (data-testid='pricing-insurance-box') AND on all /fahrschule-* location pages (also under 'pricing-insurance-box' via shared Pricing component with lockedCanton prop). LocPrices.jsx is dead code – if main agent decides to keep or delete it, no impact on the running app. (3) BlogManager inline create form (data-testid=admin-blog-add-toggle / admin-blog-add-form / admin-blog-add-title-de / admin-blog-add-submit) works with POST /api/blog. New posts appear as admin-blog-row-<slug>. Trash button has no aria-label; use `row.locator('button').last` or add a dedicated testid. Slugs auto-generated as `${slugify(title_de)}-${Date.now().toString(36).slice(-4)}`. Location slugs use route pattern /fahrschule-<slug> (NOT /standorte/<slug>) — actual slugs: einsiedeln, siebnen, lachen, waedenswil, horgen, altendorf, chur, lenzerheide, rapperswil, pfaeffikon-sz, richterswil, wetzikon, st-gallen, domat-ems (14 total).",
+  "rca of the issue": "All 3 P0 bugs reported by user are RESOLVED. RCA of spacebar bug: EditablePackageCard had an outer div with onKeyDown={e => { if (e.key===' ') { e.preventDefault(); onSelect(...) } }}. Because onKeyDown bubbles up from nested contentEditable spans, typing Space inside the title/subtitle/feature/highlight fired the outer preventDefault, eating the space. Fix: added early return `if (e.target !== e.currentTarget) return;` so only Space typed directly on the card container triggers selection. RCA of insurance-box UX: previous rendering was a small inline paragraph mt-10 text-sm – too easy to miss; user requested a bigger, more visible info box with icon. Fix: replaced with a bordered rounded-2xl block containing ShieldCheck icon + big 'WICHTIGER HINWEIS' label + editable note. RCA of blog creation friction: previously admins could only edit existing posts – no way to create from the dashboard. Fix: added inline form to BlogManager with a right-slot 'Neuer Beitrag' toggle that POSTs to /api/blog then redirects the admin to edit inline on the website."
+}

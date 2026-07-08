@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ShieldCheck } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import Editable from "@/components/edit/Editable";
 import CantonWappen from "@/components/site/CantonWappen";
@@ -67,14 +68,27 @@ export default function LocPrices({ loc, updateField }) {
             </motion.div>
           ))}
         </div>
-        <Editable
-          path={`price_note_${lang}`}
-          value={pick(loc.price_note_de, loc.price_note_en)}
-          onUpdate={updateField}
-          as="p"
-          multiline
-          className="mt-8 text-sm text-[#475569] max-w-3xl leading-relaxed font-medium block"
-        />
+        <div
+          data-testid="loc-price-insurance-box"
+          className="mt-8 flex items-start gap-4 max-w-3xl p-5 md:p-6 rounded-2xl bg-white border-2 border-[#ff5a36] shadow-[0_10px_30px_-15px_rgba(255,90,54,0.35)]"
+        >
+          <div className="shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#ff5a36] text-white">
+            <ShieldCheck size={22} strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-bold tracking-[0.22em] uppercase text-[#ff5a36] mb-1">
+              {lang === "de" ? "Wichtiger Hinweis" : "Important note"}
+            </div>
+            <Editable
+              path={`price_note_${lang}`}
+              value={pick(loc.price_note_de, loc.price_note_en)}
+              onUpdate={updateField}
+              as="p"
+              multiline
+              className="text-base md:text-lg text-[#0f172a] leading-snug font-semibold block"
+            />
+          </div>
+        </div>
       </div>
     </section>
   );

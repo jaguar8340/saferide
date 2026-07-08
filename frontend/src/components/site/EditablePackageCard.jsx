@@ -80,6 +80,11 @@ export default function EditablePackageCard({
       data-testid={`package-${pkg.slug}`}
       onClick={() => onSelect(pkg.slug)}
       onKeyDown={(e) => {
+        // Only intercept keys when the outer card is focused – never swallow
+        // Space / Enter typed inside a nested contentEditable child (title,
+        // subtitle, feature, highlight …). Otherwise the user cannot type
+        // spaces while editing.
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect(pkg.slug);
