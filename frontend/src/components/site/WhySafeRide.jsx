@@ -13,19 +13,10 @@ import {
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
+import CantonWappen from "@/components/site/CantonWappen";
 
 const ICONS = { Heart, Brain, Sparkles, Car, MapPin, ShieldCheck };
-
-// Six pillar cards rendered in a 12-col grid. Each card occupies a varying
-// number of columns to break the monotony – wide / narrow / wide pattern.
-const SPANS = [
-  "lg:col-span-7", // wp1 wide-left
-  "lg:col-span-5", // wp2 narrow-right
-  "lg:col-span-5", // wp3 narrow-left
-  "lg:col-span-7", // wp4 wide-right
-  "lg:col-span-7", // wp5 wide-left
-  "lg:col-span-5", // wp6 narrow-right
-];
+const CANTON_CODES = ["ZH", "SZ", "SG", "GR"];
 
 const ACCENTS = [
   { iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
@@ -117,13 +108,14 @@ export default function WhySafeRide({ data }) {
           </motion.div>
         </div>
 
-        {/* Pillars grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
+        {/* Pillars grid – equal-height, 3-column layout for a compact and
+            visually balanced overview. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {pillars.map((p, i) => {
             const Icon = ICONS[p.icon] || Sparkles;
             const a = ACCENTS[i % ACCENTS.length];
-            const span = SPANS[i % SPANS.length];
             const dark = !!a.bg;
+            const isLocationsPillar = p.icon === "MapPin";
             return (
               <motion.article
                 key={p.id}
@@ -132,7 +124,7 @@ export default function WhySafeRide({ data }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
-                className={`${span} relative rounded-3xl p-7 md:p-9 ${
+                className={`relative rounded-3xl p-6 md:p-7 flex flex-col ${
                   dark
                     ? `${a.bg} ${a.fg}`
                     : "bg-[#fbf9f6] border border-[#e2e8f0] text-[#0f172a]"
@@ -140,9 +132,9 @@ export default function WhySafeRide({ data }) {
               >
                 <div className="flex items-start justify-between gap-4">
                   <span
-                    className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl ${a.iconBg} ${a.iconFg} shrink-0`}
+                    className={`inline-flex items-center justify-center w-11 h-11 rounded-2xl ${a.iconBg} ${a.iconFg} shrink-0`}
                   >
-                    <Icon size={18} />
+                    <Icon size={17} />
                   </span>
                   {editMode && (
                     <button
@@ -159,14 +151,25 @@ export default function WhySafeRide({ data }) {
                   path={`why_safe_ride.pillars.${i}.title_${lang}`}
                   value={pick(p.title_de, p.title_en)}
                   as="h3"
-                  className="font-display text-2xl md:text-3xl leading-tight tracking-tight mt-6 block"
+                  className="font-display text-xl md:text-2xl leading-tight tracking-tight mt-5 block"
                 />
+                {isLocationsPillar && (
+                  <div
+                    data-testid={`why-pillar-${i}-wappen`}
+                    className="mt-3 flex items-center gap-1.5"
+                    aria-label="Kantone Zürich, Schwyz, St. Gallen, Graubünden"
+                  >
+                    {CANTON_CODES.map((code) => (
+                      <CantonWappen key={code} code={code} size="w-6 h-6" />
+                    ))}
+                  </div>
+                )}
                 <Editable
                   path={`why_safe_ride.pillars.${i}.body_${lang}`}
                   value={pick(p.body_de, p.body_en)}
                   as="p"
                   multiline
-                  className={`mt-4 text-[15px] leading-relaxed font-medium block ${
+                  className={`mt-3 text-sm leading-relaxed font-medium block ${
                     dark ? "text-white/85" : "text-[#475569]"
                   }`}
                 />

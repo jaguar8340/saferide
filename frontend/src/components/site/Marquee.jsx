@@ -17,7 +17,7 @@ export default function Marquee({ de, en }) {
     return (
       <section
         data-testid="marquee-section"
-        className="bg-[#0f172a] text-white py-6 md:py-7 px-5 md:px-10 lg:px-14"
+        className="bg-black text-white py-6 md:py-7 px-5 md:px-10 lg:px-14"
       >
         <label className="flex items-center gap-3 max-w-5xl mx-auto">
           <span className="text-[10px] tracking-widest uppercase font-semibold text-white/60 shrink-0">
@@ -31,7 +31,7 @@ export default function Marquee({ de, en }) {
               if (draft !== text) updateField(`marquee_${lang}`, draft);
             }}
             data-testid={`marquee-input-${lang}`}
-            className="flex-1 bg-transparent border-b border-white/30 focus:border-[#ff5a36] focus:outline-none py-2 font-display text-2xl md:text-3xl"
+            className="flex-1 bg-transparent border-b border-white/30 focus:border-white focus:outline-none py-2 font-display text-2xl md:text-3xl"
             placeholder="Wörter mit · trennen"
           />
         </label>
@@ -42,32 +42,18 @@ export default function Marquee({ de, en }) {
   return (
     <section
       data-testid="marquee-section"
-      className="bg-[#0f172a] text-white py-6 md:py-7 overflow-hidden border-y-4 border-[#ff5a36]"
+      className="bg-black text-white py-6 md:py-7 overflow-hidden"
     >
       <FastMarquee speed={45} gradient={false}>
         {items.concat(items).concat(items).map((word, i) => (
           <span
             key={i}
-            className="flex items-center gap-5 px-5 font-display text-3xl md:text-4xl"
+            className="flex items-center gap-5 px-5 font-display text-3xl md:text-4xl text-white"
           >
-            <span
-              className={
-                i % 4 === 1
-                  ? "font-serif-i text-[#ff5a36] font-normal"
-                  : i % 4 === 2
-                    ? "text-[#ffb56b]"
-                    : i % 4 === 3
-                      ? "text-[#1e6fff]"
-                      : ""
-              }
-            >
-              {word}
-            </span>
+            <span>{word}</span>
             <span
               aria-hidden
-              className={`inline-block w-1.5 h-1.5 rounded-full ${
-                i % 3 === 0 ? "bg-[#ff5a36]" : i % 3 === 1 ? "bg-[#ff8c42]" : "bg-[#1e6fff]"
-              }`}
+              className="inline-block w-1.5 h-1.5 rounded-full bg-white/60"
             />
           </span>
         ))}

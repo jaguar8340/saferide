@@ -23,6 +23,7 @@ export default function Speedo({
   textColor = "#0f172a",
   trackColor = "#e2e8f0",
   testid,
+  children,
 }) {
   const wrapRef = useRef(null);
   const [needle, setNeedle] = useState(0); // 0..1 animated
@@ -153,18 +154,24 @@ export default function Speedo({
         <circle cx={CX} cy={CY} r={9} fill={textColor} />
         <circle cx={CX} cy={CY} r={3.5} fill={color} />
       </svg>
-      <div
-        className="mt-[-14px] font-display leading-none tabular-nums"
-        style={{ color: textColor, fontSize: "clamp(1.9rem, 3.5vw, 2.8rem)" }}
-      >
-        {value}
-      </div>
-      <div
-        className="mt-2 text-[10px] tracking-[0.2em] uppercase font-semibold"
-        style={{ color: textColor, opacity: 0.72 }}
-      >
-        {label}
-      </div>
+      {children ? (
+        children
+      ) : (
+        <>
+          <div
+            className="mt-[-14px] font-display leading-none tabular-nums"
+            style={{ color: textColor, fontSize: "clamp(1.9rem, 3.5vw, 2.8rem)" }}
+          >
+            {value}
+          </div>
+          <div
+            className="mt-2 text-[10px] tracking-[0.2em] uppercase font-semibold"
+            style={{ color: textColor, opacity: 0.72 }}
+          >
+            {label}
+          </div>
+        </>
+      )}
     </div>
   );
 }

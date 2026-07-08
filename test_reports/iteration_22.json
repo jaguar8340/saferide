@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 22 (Feb 7, 2026 UX-Batch) full E2E validation. All 5 UX fixes verified working. Backend: 9/9 P0 regression pytest PASS + 17/17 new iteration22 pytest PASS (pillar body lengths < 200 chars for both DE/EN across all 6 pillars, MapPin icon on pillar[4], about stat value/label PATCH persistence). Frontend automation: (1) Marquee: bg=rgb(0,0,0), inner text=rgb(255,255,255) – no coral/border. (2) Hero italic highlight text 'Anders. Besser. Mutiger.' color=rgb(220,38,38)=#dc2626 with class font-serif-i text-[#dc2626]. (3) WhySafeRide grid: parent class 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3', 6 pillars, widths 434.66/434.67/434.66/434.66/434.67/434.66 – max-min diff=0.02px (well within ±2px). (4) 4 canton wappen [data-testid='why-pillar-4-wappen'] contains exactly 4 sub-elements: canton-wappen-ZH, -SZ, -SG, -GR – all present. (5) About stats inline-edit: entered edit mode via admin toolbar (clicked BEARBEITEN), typed ' TESTLABEL' into [data-edit-path='about.stat1_label_de'] – on blur PATCH /api/content fired with body {\"about.stat1_label_de\":\"ERFOLGSQUOTE TESTLABEL\"}, GET /api/content confirmed persistence. Repeated for [data-edit-path='about.stat1_value']: typed ' 999+', PATCH sent, GET confirms 'über 90% 999+'. Both fields reset to original values (ERFOLGSQUOTE / über 90%) via authenticated PATCH – final GET verified clean state. 0 console errors on homepage load.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration22.py",
+    "/app/backend/tests/test_p0_fixes.py",
+    "/app/test_reports/pytest/it22_iteration22.xml",
+    "/app/test_reports/pytest/it22_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Speedo.jsx – children-prop pattern is clean and backward-compatible; default path still renders static value/label divs when no children passed. Good API design.",
+    "About.jsx – Editable wraps the value/label with matching classes (mt-[-14px] font-display, mt-2 text-[10px] tracking-[0.2em]) – styling is preserved even in edit mode. text-center class added so contentEditable expands full width for easier click-to-edit.",
+    "WhySafeRide.jsx – switching from SPANS asymmetric layout to grid-cols-3 is a substantial simplification (removed ~30 lines of hard-coded col-span logic). Consider extracting the ACCENTS array to a constants file if reused elsewhere.",
+    "CantonWappen.jsx – nice detail using stable code detection (\\\\b(SZ|ZH|SG|GR)\\\\b) before falling back to full-name matching – avoids false positives like 'sz' matching inside 'Schwyz'. Testid pattern canton-wappen-<code> is consistent and testable.",
+    "Marquee.jsx – edit-mode view uses a raw <input> instead of the shared Editable component. Works fine but inconsistent with the rest of the codebase. Not blocking.",
+    "Startup migration (_migrate_why_pillar_bodies_short) is idempotent and safe – checks each pillar's body_de against old default snapshot before rewriting. Force-patched wp5 (previously edited by user) is acceptable one-time correction."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration22.py (created – 17 tests, 100% pass)"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26: 9 P0 + 17 iteration22)",
+    "frontend": "100% (5/5: marquee bg, hero red, 3-col equal grid, 4 wappen, About stats inline PATCH)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – login OK",
+  "seed_data_creation": "Temporarily modified about.stat1_label_de → 'ERFOLGSQUOTE TESTLABEL' and about.stat1_value → 'über 90% 999+' during UI edit-mode E2E testing. Both restored to original values ('ERFOLGSQUOTE' / 'über 90%') via authenticated PATCH. Final /api/content state verified clean. Pillar bodies were left untouched (migration output).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 5 UX fixes on Feb 7, 2026 verified: (1) Marquee is now bg-black text-white (no coral, no border), edit mode still functional. (2) Hero italic highlight uses text-[#dc2626] = rgb(220,38,38). (3) About-section has 3 speedometers, each with inline-editable value (data-edit-path='about.stat<n>_value') AND label (data-edit-path='about.stat<n>_label_<de|en>') – both PATCH via blur, persist to DB. (4) WhySafeRide uses grid-cols-1 sm:grid-cols-2 lg:grid-cols-3, all 6 pillars equal width within 0.02px at 1920×900, padding reduced to p-6 md:p-7. (5) 5th pillar (icon=MapPin) renders 4 canton wappen (ZH/SZ/SG/GR) as SVGs between title and body – testid why-pillar-4-wappen contains 4 x [data-testid=canton-wappen-<code>]. Pillar body lengths: DE range 124-157 chars, EN 98-138 chars (all < 200). Edit mode toggle: admin toolbar first-button toggles BEARBEITEN ↔ VORSCHAU – on first load after admin login, state may or may not be persisted from localStorage; always check editable count and toggle if needed. Cookie-based PATCH from evaluate() returns 401 – use Bearer JWT token (from /api/auth/login access_token) for scripted resets.",
+  "rca of the issue": "No new bugs. All 5 UX changes implemented correctly per spec and verified functional end-to-end."
+}

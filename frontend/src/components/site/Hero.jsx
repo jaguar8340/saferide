@@ -49,7 +49,7 @@ export default function Hero({ data }) {
                 path={`hero.highlight_${lang}`}
                 value={pick(data.highlight_de, data.highlight_en)}
                 as="span"
-                className="inline-block font-serif-i text-[#ff5a36] font-normal"
+                className="inline-block font-serif-i text-[#dc2626] font-normal"
               />
             </h1>
 

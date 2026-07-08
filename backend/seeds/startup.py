@@ -62,6 +62,11 @@ async def run_startup_seeds() -> None:
         if missing:
             await db.site_content.update_one({"id": "main"}, {"$set": missing})
 
+    # One-time migration: shorten why_safe_ride pillar bodies if they still
+    # contain the previous long-form default text. Any body that has been
+    # edited by the admin (differs from the previous default) is left alone.
+    await _migrate_why_pillar_bodies_short()
+
     # ----- Testimonials & Gallery -----
     if await db.testimonials.count_documents({}) == 0:
         await db.testimonials.insert_many([dict(t) for t in DEFAULT_TESTIMONIALS])
@@ -256,3 +261,54 @@ async def run_startup_seeds() -> None:
             },
         ]
         await db.partners.insert_many(partner_seeds)
+
+
+
+# Previous (long) default bodies for the six why_safe_ride pillars. Used by the
+# one-time migration below to detect "still on default seed" vs "user has
+# edited" – we ONLY shorten if the current body_de matches the old default
+# EXACTLY (i.e. was never touched by an admin).
+_OLD_PILLAR_BODIES_DE = {
+    "wp1": "Ich bin keine anonyme Fahrschule mit fünfzehn Lehrern und einer Hotline. Ich bin Nadine – und ich kenne jeden meiner Fahrschüler:innen mit Namen, weiss um deine Stärken und deine Baustellen, deine Lieblingsstrecken und deine Fahrlieder. Bei mir bekommst du keine Lehrer-Rotation, keine Sätze wie \"Hat dir das Kollege X nicht so erklärt?\" – sondern eine durchgehende Begleitung von der ersten Lektion bis zum Tag, an dem du den Ausweis in der Hand hältst. Das schafft Vertrauen. Und Vertrauen ist genau das, was hinter dem Steuer den Unterschied macht.",
+    "wp2": "Fahrenlernen ist Kopfsache. Wer Angst hat oder gestresst ist, vergisst alles, was er gelernt hat – sobald die Prüferin neben dir sitzt. Genau deshalb verbinde ich klassische Fahrlehrer-Arbeit mit fundiertem Mental Coaching: Atemübungen, mentale Vorbereitung, Reframing von Fehlern und gezielte Visualisierung. Du lernst nicht nur, wie man rückwärts parkiert – du lernst auch, wie du dich VOR und WÄHREND der Prüfung in einen ruhigen, klaren Zustand bringst. Das ist ein Unterschied, der zählt: Schüler:innen, die mit mir arbeiten, schaffen die Prüfung im Schnitt nicht nur schneller, sondern auch entspannter.",
+    "wp3": "Standard-Fahrschulen funktionieren für Standard-Schüler:innen. Wer im ADHS-Spektrum unterwegs ist oder Autismus hat, weiss: Reizüberflutung, Routinen, Verarbeitungstempo – das sind keine \"Macken\", sondern Tatsachen. Ich habe Weiterbildungen im neurodiversen Lernen gemacht und passe die Lektionen entsprechend an: kürzere, fokussiertere Einheiten, klarere Strukturen, vorhersehbare Abläufe, sensorisch entlastete Fahrzeuge. Das Ergebnis: Schüler:innen, die bei anderen Schulen frustriert aufgegeben haben, schaffen bei mir den Ausweis – und kommen freiwillig zurück, um Verwandte und Geschwister anzumelden.",
+    "wp4": "Audi S3, Opel OPC, Range Rover Sport – das ist keine zufällige Sammlung, das ist eine Wahl. Drei verschiedene Konzepte, drei verschiedene Fahrgefühle, drei verschiedene Sitzpositionen. Du lernst nicht nur an einem einzigen Auto, du lernst SCHALTEN. Du spürst den Unterschied zwischen einem sportlichen Kompaktwagen und einem hochbeinigen SUV. Du verstehst, wieso eine kürzere Übersetzung in der Stadt mehr Spass macht und wieso ein langer Radstand auf der Autobahn entspannter ist. Die Fahrzeuge sind technisch top, regelmässig gewartet und – ehrlich gesagt – einfach schöner als das, was die meisten meiner Kolleg:innen anbieten.",
+    "wp5": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Lektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
+    "wp6": "Was du auf der Preisseite siehst, ist das, was du zahlst. Kein Aufpreis für \"Wochenend-Lektionen\", keine versteckten Anfahrtspauschalen, keine teuren Pflicht-Pakete. Du bekommst eine ehrliche Rechnung mit allem, was du gefahren hast – inklusive Kilometerstand wenn du das willst. Wenn du eine Lektion absagst, bist du flexibel: 24 Stunden vorher reicht völlig. Ich verdiene mein Geld damit, dass meine Schüler:innen die Prüfung schaffen und mich weiterempfehlen – nicht damit, dass ich mehr Stunden draufpacke als nötig sind. Ehrlich gesagt: Wenn ich nach zehn Stunden sehe, dass du bereit bist, sage ich es dir.",
+}
+
+
+async def _migrate_why_pillar_bodies_short() -> None:
+    """Shorten why_safe_ride pillar body_de / body_en for pillars still using
+    the previous long-form default text. Any pillar that was edited by the
+    admin is left untouched (identity comparison on body_de)."""
+    doc = await db.site_content.find_one({"id": "main"}, {"why_safe_ride": 1})
+    if not doc:
+        return
+    pillars = (doc.get("why_safe_ride") or {}).get("pillars") or []
+    if not pillars:
+        return
+
+    # Build a lookup of the NEW short bodies from DEFAULT_CONTENT.
+    new_pillars_by_id = {
+        p["id"]: p
+        for p in ((DEFAULT_CONTENT.get("why_safe_ride") or {}).get("pillars") or [])
+    }
+
+    changed = False
+    for p in pillars:
+        pid = p.get("id")
+        old_default = _OLD_PILLAR_BODIES_DE.get(pid)
+        new_p = new_pillars_by_id.get(pid)
+        if not old_default or not new_p:
+            continue
+        if p.get("body_de") == old_default:
+            p["body_de"] = new_p["body_de"]
+            p["body_en"] = new_p["body_en"]
+            changed = True
+
+    if changed:
+        await db.site_content.update_one(
+            {"id": "main"}, {"$set": {"why_safe_ride.pillars": pillars}}
+        )
+        log.info("Shortened why_safe_ride pillars to compact defaults")

@@ -54,48 +54,48 @@ DEFAULT_CONTENT: Dict[str, Any] = {
                 "icon": "Heart",
                 "title_de": "Persönlich. Echt. Auf Augenhöhe.",
                 "title_en": "Personal. Real. On equal terms.",
-                "body_de": "Ich bin keine anonyme Fahrschule mit fünfzehn Lehrern und einer Hotline. Ich bin Nadine – und ich kenne jeden meiner Fahrschüler:innen mit Namen, weiss um deine Stärken und deine Baustellen, deine Lieblingsstrecken und deine Fahrlieder. Bei mir bekommst du keine Lehrer-Rotation, keine Sätze wie \"Hat dir das Kollege X nicht so erklärt?\" – sondern eine durchgehende Begleitung von der ersten Lektion bis zum Tag, an dem du den Ausweis in der Hand hältst. Das schafft Vertrauen. Und Vertrauen ist genau das, was hinter dem Steuer den Unterschied macht.",
-                "body_en": "I am not an anonymous school with fifteen instructors and a hotline. I am Nadine – and I know every one of my students by name, I know your strengths and your sticking points, your favourite routes and your driving songs. With me you get no instructor rotation, no \"Didn't colleague X explain it differently?\" – just one consistent guide from your first lesson to the day you hold the licence in your hand. That builds trust. And trust is exactly what makes the difference behind the wheel."
+                "body_de": "Ich bin Nadine – keine anonyme Fahrschule, keine Lehrer-Rotation. Persönliche Begleitung von der ersten Lektion bis zum Führerausweis.",
+                "body_en": "I'm Nadine – no anonymous school, no instructor rotation. Personal guidance from your first lesson to the licence."
             },
             {
                 "id": "wp2",
                 "icon": "Brain",
                 "title_de": "Mental Coaching statt Druck",
                 "title_en": "Mental coaching instead of pressure",
-                "body_de": "Fahrenlernen ist Kopfsache. Wer Angst hat oder gestresst ist, vergisst alles, was er gelernt hat – sobald die Prüferin neben dir sitzt. Genau deshalb verbinde ich klassische Fahrlehrer-Arbeit mit fundiertem Mental Coaching: Atemübungen, mentale Vorbereitung, Reframing von Fehlern und gezielte Visualisierung. Du lernst nicht nur, wie man rückwärts parkiert – du lernst auch, wie du dich VOR und WÄHREND der Prüfung in einen ruhigen, klaren Zustand bringst. Das ist ein Unterschied, der zählt: Schüler:innen, die mit mir arbeiten, schaffen die Prüfung im Schnitt nicht nur schneller, sondern auch entspannter.",
-                "body_en": "Learning to drive is a head game. Anyone who is anxious or stressed forgets everything they have learned – as soon as the examiner sits next to you. That is why I combine classical instruction with serious mental coaching: breathing exercises, mental prep, reframing mistakes, targeted visualisation. You don't just learn how to reverse-park – you learn how to bring yourself into a calm, clear state BEFORE and DURING the exam. That is a difference that counts: students who work with me pass not only faster on average, but also more relaxed."
+                "body_de": "Klassische Fahrlehrer-Arbeit + Mental Coaching: Atemübungen, mentale Vorbereitung, Reframing. So bestehst du die Prüfung ruhiger – und oft schneller.",
+                "body_en": "Classical instruction + mental coaching: breathing, mental prep, reframing. Pass calmer – and often faster."
             },
             {
                 "id": "wp3",
                 "icon": "Sparkles",
                 "title_de": "Spezialisiert auf ADHS & Autismus",
                 "title_en": "Specialised in ADHD & autism",
-                "body_de": "Standard-Fahrschulen funktionieren für Standard-Schüler:innen. Wer im ADHS-Spektrum unterwegs ist oder Autismus hat, weiss: Reizüberflutung, Routinen, Verarbeitungstempo – das sind keine \"Macken\", sondern Tatsachen. Ich habe Weiterbildungen im neurodiversen Lernen gemacht und passe die Lektionen entsprechend an: kürzere, fokussiertere Einheiten, klarere Strukturen, vorhersehbare Abläufe, sensorisch entlastete Fahrzeuge. Das Ergebnis: Schüler:innen, die bei anderen Schulen frustriert aufgegeben haben, schaffen bei mir den Ausweis – und kommen freiwillig zurück, um Verwandte und Geschwister anzumelden.",
-                "body_en": "Standard driving schools work for standard students. Anyone on the ADHD spectrum or with autism knows: sensory overload, routines, processing speed – these are not \"quirks\", they are facts. I have done continuing education in neurodiverse learning and adapt the lessons accordingly: shorter, more focused units, clearer structures, predictable flows, sensory-relieved vehicles. The result: students who gave up frustrated at other schools pass with me – and come back voluntarily to register their siblings."
+                "body_de": "Weiterbildung im neurodiversen Lernen. Kürzere Einheiten, klare Strukturen, sensorisch entlastete Fahrzeuge. Für Schüler:innen, die anders lernen.",
+                "body_en": "Trained in neurodiverse learning. Shorter units, clear structures, sensory-relieved vehicles. For students who learn differently."
             },
             {
                 "id": "wp4",
                 "icon": "Car",
                 "title_de": "Moderne Fahrzeuge mit Charakter",
                 "title_en": "Modern vehicles with character",
-                "body_de": "Audi S3, Opel OPC, Range Rover Sport – das ist keine zufällige Sammlung, das ist eine Wahl. Drei verschiedene Konzepte, drei verschiedene Fahrgefühle, drei verschiedene Sitzpositionen. Du lernst nicht nur an einem einzigen Auto, du lernst SCHALTEN. Du spürst den Unterschied zwischen einem sportlichen Kompaktwagen und einem hochbeinigen SUV. Du verstehst, wieso eine kürzere Übersetzung in der Stadt mehr Spass macht und wieso ein langer Radstand auf der Autobahn entspannter ist. Die Fahrzeuge sind technisch top, regelmässig gewartet und – ehrlich gesagt – einfach schöner als das, was die meisten meiner Kolleg:innen anbieten.",
-                "body_en": "Audi S3, Opel OPC, Range Rover Sport – that is not a random collection, that is a choice. Three different concepts, three different driving sensations, three different seating positions. You don't learn on a single car, you learn TO SHIFT. You feel the difference between a sporty compact and a tall SUV. You understand why a shorter gear ratio is more fun in the city and why a long wheelbase is more relaxed on the motorway. The vehicles are technically top-tier, regularly serviced and – honestly – simply more beautiful than what most of my colleagues offer."
+                "body_de": "Audi S3, Opel OPC, Range Rover Sport – drei Konzepte, drei Fahrgefühle. Du lernst zu schalten und den Unterschied zwischen Kompakt- und SUV-Fahren zu spüren.",
+                "body_en": "Audi S3, Opel OPC, Range Rover Sport – three concepts, three feels. You learn to shift and to feel the difference between compact and SUV."
             },
             {
                 "id": "wp5",
                 "icon": "MapPin",
                 "title_de": "14 Standorte in 4 Kantonen",
                 "title_en": "14 locations across 4 cantons",
-                "body_de": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur und Lenzerheide – wo immer du wohnst, lernst oder arbeitest, ich komme zu dir. Du verlierst keine Zeit mit langen Anfahrten zu irgendeinem zentralen Fahrschulbüro. Wir starten dort, wo es für dich Sinn ergibt: am Bahnhof, vor deiner Schule, an deinem Arbeitsplatz. Das macht den Unterschied zwischen einer halben \"Lektion mit Stress weil ich noch zur Uni muss\" und einer richtigen 50-Minuten-Lektion, in der du wirklich etwas mitnimmst.",
-                "body_en": "Einsiedeln, Lachen, Siebnen, Pfäffikon SZ, Altendorf, Wädenswil, Horgen, Richterswil, Rapperswil, Chur and Lenzerheide – wherever you live, study or work, I come to you. You don't lose time on long drives to some central driving-school office. We start where it makes sense for you: at the station, in front of your school, at your workplace. That is the difference between half a \"lesson with stress because I still have to get to uni\" and a proper 50-minute session in which you actually take something away."
+                "body_de": "Zürich, Schwyz, St. Gallen, Graubünden. Wir treffen uns dort, wo es für dich Sinn ergibt: Bahnhof, Schule oder Arbeitsplatz.",
+                "body_en": "Zurich, Schwyz, St. Gallen, Grisons. We meet where it works for you: station, school or workplace."
             },
             {
                 "id": "wp6",
                 "icon": "ShieldCheck",
                 "title_de": "Transparente Preise. Keine Tricks.",
                 "title_en": "Transparent pricing. No tricks.",
-                "body_de": "Was du auf der Preisseite siehst, ist das, was du zahlst. Kein Aufpreis für \"Wochenend-Lektionen\", keine versteckten Anfahrtspauschalen, keine teuren Pflicht-Pakete. Du bekommst eine ehrliche Rechnung mit allem, was du gefahren hast – inklusive Kilometerstand wenn du das willst. Wenn du eine Lektion absagst, bist du flexibel: 24 Stunden vorher reicht völlig. Ich verdiene mein Geld damit, dass meine Schüler:innen die Prüfung schaffen und mich weiterempfehlen – nicht damit, dass ich mehr Stunden draufpacke als nötig sind. Ehrlich gesagt: Wenn ich nach zehn Stunden sehe, dass du bereit bist, sage ich es dir.",
-                "body_en": "What you see on the pricing page is what you pay. No surcharge for \"weekend lessons\", no hidden travel flat-rates, no expensive mandatory packages. You get an honest invoice with everything you drove – including odometer if you want. If you cancel a lesson, you are flexible: 24 hours before is enough. I earn my money from my students passing and recommending me – not from packing on more hours than necessary. Honestly: if I see after ten hours that you are ready, I will tell you."
+                "body_de": "Was du auf der Preisseite siehst, zahlst du. Keine versteckten Anfahrten, keine Aufpreise. 24 Stunden Absage-Frist – ehrlich und flexibel.",
+                "body_en": "What you see on the pricing page is what you pay. No hidden travel fees, no markups. 24-hour cancellation policy."
             }
         ],
         "closing_de": "Das ist Safe Ride. Keine Marketing-Floskel. Sondern eine ehrliche, persönliche, moderne Fahrschule, die genau das tut, was sie auf der Verpackung verspricht: dich sicher, entspannt und in deinem eigenen Tempo zum Ausweis bringen.",

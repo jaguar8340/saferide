@@ -60,9 +60,10 @@ export default function About({ data }) {
               {[
                 {
                   key: "stat1",
+                  vPath: "about.stat1_value",
                   v: data.stat1_value,
-                  l_de: data.stat1_label_de,
-                  l_en: data.stat1_label_en,
+                  lPath: `about.stat1_label_${lang}`,
+                  l: pick(data.stat1_label_de, data.stat1_label_en),
                   progress: 0.86,
                   color: "#ff5a36",
                   textColor: "#0f172a",
@@ -71,9 +72,10 @@ export default function About({ data }) {
                 },
                 {
                   key: "stat2",
+                  vPath: "about.stat2_value",
                   v: data.stat2_value,
-                  l_de: data.stat2_label_de,
-                  l_en: data.stat2_label_en,
+                  lPath: `about.stat2_label_${lang}`,
+                  l: pick(data.stat2_label_de, data.stat2_label_en),
                   progress: 0.62,
                   color: "#1e6fff",
                   textColor: "#0f172a",
@@ -82,9 +84,10 @@ export default function About({ data }) {
                 },
                 {
                   key: "stat3",
+                  vPath: "about.stat3_value",
                   v: data.stat3_value,
-                  l_de: data.stat3_label_de,
-                  l_en: data.stat3_label_en,
+                  lPath: `about.stat3_label_${lang}`,
+                  l: pick(data.stat3_label_de, data.stat3_label_en),
                   progress: 0.74,
                   color: "#ff8c42",
                   textColor: "#0f172a",
@@ -99,12 +102,25 @@ export default function About({ data }) {
                 >
                   <Speedo
                     testid={`about-speedo-${i}`}
-                    value={s.v}
-                    label={pick(s.l_de, s.l_en)}
                     progress={s.progress}
                     color={s.color}
                     textColor={s.textColor}
-                  />
+                  >
+                    <Editable
+                      path={s.vPath}
+                      value={s.v}
+                      as="div"
+                      className="mt-[-14px] font-display leading-none tabular-nums block text-center"
+                      style={{ color: s.textColor, fontSize: "clamp(1.9rem, 3.5vw, 2.8rem)" }}
+                    />
+                    <Editable
+                      path={s.lPath}
+                      value={s.l}
+                      as="div"
+                      className="mt-2 text-[10px] tracking-[0.2em] uppercase font-semibold block text-center"
+                      style={{ color: s.textColor, opacity: 0.72 }}
+                    />
+                  </Speedo>
                 </div>
               ))}
             </div>
