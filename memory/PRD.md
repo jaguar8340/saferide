@@ -181,6 +181,12 @@ admin@saferide.ch / SafeRide2026!
 
 ## P0/P1/P2 Backlog Update (2026-02-07)
 - ✅ Alle 3 P0-Bugs aus User-Nachricht vom 07.02.2026 gefixt und getestet.
+- ✅ **UX-Batch 07.02.2026 (Iteration 22) — 5 Änderungen (DONE, 26/26 Backend + 5/5 Frontend green):**
+  - **Marquee/Laufschrift**: `bg-black text-white`, keine Farben, kein Coral-Border mehr (`Marquee.jsx`).
+  - **Hero-Highlight ("Anders. Besser. Mutiger.")**: Farbe von `#ff5a36` → `#dc2626` (Rot statt Orange, `Hero.jsx`).
+  - **About-Speedos editierbar**: `Speedo` akzeptiert jetzt optional `children`. In `About.jsx` sind Wert & Label mit `<Editable>` umschlossen (Pfade `about.stat{n}_value`, `about.stat{n}_label_{de|en}`).
+  - **WhySafeRide-Grid**: Asymmetrisches 12-col-Layout ersetzt durch `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` (alle 6 Cards gleich breit, `Δ < 0.02px`). Padding von `p-7/p-9` → `p-6/p-7`. Pillar-Bodies via einmalige Migration `_migrate_why_pillar_bodies_short()` in `startup.py` gekürzt (nur wenn body_de exakt altem Default entsprach; wp5 zusätzlich per API-PATCH weil vom Kunden bereits editiert).
+  - **4 Kantonswappen auf wp5**: Neue conditional Rendering-Zeile in `WhySafeRide.jsx` (`p.icon === "MapPin"` → 4 `<CantonWappen>` ZH/SZ/SG/GR zwischen Titel und Body). testid `why-pillar-4-wappen`.
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
