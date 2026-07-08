@@ -187,6 +187,15 @@ admin@saferide.ch / SafeRide2026!
   - **About-Speedos editierbar**: `Speedo` akzeptiert jetzt optional `children`. In `About.jsx` sind Wert & Label mit `<Editable>` umschlossen (Pfade `about.stat{n}_value`, `about.stat{n}_label_{de|en}`).
   - **WhySafeRide-Grid**: Asymmetrisches 12-col-Layout ersetzt durch `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` (alle 6 Cards gleich breit, `Δ < 0.02px`). Padding von `p-7/p-9` → `p-6/p-7`. Pillar-Bodies via einmalige Migration `_migrate_why_pillar_bodies_short()` in `startup.py` gekürzt (nur wenn body_de exakt altem Default entsprach; wp5 zusätzlich per API-PATCH weil vom Kunden bereits editiert).
   - **4 Kantonswappen auf wp5**: Neue conditional Rendering-Zeile in `WhySafeRide.jsx` (`p.icon === "MapPin"` → 4 `<CantonWappen>` ZH/SZ/SG/GR zwischen Titel und Body). testid `why-pillar-4-wappen`.
+
+- ✅ **Iteration 23 (07.02.2026) — Lernfahrerausweis-Upload + Originale Kantonswappen (DONE, 36/36 Backend + 5/5 Frontend green):**
+  - **Originale Kantonswappen ZH/SZ/SG/GR** ersetzen die selbst gebauten stilisierten SVGs. 4 Wikimedia-Commons Public-Domain SVGs unter `/app/frontend/public/wappen/{ZH,SZ,SG,GR}.svg` (ZH 1KB, SZ 2.5KB, SG 1.3KB, GR 4.3KB). `CantonWappen.jsx` rendert nun `<img src="/wappen/{code}.svg" loading="lazy" decoding="async" data-testid="canton-wappen-{code}">`. Multi-Code Regions (z.B. "Kanton ZH / SZ") werden weiterhin unterstützt.
+  - **Lernfahrerausweis-Upload im VKU-Formular** (`VkuRegistrationForm.jsx`): Neuer Upload-Button vor "Bemerkungen". Hidden `<input type="file">` + Dashed-Border-Button. Akzeptiert JPG/PNG/WebP/PDF bis 8 MB. Sobald eine Datei gewählt wird, POST an `/api/vku/permit-upload` sofort; Button wird durch grünen "Datei angehängt"-Pill mit X-Button ersetzt. testids: `vku-form-permit-input`, `vku-form-permit-upload-btn`, `vku-form-permit-uploaded`, `vku-form-permit-clear`.
+  - **Backend**: Neuer PUBLIC-Endpunkt `POST /api/vku/permit-upload` in `routers/vku.py` (kein Auth). Payload multipart `file`. Validiert MIME zuerst (400) dann Size (413, max 8 MB). Speichert unter `saferide/vku-permits/{uuid}.{ext}` via `put_object`. Returns `{path, url:"/api/files/<path>", filename, kind:"image"|"pdf"}`.
+  - **Schema**: `VkuRegistrationCreate` erweitert um `permit_file_url:str=""` und `permit_file_name:str=""` (beide optional).
+  - **Storage**: `core/storage.py` erweitert um `ALLOWED_DOCUMENT_TYPES={"application/pdf":"pdf"}` und `MAX_DOCUMENT_BYTES=8*1024*1024` (getrennt von IMAGE 10 MB / VIDEO 60 MB).
+  - **Admin-Viewer**: `VkuRegistrationsViewer.jsx` zeigt bei ausgewählter Anmeldung eine neue "Lernfahrerausweis"-Sektion mit Öffnen-Link (`vku-registration-permit-link`) sobald `permit_file_url` gesetzt.
+  - Verifiziert per Playwright E2E: anonymous Formular ausfüllen → PNG hochladen → Success → Admin sieht Row mit funktionierendem Datei-Link.
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
