@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Mail, Phone, Trash2, Inbox as InboxIcon, Cake, GraduationCap, MessageSquare } from "lucide-react";
+import { Mail, Phone, Trash2, Inbox as InboxIcon, Cake, GraduationCap, MessageSquare, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
@@ -175,6 +175,26 @@ export default function VkuRegistrationsViewer() {
                     <div className="p-4 bg-[#fafaf9] border border-[#e7e5e4] text-sm text-[#1c1917] leading-relaxed whitespace-pre-wrap rounded-lg font-light">
                       {selected.notes}
                     </div>
+                  </div>
+                )}
+
+                {/* Permit file */}
+                {selected.permit_file_url && (
+                  <div className="mt-5">
+                    <div className="flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-[#475569] mb-2">
+                      <FileText size={11} /> Lernfahrerausweis
+                    </div>
+                    <a
+                      href={selected.permit_file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid="vku-registration-permit-link"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f172a] bg-white border border-[#e7e5e4] hover:border-[#ff5a36] hover:text-[#ff5a36] rounded-full px-4 py-2 transition-colors"
+                    >
+                      <FileText size={13} />
+                      {selected.permit_file_name || "Datei öffnen"}
+                      <ExternalLink size={12} />
+                    </a>
                   </div>
                 )}
               </div>

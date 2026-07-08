@@ -1,59 +1,28 @@
 /**
- * Small inline SVG cantonal coats of arms for Swiss cantons.
- * Uses simplified flag-style art (no licensing concerns) sized to fit
- * inside a tag/pill. Each canton wappen ships as a tiny self-contained SVG.
+ * Small inline cantonal coats of arms for the four Swiss cantons Safe Ride
+ * operates in. Uses the OFFICIAL Wikimedia Commons "matte" SVG artwork,
+ * shipped locally under /wappen/{code}.svg.
  *
  * Detection: pass either a `code` ("ZH"|"SZ"|"SG"|"GR") or a free-text
  * `region` string (e.g. "Kanton Schwyz") and the component returns null
  * if no match is found.
  */
 
-// Map of canton code → simple, recognisable SVG of the flag/wappen.
-const WAPPEN_SVG = {
-  // Schwyz: red field with white inset cross in upper-left
-  SZ: (
-    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect width="32" height="32" rx="4" fill="#dc2626" />
-      <g fill="#ffffff">
-        <rect x="5" y="5" width="2.4" height="6" />
-        <rect x="3.8" y="6.5" width="4.8" height="2.4" />
-      </g>
-    </svg>
-  ),
-  // Zürich: diagonally split blue/white
-  ZH: (
-    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect width="32" height="32" rx="4" fill="#ffffff" />
-      <polygon points="0,0 32,0 0,32" fill="#1d4ed8" />
-    </svg>
-  ),
-  // St. Gallen: green field with fasces (simplified)
-  SG: (
-    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect width="32" height="32" rx="4" fill="#16a34a" />
-      <g fill="#ffffff">
-        <rect x="14" y="6" width="4" height="20" rx="0.6" />
-        <rect x="11.5" y="12" width="9" height="1.6" />
-        <rect x="11.5" y="16" width="9" height="1.6" />
-        <rect x="11.5" y="20" width="9" height="1.6" />
-      </g>
-    </svg>
-  ),
-  // Graubünden: triple combined (black/white left, blue/yellow top-right, white-red bottom-right)
-  GR: (
-    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect width="32" height="32" rx="4" fill="#ffffff" />
-      {/* Left half: black ibex on white background (simplified to black triangle) */}
-      <polygon points="0,0 16,0 16,32 0,32" fill="#0f172a" />
-      <polygon points="0,0 16,0 16,32" fill="#ffffff" opacity="0.95" />
-      {/* Top-right quadrant blue-yellow split */}
-      <polygon points="16,0 32,0 32,16 16,16" fill="#1d4ed8" />
-      <polygon points="16,0 32,0 16,16" fill="#fbbf24" />
-      {/* Bottom-right quadrant red-white split */}
-      <polygon points="16,16 32,16 32,32 16,32" fill="#ffffff" />
-      <polygon points="16,16 32,32 16,32" fill="#dc2626" />
-    </svg>
-  ),
+// Human-readable canton names (for accessibility labels + tooltips).
+const CANTON_NAMES = {
+  ZH: "Zürich",
+  SZ: "Schwyz",
+  SG: "St. Gallen",
+  GR: "Graubünden",
+};
+
+// Local, official Wappen SVGs from Wikimedia Commons (public domain,
+// downloaded once to /app/frontend/public/wappen/{code}.svg).
+const WAPPEN_SRC = {
+  ZH: "/wappen/ZH.svg",
+  SZ: "/wappen/SZ.svg",
+  SG: "/wappen/SG.svg",
+  GR: "/wappen/GR.svg",
 };
 
 const NAME_TO_CODE = {
@@ -103,6 +72,23 @@ export function detectCantonCodes(input) {
   return codes;
 }
 
+function Shield({ code, size, className }) {
+  const src = WAPPEN_SRC[code];
+  const name = CANTON_NAMES[code] || code;
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={`Wappen Kanton ${name}`}
+      title={`Kanton ${name}`}
+      loading="lazy"
+      decoding="async"
+      data-testid={`canton-wappen-${code}`}
+      className={`inline-block shrink-0 object-contain ${size} ${className}`}
+    />
+  );
+}
+
 /**
  * Inline canton wappen. Returns null when no match.
  * @param {object} props
@@ -118,32 +104,13 @@ export default function CantonWappen({ code, region, size = "w-4 h-4", className
   const codes = code ? [code] : detectCantonCodes(region);
   if (codes.length === 0) return null;
   if (codes.length === 1) {
-    const resolved = codes[0];
-    if (!WAPPEN_SVG[resolved]) return null;
-    return (
-      <span
-        data-testid={`canton-wappen-${resolved}`}
-        className={`inline-block shrink-0 overflow-hidden rounded-[3px] ${size} ${className}`}
-        aria-label={`Wappen ${resolved}`}
-      >
-        {WAPPEN_SVG[resolved]}
-      </span>
-    );
+    return <Shield code={codes[0]} size={size} className={className} />;
   }
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`}>
-      {codes.map((c) =>
-        WAPPEN_SVG[c] ? (
-          <span
-            key={c}
-            data-testid={`canton-wappen-${c}`}
-            className={`inline-block shrink-0 overflow-hidden rounded-[3px] ${size}`}
-            aria-label={`Wappen ${c}`}
-          >
-            {WAPPEN_SVG[c]}
-          </span>
-        ) : null,
-      )}
+    <span className={`inline-flex items-center gap-1 ${className}`}>
+      {codes.map((c) => (
+        <Shield key={c} code={c} size={size} className="" />
+      ))}
     </span>
   );
 }

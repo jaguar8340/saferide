@@ -1,6 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Loader2, CheckCircle2, User, Mail, Phone, Cake, ClipboardList, CalendarDays } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  CheckCircle2,
+  User,
+  Mail,
+  Phone,
+  Cake,
+  ClipboardList,
+  CalendarDays,
+  Upload,
+  FileText,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
@@ -45,12 +58,60 @@ export default function VkuRegistrationForm({ months = [], lang = "de" }) {
     birth_date: "",
     course_slot: "",
     notes: "",
+    permit_file_url: "",
+    permit_file_name: "",
   });
   const [state, setState] = useState("idle"); // idle | loading | success
   const [err, setErr] = useState("");
+  const [permitState, setPermitState] = useState("idle"); // idle | uploading | uploaded | error
+  const fileInputRef = useRef(null);
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const onPermitSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Client-side size guard: 8 MB.
+    if (file.size > 8 * 1024 * 1024) {
+      setPermitState("error");
+      toast.error(
+        lang === "en"
+          ? "File too large (max 8 MB)."
+          : "Datei zu gross (max. 8 MB).",
+      );
+      e.target.value = "";
+      return;
+    }
+    setPermitState("uploading");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await api.post("/vku/permit-upload", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((f) => ({
+        ...f,
+        permit_file_url: r.data.url,
+        permit_file_name: r.data.filename || file.name,
+      }));
+      setPermitState("uploaded");
+      toast.success(
+        lang === "en" ? "Learner permit uploaded" : "Lernfahrerausweis hochgeladen",
+      );
+    } catch (err2) {
+      setPermitState("error");
+      toast.error(formatApiError(err2));
+    } finally {
+      // Reset the input so re-selecting the same file re-triggers change.
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const clearPermit = () => {
+    setForm((f) => ({ ...f, permit_file_url: "", permit_file_name: "" }));
+    setPermitState("idle");
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -82,7 +143,10 @@ export default function VkuRegistrationForm({ months = [], lang = "de" }) {
         birth_date: "",
         course_slot: "",
         notes: "",
+        permit_file_url: "",
+        permit_file_name: "",
       });
+      setPermitState("idle");
       toast.success(
         lang === "en"
           ? "Registration received – we'll reach out within 24h."
@@ -228,6 +292,81 @@ export default function VkuRegistrationForm({ months = [], lang = "de" }) {
               </option>
             ))}
           </select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className={label}>
+            <FileText size={11} />{" "}
+            {lang === "en"
+              ? "Learner permit (photo or PDF)"
+              : "Lernfahrerausweis (Foto oder PDF)"}
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            onChange={onPermitSelect}
+            className="hidden"
+            data-testid="vku-form-permit-input"
+          />
+          {form.permit_file_url ? (
+            <div
+              className="flex items-center gap-3 bg-[#f0fdf4] border border-[#a7f3d0] rounded-2xl px-4 py-3"
+              data-testid="vku-form-permit-uploaded"
+            >
+              <CheckCircle2
+                size={18}
+                className="text-[#065f46] shrink-0"
+                strokeWidth={2.2}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-[#065f46] truncate">
+                  {form.permit_file_name || (lang === "en" ? "Uploaded" : "Hochgeladen")}
+                </div>
+                <div className="text-[10px] tracking-widest uppercase font-semibold text-[#065f46]/70">
+                  {lang === "en" ? "Attached to your registration" : "An deine Anmeldung angehängt"}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearPermit}
+                className="text-[#065f46] hover:text-[#dc2626] p-1 rounded-full transition-colors"
+                data-testid="vku-form-permit-clear"
+                aria-label={lang === "en" ? "Remove file" : "Datei entfernen"}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={permitState === "uploading"}
+              data-testid="vku-form-permit-upload-btn"
+              className="w-full flex items-center gap-3 bg-white border-2 border-dashed border-[#e2e8f0] hover:border-[#ff5a36] hover:bg-[#fff7f3] rounded-2xl px-4 py-3.5 text-left transition-all disabled:opacity-60 disabled:cursor-wait"
+            >
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#ff5a36]/10 text-[#ff5a36] shrink-0">
+                {permitState === "uploading" ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Upload size={16} strokeWidth={2.2} />
+                )}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-semibold text-[#0f172a]">
+                  {permitState === "uploading"
+                    ? lang === "en"
+                      ? "Uploading…"
+                      : "Wird hochgeladen…"
+                    : lang === "en"
+                      ? "Choose file to upload"
+                      : "Datei zum Hochladen wählen"}
+                </span>
+                <span className="block text-[10px] tracking-widest uppercase font-semibold text-[#94a3b8] mt-0.5">
+                  JPG · PNG · PDF · {lang === "en" ? "max 8 MB" : "max. 8 MB"}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
         <div className="sm:col-span-2">
           <label className={label}>

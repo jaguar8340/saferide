@@ -21,8 +21,12 @@ ALLOWED_VIDEO_TYPES = {
     "video/quicktime": "mov",
     "video/webm": "webm",
 }
+ALLOWED_DOCUMENT_TYPES = {
+    "application/pdf": "pdf",
+}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024   # 10 MB images
 MAX_VIDEO_BYTES = 60 * 1024 * 1024    # 60 MB videos
+MAX_DOCUMENT_BYTES = 8 * 1024 * 1024  # 8 MB documents (learner permit scans)
 
 _storage_key: Optional[str] = None
 

@@ -136,6 +136,8 @@ class VkuRegistrationCreate(BaseModel):
     birth_date: str = Field(min_length=1, max_length=40)
     course_slot: str = Field(min_length=1, max_length=200)
     notes: str = Field(default="", max_length=2000)
+    permit_file_url: str = Field(default="", max_length=500)
+    permit_file_name: str = Field(default="", max_length=200)
 
 
 class VkuRegistration(VkuRegistrationCreate):

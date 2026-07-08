@@ -1,13 +1,57 @@
 """VKU course registrations – public POST + admin management."""
+import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from core.db import db
 from core.security import get_current_admin
+from core.storage import (
+    ALLOWED_DOCUMENT_TYPES,
+    ALLOWED_IMAGE_TYPES,
+    APP_NAME,
+    MAX_DOCUMENT_BYTES,
+    put_object,
+)
 from models.schemas import VkuRegistration, VkuRegistrationCreate
 
 router = APIRouter(tags=["vku"])
+
+
+@router.post("/vku/permit-upload")
+async def upload_permit(file: UploadFile = File(...)):
+    """PUBLIC endpoint for uploading a learner permit (Lernfahrerausweis)
+    scan or photo as part of the VKU registration flow. Accepts JPEG/PNG/WebP
+    images or a single PDF. Max 8 MB. No auth required – the returned URL is
+    stored on the VkuRegistration row created immediately afterwards."""
+    content_type = (file.content_type or "application/octet-stream").lower()
+    is_image = content_type in ALLOWED_IMAGE_TYPES
+    is_pdf = content_type in ALLOWED_DOCUMENT_TYPES
+    if not (is_image or is_pdf):
+        raise HTTPException(
+            status_code=400,
+            detail="Nur Bilder (JPG/PNG/WebP) oder PDF-Dateien erlaubt.",
+        )
+    data = await file.read()
+    if len(data) > MAX_DOCUMENT_BYTES:
+        max_mb = MAX_DOCUMENT_BYTES // (1024 * 1024)
+        raise HTTPException(
+            status_code=413, detail=f"Datei zu gross (max. {max_mb} MB)."
+        )
+    ext = (
+        ALLOWED_DOCUMENT_TYPES[content_type]
+        if is_pdf
+        else ALLOWED_IMAGE_TYPES[content_type]
+    )
+    path = f"{APP_NAME}/vku-permits/{uuid.uuid4()}.{ext}"
+    result = put_object(path, data, content_type)
+    stored_path = result.get("path", path)
+    return {
+        "path": stored_path,
+        "url": f"/api/files/{stored_path}",
+        "filename": file.filename or f"permit.{ext}",
+        "kind": "pdf" if is_pdf else "image",
+    }
 
 
 @router.post("/vku/registrations", response_model=VkuRegistration)

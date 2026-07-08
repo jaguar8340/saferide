@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 23 (Feb 7, 2026) full E2E validation of (1) original Wikimedia Wappen ZH/SZ/SG/GR and (2) VKU learner-permit (Lernfahrerausweis) upload. 100% pass. Backend pytest: 10/10 new iteration23 tests pass (wappen static assets served with correct SVG bodies, POST /api/vku/permit-upload accepts PNG/PDF returning {path,url,filename,kind}, GET /api/files/<path> returns original bytes with correct Content-Type, 400 on text/plain, 413 on 9 MB payload, full registration lifecycle with permit_file_url persistence, list endpoint requires admin). Regression: 26/26 (9 P0 + 17 iteration22) still green. Frontend Playwright: (a) homepage [data-testid=why-pillar-4-wappen] has exactly 4 <img> children with src ∈ {/wappen/ZH.svg, /wappen/SZ.svg, /wappen/SG.svg, /wappen/GR.svg}; (b) /standorte/pfaeffikon-sz renders CantonWappen with /wappen/*.svg src; (c) /vku form shows [data-testid=vku-form-permit-upload-btn] with 'Datei zum Hochladen wählen' (DE) and 'Choose file to upload' (EN) after language toggle; (d) full anonymous VKU registration E2E: filled 6 fields, attached in-memory PNG via [data-testid=vku-form-permit-input].set_input_files, waited for [data-testid=vku-form-permit-uploaded] showing 'test_permit.png · An deine Anmeldung angehängt', submitted, [data-testid=vku-form-success] appeared; (e) admin login → sidebar 'VKU-Anmeldungen' → row visible with correct name & course · detail panel shows 'Lernfahrerausweis' section with [data-testid=vku-registration-permit-link] href=/api/files/saferide/vku-permits/<uuid>.png and text 'test_permit.png'; (f) cleanup via [data-testid=vku-registration-delete] confirmed row removal. curl on the permit URL returned 200 image/png with valid PNG signature.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iteration23.py",
+    "/app/test_reports/pytest/it23_results.xml",
+    "/app/backend/tests/test_p0_fixes.py",
+    "/app/backend/tests/test_iteration22.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VkuRegistrationForm.jsx – nice UX: file input is hidden, dashed button reveals it; after successful upload the button is replaced by a green 'attached' pill with X to clear. permit_file_url + permit_file_name flow through form state → POST /api/vku/registrations, decoupling the two-step upload from submission cleanly.",
+    "vku.py – upload_permit correctly reads the file into memory before size check (order matters: MIME first for cheap 400, size check second for 413). Path scoping under {APP_NAME}/vku-permits/{uuid}.{ext} avoids collisions.",
+    "CantonWappen.jsx – switching from inline SVG to <img src='/wappen/{code}.svg'> is a significant improvement for authenticity (real heraldic Wikimedia files) AND correctness (public-domain provenance). Nice touch: loading='lazy' + decoding='async' + object-contain classes.",
+    "storage.py – MAX_DOCUMENT_BYTES=8MB is separate from MAX_UPLOAD_BYTES=10MB (image gallery) and MAX_VIDEO_BYTES=60MB (videos). Correct separation of concerns.",
+    "Note: /admin?tab=vku URL param maps to internal tab key 'vku_registrations' – clicking sidebar rewrites URL to ?tab=vku_registrations. If E1 wants /admin?tab=vku (as spec says) to auto-select the VKU tab, add an alias in the tab-key resolution logic. Minor / low-priority."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration23.py (created – 10 tests, 100% pass)"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 iteration23 + 26/26 regression = 36/36)",
+    "frontend": "100% (5/5: 4 wappen on homepage, wappen on location page, upload btn DE+EN labels, full registration+upload+admin+delete E2E)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! – login OK",
+  "seed_data_creation": "Created 1 VKU registration (email test-it23-e2e-1783533416@saferide.ch, permit_file test_permit.png) during E2E — deleted via UI delete button. Backend test_create_list_delete_with_permit also creates+deletes its own record. Final DB clean of test-it23 rows.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 23 stack: (A) 4 original Swiss cantonal Wappen served statically from /app/frontend/public/wappen/{ZH,SZ,SG,GR}.svg – preview origin returns them with content-type image/svg+xml. CantonWappen.jsx renders <img src='/wappen/{code}.svg' data-testid='canton-wappen-{code}'>; multi-code (region='ZH / SZ') is supported. (B) VKU permit upload: POST /api/vku/permit-upload (PUBLIC, no auth) accepts multipart file field 'file', types image/jpeg image/png image/webp image/gif application/pdf, max 8 MB → returns {path, url:'/api/files/<path>', filename, kind:'image'|'pdf'}. 400 on unsupported MIME, 413 on oversize. VkuRegistrationCreate model has optional permit_file_url & permit_file_name (default ''). Admin detail panel shows [data-testid=vku-registration-permit-link] when permit_file_url is set. To reach the VKU admin tab in tests: after admin login, either click sidebar text 'VKU-Anmeldungen' or navigate to /admin?tab=vku_registrations (the ?tab=vku shortcut does NOT work – it falls back to 'content' tab; consider adding an alias). Test credentials unchanged. All prior iteration22 assertions still hold.",
+  "rca of the issue": "No new bugs. Feature works end-to-end. Only observation: the URL query param ?tab=vku does not map to the VKU-Anmeldungen tab (it silently falls back to 'content'); the actual key is 'vku_registrations'. Not a functional bug because the sidebar link works; only affects deep-linking as documented in the spec. Recommend adding a 2-line alias {'vku': 'vku_registrations'} in the admin tab resolver if deep-linking from spec is desired."
+}
