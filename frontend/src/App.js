@@ -16,6 +16,7 @@ import SportPreview from "@/pages/SportPreview";
 import ElegantPreview from "@/pages/ElegantPreview";
 import VividPreview from "@/pages/VividPreview";
 import LiveryPreview from "@/pages/LiveryPreview";
+import CouturePreview from "@/pages/CouturePreview";
 import WhatsAppFab from "@/components/site/WhatsAppFab";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -75,6 +76,7 @@ function App() {
                 <Route path="/preview/elegant" element={<ElegantPreview />} />
                 <Route path="/preview/vivid" element={<VividPreview />} />
                 <Route path="/preview/livery" element={<LiveryPreview />} />
+                <Route path="/preview/couture" element={<CouturePreview />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"

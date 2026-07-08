@@ -1,0 +1,364 @@
+/*
+ * Couture design variant – elegant editorial × sporty rebellion.
+ * All rules are scoped to `.couture-root` so they cannot leak into the
+ * live site. Only reachable via /preview/couture.
+ *
+ * Design tokens:
+ *   - noir       #0b0b0f  (deep base, midnight)
+ *   - ink        #17171d  (secondary dark surface)
+ *   - cream      #f2ecdf  (parchment / body text on dark)
+ *   - ivory      #f8f3e7  (page background alt)
+ *   - champagne  #c9a961  (elegant metallic accent)
+ *   - scarlet    #e6122e  (racing red, primary sport accent)
+ *   - hot-pink   #ff2b6b  (cheeky secondary sport accent)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,700&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+
+.couture-root {
+  --c-noir: #0b0b0f;
+  --c-ink: #17171d;
+  --c-cream: #f2ecdf;
+  --c-ivory: #f8f3e7;
+  --c-champagne: #c9a961;
+  --c-scarlet: #e6122e;
+  --c-hot-pink: #ff2b6b;
+  --c-line: #2a2a34;
+  --c-muted: #6b6b78;
+
+  color: var(--c-noir);
+  background: var(--c-ivory);
+}
+
+.couture-root .font-editorial {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.couture-root .font-sport {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  letter-spacing: 0.05em;
+}
+.couture-root .font-body {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+}
+.couture-root .font-utility {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ---------- Elegant grain / paper texture ---------- */
+.couture-root .cu-paper {
+  background-color: var(--c-ivory);
+  background-image:
+    radial-gradient(rgba(11, 11, 15, 0.03) 1px, transparent 1px),
+    radial-gradient(rgba(201, 169, 97, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px, 40px 40px;
+  background-position: 0 0, 11px 11px;
+}
+.couture-root .cu-noir-grain {
+  background-color: var(--c-noir);
+  background-image:
+    radial-gradient(rgba(242, 236, 223, 0.02) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* ---------- Editorial rules ---------- */
+.couture-root .cu-hairline {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--c-champagne) 15%,
+    var(--c-champagne) 85%,
+    transparent 100%
+  );
+}
+.couture-root .cu-hairline-dark {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(11, 11, 15, 0.35) 15%,
+    rgba(11, 11, 15, 0.35) 85%,
+    transparent 100%
+  );
+}
+
+/* ---------- Race number badge (elegant × sport) ---------- */
+.couture-root .cu-race-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.75rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  background: var(--c-scarlet);
+  color: var(--c-cream);
+  border: 2px solid var(--c-noir);
+  box-shadow: 4px 4px 0 var(--c-noir);
+  transform: rotate(-2deg);
+}
+.couture-root .cu-race-num--noir {
+  background: var(--c-noir);
+  color: var(--c-champagne);
+  box-shadow: 4px 4px 0 var(--c-scarlet);
+}
+
+/* ---------- Labels ---------- */
+.couture-root .cu-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid currentColor;
+  text-transform: uppercase;
+}
+.couture-root .cu-label--champagne {
+  color: var(--c-champagne);
+}
+.couture-root .cu-label--scarlet {
+  color: var(--c-scarlet);
+}
+
+/* ---------- Buttons (elegant + sporty) ---------- */
+.couture-root .cu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.6rem;
+  background: var(--c-scarlet);
+  color: var(--c-cream);
+  border: 2px solid var(--c-noir);
+  border-radius: 999px;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.couture-root .cu-btn:hover {
+  transform: translateY(-2px);
+  background: var(--c-noir);
+  color: var(--c-champagne);
+}
+.couture-root .cu-btn--ghost {
+  background: transparent;
+  color: var(--c-noir);
+  border-color: var(--c-noir);
+}
+.couture-root .cu-btn--ghost:hover {
+  background: var(--c-noir);
+  color: var(--c-cream);
+}
+.couture-root .cu-btn--gold {
+  background: var(--c-noir);
+  color: var(--c-champagne);
+  border-color: var(--c-champagne);
+}
+.couture-root .cu-btn--gold:hover {
+  background: var(--c-champagne);
+  color: var(--c-noir);
+  border-color: var(--c-noir);
+}
+
+/* ---------- Diagonal scarlet sash ---------- */
+.couture-root .cu-sash {
+  position: absolute;
+  top: 12%;
+  right: -30%;
+  width: 60%;
+  height: 2.5rem;
+  background: var(--c-scarlet);
+  transform: rotate(28deg);
+  pointer-events: none;
+}
+.couture-root .cu-sash-text {
+  position: absolute;
+  color: var(--c-cream);
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.4em;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- Elegant frame (image portrait) ---------- */
+.couture-root .cu-frame {
+  position: relative;
+  padding: 0.5rem;
+  background: var(--c-noir);
+  border: 1px solid var(--c-champagne);
+}
+.couture-root .cu-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(201, 169, 97, 0.35);
+  pointer-events: none;
+}
+.couture-root .cu-frame::after {
+  content: '';
+  position: absolute;
+  inset: -6px -6px auto auto;
+  width: 28px;
+  height: 28px;
+  background: var(--c-scarlet);
+  border: 2px solid var(--c-noir);
+  transform: rotate(-8deg);
+  z-index: 2;
+}
+
+/* ---------- Number-marker (editorial section index) ---------- */
+.couture-root .cu-num-marker {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--c-champagne);
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- Serif italic pull-quote ---------- */
+.couture-root .cu-pull {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* ---------- Underline stroke ---------- */
+.couture-root .cu-under {
+  background-image: linear-gradient(
+    to top,
+    var(--c-scarlet) 0,
+    var(--c-scarlet) 22%,
+    transparent 22%
+  );
+  background-repeat: no-repeat;
+  padding: 0 0.15em;
+}
+
+/* ---------- Header nav elegance ---------- */
+.couture-root .cu-nav-link {
+  position: relative;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--c-cream);
+  transition: color 0.2s ease;
+}
+.couture-root .cu-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1px;
+  background: var(--c-scarlet);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s ease;
+}
+.couture-root .cu-nav-link:hover {
+  color: var(--c-champagne);
+}
+.couture-root .cu-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ---------- Pillar card ---------- */
+.couture-root .cu-pillar {
+  position: relative;
+  background: var(--c-ivory);
+  border: 1px solid rgba(11, 11, 15, 0.12);
+  padding: 2rem 1.75rem;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.couture-root .cu-pillar:hover {
+  border-color: var(--c-scarlet);
+  transform: translateY(-4px);
+}
+.couture-root .cu-pillar--dark {
+  background: var(--c-noir);
+  color: var(--c-cream);
+  border-color: var(--c-champagne);
+}
+.couture-root .cu-pillar--dark:hover {
+  border-color: var(--c-scarlet);
+}
+
+/* ---------- Fleet card ---------- */
+.couture-root .cu-fleet-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--c-ink);
+  border: 1px solid var(--c-champagne);
+  transition: transform 0.35s ease;
+}
+.couture-root .cu-fleet-card:hover {
+  transform: translateY(-6px);
+}
+.couture-root .cu-fleet-card:hover .cu-fleet-img {
+  transform: scale(1.06);
+}
+.couture-root .cu-fleet-img {
+  transition: transform 0.6s ease;
+}
+
+/* ---------- Marquee (elegant × sport) ---------- */
+.couture-root .cu-marquee-track {
+  display: flex;
+  gap: 3rem;
+  animation: cu-marquee 42s linear infinite;
+  white-space: nowrap;
+}
+@keyframes cu-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- Price plan card ---------- */
+.couture-root .cu-plan {
+  position: relative;
+  background: var(--c-ivory);
+  border: 1px solid rgba(11, 11, 15, 0.12);
+  padding: 2rem 1.75rem;
+  color: var(--c-noir);
+}
+.couture-root .cu-plan--dark {
+  background: var(--c-ink);
+  border-color: rgba(201, 169, 97, 0.25);
+  color: var(--c-cream);
+}
+.couture-root .cu-plan--featured {
+  background: var(--c-noir);
+  color: var(--c-cream);
+  border-color: var(--c-scarlet);
+  border-width: 2px;
+}
+.couture-root .cu-plan--featured .cu-plan-price {
+  color: var(--c-champagne);
+}
+
+/* ---------- Small utility ---------- */
+.couture-root .cu-divider-star::before,
+.couture-root .cu-divider-star::after {
+  content: '';
+  display: inline-block;
+  width: 40px;
+  height: 1px;
+  background: currentColor;
+  vertical-align: middle;
+  margin: 0 0.75rem;
+  opacity: 0.6;
+}

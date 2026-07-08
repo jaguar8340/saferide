@@ -188,6 +188,18 @@ admin@saferide.ch / SafeRide2026!
   - **WhySafeRide-Grid**: Asymmetrisches 12-col-Layout ersetzt durch `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` (alle 6 Cards gleich breit, `Δ < 0.02px`). Padding von `p-7/p-9` → `p-6/p-7`. Pillar-Bodies via einmalige Migration `_migrate_why_pillar_bodies_short()` in `startup.py` gekürzt (nur wenn body_de exakt altem Default entsprach; wp5 zusätzlich per API-PATCH weil vom Kunden bereits editiert).
   - **4 Kantonswappen auf wp5**: Neue conditional Rendering-Zeile in `WhySafeRide.jsx` (`p.icon === "MapPin"` → 4 `<CantonWappen>` ZH/SZ/SG/GR zwischen Titel und Body). testid `why-pillar-4-wappen`.
 
+- ✅ **Iteration 24 (07.02.2026) — Couture Design-Variante unter `/preview/couture` (DONE)**:
+  - Fünfte vollständig isolierte Design-Vorschau. Live-Design bleibt zu 100% unangetastet.
+  - Ein einzelnes Page-File `/app/frontend/src/pages/CouturePreview.jsx` (~750 LOC) mit allen 8 Sektionen inline (Preview-Banner, Header, Hero, Marquee, About, Why, Fleet, Pricing, Contact, Footer). Scoped CSS `/app/frontend/src/couture.css` (alle Regeln unter `.couture-root`).
+  - **Design-Sprache**: Editorial × Motorsport (Vogue-Magazin trifft F1-Pit-Lane). Deep-Noir `#0b0b0f` + Cream-Parchment `#f2ecdf` + Champagner-Gold `#c9a961` + Racing-Rot `#e6122e` + Hot-Pink `#ff2b6b`.
+  - **Typografie**: Playfair Display Italic (elegant serif) für Titel + Cormorant Garamond (elegant serif) für Body + Bebas Neue (kondensiert uppercase) für Labels/Buttons/Nav.
+  - **Elegant edel**: Ausgabenreferenz "Nr. 01 · Feb 2026 · The Driving Issue · CHF 0.00", champagnerfarbene Haarlinien-Divider, Italic-Serif-Pull-Quotes, Portrait-Frame mit Fine-Gold-Rand, editorial "0X." Nummerierung, magazine-cover Layout.
+  - **Sportlich frech**: Race-Number-Badges (01, 02, P1, P2, CTA) mit Hard-Offset-Scarlet-Shadow, diagonaler Rot-Sash "FRESH · FEARLESS · FAST", roter Attitude-Underline-Stroke, bold uppercase "Anders · Besser · Mutiger.", Racing-Red-CTA-Buttons.
+  - Route in `App.js` unter `/preview/couture` registriert. Alle bestehenden Preview-Routen (/preview/sport, /vivid, /livery, /elegant) funktionieren unverändert.
+  - Portrait-Fallback nutzt echtes hochgeladenes Hero-Bild via `content.hero.image_url`.
+  - testids: `couture-preview-page`, `couture-preview-banner`, `couture-preview-back-to-original`, `couture-header`, `couture-hero`, `couture-hero-title/subtitle/cta-*`, `couture-about`, `couture-about-stat-{0,1,2}`, `couture-why`, `couture-why-pillar-{0..5}`, `couture-fleet`, `couture-fleet-{0,1,2}`, `couture-pricing`, `couture-plan-{0,1,2}`, `couture-contact`, `couture-contact-phone/email`, `couture-footer`.
+
+
 - ✅ **Iteration 23 (07.02.2026) — Lernfahrerausweis-Upload + Originale Kantonswappen (DONE, 36/36 Backend + 5/5 Frontend green):**
   - **Originale Kantonswappen ZH/SZ/SG/GR** ersetzen die selbst gebauten stilisierten SVGs. 4 Wikimedia-Commons Public-Domain SVGs unter `/app/frontend/public/wappen/{ZH,SZ,SG,GR}.svg` (ZH 1KB, SZ 2.5KB, SG 1.3KB, GR 4.3KB). `CantonWappen.jsx` rendert nun `<img src="/wappen/{code}.svg" loading="lazy" decoding="async" data-testid="canton-wappen-{code}">`. Multi-Code Regions (z.B. "Kanton ZH / SZ") werden weiterhin unterstützt.
   - **Lernfahrerausweis-Upload im VKU-Formular** (`VkuRegistrationForm.jsx`): Neuer Upload-Button vor "Bemerkungen". Hidden `<input type="file">` + Dashed-Border-Button. Akzeptiert JPG/PNG/WebP/PDF bis 8 MB. Sobald eine Datei gewählt wird, POST an `/api/vku/permit-upload` sofort; Button wird durch grünen "Datei angehängt"-Pill mit X-Button ersetzt. testids: `vku-form-permit-input`, `vku-form-permit-upload-btn`, `vku-form-permit-uploaded`, `vku-form-permit-clear`.
