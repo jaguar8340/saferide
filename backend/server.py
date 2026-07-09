@@ -29,6 +29,7 @@ from routers import (
     content,
     entities,
     fahrkontrolle,
+    fahrkontrolle_pdf,
     gallery,
     locations,
     sitemap,
@@ -57,6 +58,7 @@ api.include_router(sitemap.router)
 api.include_router(vku.router)
 api.include_router(students.router)
 api.include_router(fahrkontrolle.router)
+api.include_router(fahrkontrolle_pdf.router)
 
 app.include_router(api)
 

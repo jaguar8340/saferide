@@ -23,12 +23,24 @@ import {
   Trash2,
   Route as RouteIcon,
   ChevronDown,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
+
+/** Format an ISO date (YYYY-MM-DD) as strict DD/MM/YYYY.
+ *  Returns "—" for empty/invalid input. */
+const formatDateDMY = (iso) => {
+  if (!iso || typeof iso !== "string") return "—";
+  // Accept both YYYY-MM-DD and full ISO strings (YYYY-MM-DDTHH:mm:ss…).
+  const datePart = iso.slice(0, 10);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!m) return "—";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+};
 
 export default function FahrkontrolleTab({ student }) {
   const [categories, setCategories] = useState([]);
@@ -41,6 +53,35 @@ export default function FahrkontrolleTab({ student }) {
   const [addingLesson, setAddingLesson] = useState(false);
   const [openRoutesForLesson, setOpenRoutesForLesson] = useState(null);
   const [notes, setNotes] = useState("");
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const exportPdf = async () => {
+    if (lessons.length === 0) return;
+    setExportingPdf(true);
+    try {
+      const res = await api.get(
+        `/students/${student.id}/fahrkontrolle.pdf`,
+        { responseType: "blob" },
+      );
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = `${student.last_name || ""}_${student.first_name || ""}`
+        .replace(/[^a-zA-Z0-9_-]+/g, "_")
+        .replace(/^_+|_+$/g, "") || "schueler";
+      a.download = `Fahrkontrolle_${safeName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("PDF erstellt");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -138,13 +179,24 @@ export default function FahrkontrolleTab({ student }) {
       } else {
         setAssessments((cur) => ({ ...cur, [key]: r.data }));
       }
+      // NOTE: intentionally do NOT close the popup here.
+      // Autosave keeps the popup open so the user can add a comment
+      // after tapping a rating. The popup closes on "Fertig" / X / overlay.
+    } catch (e) {
+      toast.error(formatApiError(e));
+      throw e;   // re-throw so popup skips its "Gespeichert" flash
+    }
+  };
+
+  const clearRating = async () => {
+    if (!popupCell) return;
+    try {
+      await saveRating("", "");
       setPopupCell(null);
     } catch (e) {
       toast.error(formatApiError(e));
     }
   };
-
-  const clearRating = () => saveRating("", "");
 
   const toggleRouteForLesson = async (lesson, routeId) => {
     const nextRoutes = lesson.routes?.includes(routeId)
@@ -202,20 +254,37 @@ export default function FahrkontrolleTab({ student }) {
           </span>
           Bewertungen
         </div>
-        <button
-          type="button"
-          onClick={addLesson}
-          disabled={addingLesson}
-          data-testid="fahrkontrolle-add-lesson"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
-        >
-          {addingLesson ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Plus size={12} />
-          )}
-          Neue Lektion
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={exportPdf}
+            disabled={exportingPdf || lessons.length === 0}
+            data-testid="fahrkontrolle-export-pdf"
+            title={lessons.length === 0 ? "Erst eine Lektion anlegen" : "PDF-Export A4"}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#0f172a] text-[#0f172a] px-4 py-2 rounded-full hover:bg-[#0f172a] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {exportingPdf ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <FileDown size={12} />
+            )}
+            PDF-Export
+          </button>
+          <button
+            type="button"
+            onClick={addLesson}
+            disabled={addingLesson}
+            data-testid="fahrkontrolle-add-lesson"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+          >
+            {addingLesson ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Plus size={12} />
+            )}
+            Neue Lektion
+          </button>
+        </div>
       </div>
 
       {/* Matrix (horizontal scroll on narrow screens) */}
@@ -238,21 +307,26 @@ export default function FahrkontrolleTab({ student }) {
                   <th
                     key={l.id}
                     data-testid={`fahrkontrolle-lesson-header-${l.lesson_number}`}
-                    className="px-2 py-3 text-center min-w-[64px]"
+                    className="px-1.5 py-3 text-center w-[76px] min-w-[76px] align-middle"
                   >
-                    <div className="font-display text-base leading-none">
-                      L{l.lesson_number}
+                    <div className="w-11 mx-auto flex flex-col items-center gap-0.5">
+                      <div className="font-display text-base leading-none">
+                        L{l.lesson_number}
+                      </div>
+                      <div
+                        data-testid={`fahrkontrolle-lesson-date-${l.lesson_number}`}
+                        className="text-[10px] text-[#a8a29e] leading-tight tabular-nums whitespace-nowrap"
+                      >
+                        {formatDateDMY(l.date)}
+                      </div>
+                      <button
+                        onClick={() => removeLesson(l)}
+                        className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
+                        aria-label="Lektion löschen"
+                      >
+                        <Trash2 size={9} />
+                      </button>
                     </div>
-                    <div className="text-[10px] text-[#a8a29e] mt-1">
-                      {(l.date || "").slice(5) || "—"}
-                    </div>
-                    <button
-                      onClick={() => removeLesson(l)}
-                      className="mt-1 mx-auto flex items-center justify-center w-5 h-5 rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
-                      aria-label="Lektion löschen"
-                    >
-                      <Trash2 size={9} />
-                    </button>
                   </th>
                 ))}
               </tr>
@@ -294,14 +368,14 @@ export default function FahrkontrolleTab({ student }) {
                           return (
                             <td
                               key={l.id}
-                              className="px-1.5 py-1.5 text-center"
+                              className="px-1.5 py-1.5 text-center w-[76px] min-w-[76px]"
                             >
                               <button
                                 onClick={() =>
                                   setPopupCell({ subitem: sub, lesson: l, category: cat })
                                 }
                                 data-testid={`fk-cell-${sub.id}-${l.id}`}
-                                className={`relative w-11 h-11 rounded-xl font-display text-lg leading-none flex items-center justify-center transition-all ${
+                                className={`relative w-11 h-11 mx-auto rounded-xl font-display text-lg leading-none flex items-center justify-center transition-all ${
                                   meta
                                     ? "shadow-sm active:scale-95"
                                     : "border border-dashed border-[#e7e5e4] text-[#a8a29e] hover:border-[#ff5a36]"
@@ -352,7 +426,7 @@ export default function FahrkontrolleTab({ student }) {
                   return (
                     <td
                       key={l.id}
-                      className="px-1.5 py-2 text-center relative"
+                      className="px-1.5 py-2 text-center relative w-[76px] min-w-[76px]"
                     >
                       <button
                         onClick={() =>
@@ -361,7 +435,7 @@ export default function FahrkontrolleTab({ student }) {
                           )
                         }
                         data-testid={`fk-routes-toggle-${l.id}`}
-                        className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-colors ${
+                        className={`w-11 h-11 mx-auto rounded-xl flex flex-col items-center justify-center transition-colors ${
                           routesCount > 0
                             ? "bg-[#1e6fff]/10 text-[#1e6fff]"
                             : "border border-dashed border-[#e7e5e4] text-[#a8a29e] hover:border-[#1e6fff]"
@@ -417,7 +491,7 @@ export default function FahrkontrolleTab({ student }) {
                   Übersicht
                 </td>
                 {lessons.map((l) => (
-                  <td key={l.id} className="px-1.5 py-2 text-center align-top">
+                  <td key={l.id} className="px-1.5 py-2 text-center align-top w-[76px] min-w-[76px]">
                     <div className="flex flex-wrap gap-1 justify-center">
                       {(l.routes || []).map((rid) => {
                         const r = routesById[rid];

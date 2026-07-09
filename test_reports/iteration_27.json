@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 27 – Fahrkontrolle Phase 2 (autosave + DD/MM/YYYY + column alignment + PDF export). ALL PASS. Backend pytest test_iteration27_fahrkontrolle_pdf.py (3/3) + test_iteration27_pdf_extra.py (4/4) + iteration26 regression (13/13) = 20/20 green. PDF endpoint validated with real pypdf page counts: no lessons → 1 page, lessons without comments → 1 page, lessons WITH a comment → 2 pages (Ausbildungsjournal). Filename convention Fahrkontrolle_{LastName}_{FirstName}.pdf confirmed. 401 without JWT, 404 for unknown student. Frontend Playwright 15/15 flows verified end-to-end against the public URL: login → create student → open FahrkontrolleTab → PDF button disabled at 0 lessons + enabled at ≥1 lesson → L1 date header shows '09/07/2026' (strict DD/MM/YYYY) → header td width 76px + cell td width 76px + centers align perfectly (diff 0.0px) → cell click opens RatingPopup → clicking rating-btn-3 AUTOSAVES and popup stays open + Gespeichert flash pill toggles → typing in rating-popup-comment + blur AUTOSAVES → clicking Fertig closes popup → reopening cell pre-fills the persisted comment 'Auto comment TEST' and the cell renders '3' → clicking the overlay closes popup → Leeren wipes the cell (value+comment removed) and closes popup → re-adding rating 4 + 'Final PDF test' comment + PDF-Export click triggers a real download named 'Fahrkontrolle_TESTStudent_TESTPDF.pdf', 5980 bytes, valid %PDF magic. All test data cleaned up.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iteration27_fahrkontrolle_pdf.py",
+    "/app/backend/tests/test_iteration27_pdf_extra.py",
+    "/app/backend/tests/test_iteration26_fahrkontrolle.py",
+    "/app/test_reports/pytest/it27_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "fahrkontrolle_pdf.py: PDF endpoint is well-structured — mounted at /api/students/{id}/fahrkontrolle.pdf via APIRouter(prefix='/students'). Auth guard via Depends(get_current_admin). Excludes MongoDB _id in all reads. Uses ReportLab canvas API directly (fast, no platypus tables) — A4 landscape, header + matrix + routes + optional page 2 journal. Row height auto-shrinks to fit ~35 subitems + 6 category dividers on one page. Filename slug strips non-alphanumeric and joins last_name_first_name. Nice.",
+    "fahrkontrolle_pdf.py minor: journal Paragraph.wrap(avail_w, 60mm) hard-caps comment height to 60mm — very long comments could truncate. Non-blocking for realistic use.",
+    "fahrkontrolle_pdf.py minor: only orange dot indicates a comment on page 1; the actual text lives on page 2. Correct per user spec (\"Ausbildungsjournal = page 2\").",
+    "FahrkontrolleTab.jsx saveRating(): intentionally does NOT close the popup after upsert — comment near line 182–188 documents this. Autosave semantics match user preference A.",
+    "FahrkontrolleTab.jsx clearRating(): calls saveRating('','') then closes popup. Backend upsert semantics correctly delete the row when value AND comment are both empty (verified in iteration26 tests).",
+    "RatingPopup.jsx: uses lastPersistedComment ref to avoid redundant PUTs on blur if the comment hasn't changed. Good.",
+    "RatingPopup.jsx: savedFlash timer cleared on unmount to prevent state update on unmounted component. Good.",
+    "FahrkontrolleTab.jsx formatDateDMY(): strict regex on YYYY-MM-DD, returns '—' on invalid — safe.",
+    "FahrkontrolleTab.jsx column layout: header <th> and matrix cells both use w-[76px] min-w-[76px] classes. The rating <button> inside each td is 44px (w-11 h-11) with mx-auto — visually centered inside the 76px column. Confirmed via bounding box diff 0.0px.",
+    "React key warning from iteration 26 has been fixed – categoriesSorted.map() now uses <Fragment key={cat.id}> imported from react. No console warnings observed in this iteration."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration27_pdf_extra.py (created – 4 extra PDF assertions using pypdf for accurate page counts)"
+  ],
+  "success_rate": {"backend": "100% (20/20 – 3 pdf-core + 4 pdf-extra + 13 iteration26 regression)", "frontend": "100% (15/15 playwright checks)"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (verified working)",
+  "seed_data_creation": "All test-created students and lessons cleaned up in finally blocks and via post-test API sweep. Only pre-seeded 'Stefan Haas' remains in DB.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 27 stable. Backend: GET /api/students/{id}/fahrkontrolle.pdf returns application/pdf with Content-Disposition attachment filename=\"Fahrkontrolle_{LastName}_{FirstName}.pdf\". Auth via Bearer JWT (Depends get_current_admin). Router: /app/backend/routers/fahrkontrolle_pdf.py mounted with prefix='/students'. Uses reportlab ==>= confirmed installed. Test files: test_iteration27_fahrkontrolle_pdf.py (3 tests, quick heuristic page count) + test_iteration27_pdf_extra.py (4 tests, uses pypdf for accurate counts). Fahrkontrolle testids reference from iteration_25.json still valid. New: fahrkontrolle-export-pdf, fahrkontrolle-lesson-date-{N}, rating-popup-saved-flash, rating-popup-done, rating-popup-delete. Notes: (a) after admin login the redirect target is '/' — always navigate to /admin?tab=students explicitly. (b) student detail page opens on Fahrkontrolle sub-tab by default. (c) PDF button is disabled at 0 lessons; disable check is via `is_disabled()` on the <button>. (d) Cell button is 44px inside a 76px td — column alignment must be checked on the TD, not the button bounding box.",
+  "rca of the issue": "No bugs found. Autosave, DD/MM/YYYY formatting, 76px column alignment, and PDF export all working end-to-end. During testing, one flaky selector attempt was corrected: playwright's bounding_box on the rating <button> returns 44px because the button is intentionally sized w-11 (44px) with mx-auto inside the 76px td — measure the parent td.getBoundingClientRect().width to assert column width."
+}
