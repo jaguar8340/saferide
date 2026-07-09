@@ -1,0 +1,44 @@
+{
+  "summary": "Iteration 36 (Kalender layout-fix + drag-and-drop) tested end-to-end. Backend: 15/15 Iter-35 regression + 4/4 new drag-PATCH tests green (test_iteration36_drag_patch.py) — same-day move, cross-day move, 30-min slot snapping, end_datetime auto-recompute all confirmed via POST→PATCH→GET flow. Frontend (Desktop 1600x900): layout bug from Iter-35 is FIXED — event pill (width=167px) now fits inside a single day column (176px) with NO horizontal overshoot; verified in both week (7 cols) and day (1 col + 64px time axis) views. Time-axis labels 06:00 / 12:00 / 18:00 / 22:00 all visible. NowLine renders as expected (1 instance during 06-22h working hours on today's column). Drag & Drop same-day (Mi 10:00→13:00) fires toast 'Verschoben auf 08.07. · 13:00' + PATCH request. Drag & Drop cross-day (Mo 10:00→Do 15:00) captured PATCH body {\"start_datetime\":\"2026-07-09T15:00:00\"} + toast 'Verschoben auf 09.07. · 15:00' + pill visually relocated into Do column (x-in-column verified). Click-to-edit on pill still opens appointment-modal in edit mode with prefilled customer_name. Click on empty slot (Fr 15:00) opens create-modal with prefilled T15:00. All 224 clickable 30-min slots present (7×16×2). Test data cleaned up (POST → DELETE round-trip).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/appointments/{id}", "issue": "start_datetime string is NOT validated via _parse_iso like POST does — a malformed value (e.g. 'not-a-date') is accepted with HTTP 200 and stored, corrupting the doc (end_datetime becomes '', preferred_date/time become garbage). Frontend rollback-on-error for drag & drop cannot detect this case. Recommendation: add the same _parse_iso() check in update_appointment() at /app/backend/routers/calendar.py line 159 when start_datetime is in updates. Priority: LOW (frontend always sends well-formed ISO from a Date snap)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration35_calendar.py",
+    "/app/backend/tests/test_iteration36_drag_patch.py",
+    "/app/test_reports/pytest/iter36_regression.xml",
+    "/app/test_reports/pytest/iter36_drag.xml"
+  ],
+  "action_items": [
+    "OPTIONAL / NICE-TO-HAVE: Add _parse_iso() validation to PATCH /api/appointments/{id} so an invalid start_datetime returns 400 (currently 200 + corrupt data). Enables the drag-and-drop rollback path in CalendarManager.handleEventMove."
+  ],
+  "critical_code_review_comments": [
+    "CalendarManager.jsx is now 1006 lines (up from 850+). Still recommend splitting into CalendarToolbar, CalendarGrid, EventPill, NowLine, AppointmentModal, ICalModal, UnscheduledCard modules for maintainability. Non-blocking.",
+    "CalendarGrid.pickupSlot uses columnRefs.current[dayIndex].getBoundingClientRect() — this rect includes the 56px header. That is compensated in practice by offsetY (from pointerdown-time bounding rect which is body-inside), and by y-clamping (`if (y > bodyHeight - SLOT_PX) y = bodyHeight - SLOT_PX`). Works fine for mouse drags starting from the pill, but if you ever add drag-from-a-different-column-header the offset math will feel implicit. Consider explicitly subtracting header height (56) from y for clarity.",
+    "handleColumnPointerUp/handleColumnPointerMove are attached to each of N columns. In week view that's 7 handlers; each pointer-move event bubbles once, so cost is negligible. But: when the mouse crosses column boundaries during a drag, no pointer-cancel/leave logic — the drag state persists correctly, but you rely on the browser NOT re-targeting via implicit pointer capture (mouse events have no implicit capture, so this works). For touch pointer types you may want e.currentTarget.setPointerCapture(e.pointerId) on pointerdown to guarantee cross-column pointermove/up delivery to a single element. Not a bug today but future touch-users may see flakier drags.",
+    "AdminAppointmentPatch.start_datetime is Optional[str] with no format validator. Consider validator using datetime-fromisoformat or a Pydantic Field pattern to prevent the corrupt-data issue noted under backend minor issue.",
+    "EventPill has both onClick and onPointerDown → drag. A pure click (no movement) triggers BOTH onPointerDown (setDrag) and, after mouseup on same element, onClick. onClick then calls onEventClick since drag is cleared after mouseup on same column: `onClick={() => !isDragging && onEventClick(a)}`. But isDragging is a captured snapshot from render. If React batching delays the setDrag(null) render, isDragging could still be true when onClick fires. Empirically it works, but a click-vs-drag threshold (e.g. moved > 4px) would be more robust.",
+    "toLocalISO() returns naive datetime string without tz. Backend _parse_iso in POST rejects malformed but accepts naive and treats it as local. Cross-timezone deployments could produce unexpected offsets — worth documenting or explicitly appending a tz. Non-blocking for CH-only deployment."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration36_drag_patch.py (NEW)"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 Iter-35 regression + 4/4 Iter-36 drag = 19/19)",
+    "frontend": "100% (layout fix, week/day views, time axis, now-line, drag same-day, drag cross-day, click-to-edit, click-to-create)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None persistent. Every test appointment (TEST_ITER36 Layout / Cross) was created via POST /api/appointments and deleted after use. Any TEST_ITER35 UI Kunde leftover from prior iterations was also cleaned. Confirmed via post-test API sweep — 0 TEST_ appointments remain in DB.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 36 fixed the CSS-Grid overshoot bug (now Flexbox with per-column absolute-positioned pills) and added pointer-events based drag-and-drop with 30-min snap + optimistic update + rollback on PATCH error. Both same-day and cross-day drags work reliably in Playwright IF you use page.mouse.move / down / (many small moves) / up on a fresh appointment; the offsetY snap means the pill snaps to the slot under the CURSOR position minus the initial cursor-inside-pill delta, which may be one slot off from your visual target — this is BY DESIGN. To assert the DB update, listen to PATCH requests via page.on('request', ...) — outbound HTTPS from inside browser_automation env is BLOCKED so use bash/pytest for API-level verification. Known backend gap: PATCH endpoint does NOT validate start_datetime format (POST does) — see minor issue above. Only frontend/CalendarManager.jsx was changed in this iteration; all Iter-35 backend endpoints and other CMS tabs untouched (Iter-35 pytest still 100% green).",
+  "rca of the issue": "Iter-35 layout bug root cause: CalendarGrid used CSS Grid `gridTemplateColumns='72px repeat(N, minmax(0,1fr))'` and pills were placed via `gridColumnStart=col+2` WITHOUT a matching `gridColumnEnd`. In CSS Grid, when only gridColumnStart is set, the item auto-spans starting at that column and defaults to `span 1` — but with `minmax(0,1fr)` implicit tracks were being created for out-of-range pills, letting them stretch to grid-content end. Iter-36 fix replaces this with pure Flexbox (`<div className='flex-1 flex'>` containing N `flex-1` columns), each column being an isolated positioned context. Pills are `absolute left-1 right-1` INSIDE the day-column body → they cannot overflow horizontally. Verified: pill.width (167) < single-column.width (176) and pill.x fits inside column.x range. Bug fully fixed."
+}

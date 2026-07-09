@@ -108,7 +108,6 @@ export default function CalendarManager() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeStart.getTime(), rangeEnd.getTime()]);
 
   const openIcal = async () => {
@@ -147,6 +146,30 @@ export default function CalendarManager() {
       phone: "",
       email: "",
     });
+  };
+
+  const handleEventMove = async (apptId, newStart) => {
+    /* Optimistic update: patch local state instantly, revert on error. */
+    const prev = appointments;
+    const iso = toLocalISO(newStart);
+    setAppointments((list) =>
+      list.map((a) => (a.id === apptId ? { ...a, start_datetime: iso } : a)),
+    );
+    try {
+      await api.patch(`/appointments/${apptId}`, { start_datetime: iso });
+      toast.success(
+        `Verschoben auf ${newStart.toLocaleDateString("de-CH", {
+          day: "2-digit",
+          month: "2-digit",
+        })} · ${newStart.toLocaleTimeString("de-CH", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+      );
+    } catch (e) {
+      setAppointments(prev);
+      toast.error(formatApiError(e));
+    }
   };
 
   const cursorTitle =
@@ -256,6 +279,7 @@ export default function CalendarManager() {
             appointments={appointments}
             onSlotClick={handleSlotClick}
             onEventClick={setEditing}
+            onEventMove={handleEventMove}
             gridRef={gridRef}
           />
         )}
@@ -343,113 +367,201 @@ export default function CalendarManager() {
   );
 }
 
-/* ---------------- Grid ---------------- */
-function CalendarGrid({ days, appointments, onSlotClick, onEventClick, gridRef }) {
-  const dayIdx = (isoStr) => {
-    const dt = new Date(isoStr);
-    for (let i = 0; i < days.length; i++) {
-      if (
-        dt.getFullYear() === days[i].getFullYear() &&
-        dt.getMonth() === days[i].getMonth() &&
-        dt.getDate() === days[i].getDate()
-      ) {
-        return i;
-      }
-    }
-    return -1;
-  };
+/* ---------------- Grid (flexbox: label column + N day columns) ---------------- */
+function CalendarGrid({ days, appointments, onSlotClick, onEventClick, onEventMove, gridRef }) {
   const eventTop = (isoStr) => {
     const dt = new Date(isoStr);
     const min = (dt.getHours() - HOUR_START) * 60 + dt.getMinutes();
     return (min / SLOT_MIN) * SLOT_PX;
   };
+  const bodyHeight = HOURS * SLOTS_PER_HOUR * SLOT_PX;
+
+  /* Drag state — one appointment in flight at a time. */
+  const [drag, setDrag] = useState(null);           // { id, offsetY }
+  const columnRefs = useRef({});
+
+  const pickupSlot = (dayIndex, clientY) => {
+    const col = columnRefs.current[dayIndex];
+    if (!col) return null;
+    const rect = col.getBoundingClientRect();
+    let y = clientY - rect.top;
+    if (drag?.offsetY) y -= drag.offsetY;
+    if (y < 0) y = 0;
+    if (y > bodyHeight - SLOT_PX) y = bodyHeight - SLOT_PX;
+    // Snap to nearest 30-min slot
+    const slotIndex = Math.round(y / SLOT_PX);
+    const minutes = slotIndex * SLOT_MIN;
+    const hour = HOUR_START + Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    const target = new Date(days[dayIndex]);
+    target.setHours(hour, minute, 0, 0);
+    return target;
+  };
+
+  const handleColumnPointerMove = (e, dayIndex) => {
+    if (!drag) return;
+    e.preventDefault();
+  };
+
+  const handleColumnPointerUp = (e, dayIndex) => {
+    if (!drag) return;
+    const target = pickupSlot(dayIndex, e.clientY);
+    const draggedId = drag.id;
+    setDrag(null);
+    document.body.style.userSelect = "";
+    if (target && onEventMove) {
+      onEventMove(draggedId, target);
+    }
+  };
+
+  const startDrag = (e, appt) => {
+    if (e.button !== undefined && e.button !== 0) return;      // only left mouse / touch
+    e.stopPropagation();
+    // offset from event's top so cursor stays inside the pill while dragging
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+    document.body.style.userSelect = "none";
+    setDrag({ id: appt.id, offsetY });
+  };
 
   return (
-    <div className="grid" style={{ gridTemplateColumns: `72px repeat(${days.length}, minmax(0,1fr))` }} ref={gridRef}>
-      {/* Header row */}
-      <div className="border-b border-[#e7e5e4] bg-[#fbf9f6]" />
-      {days.map((d, i) => (
-        <div
-          key={i}
-          className="border-b border-l border-[#e7e5e4] px-3 py-2 text-center bg-[#fbf9f6]"
-          data-testid={`calendar-day-header-${i}`}
-        >
-          <div className="text-[10px] tracking-widest uppercase text-[#78716c]">
-            {DAY_NAMES_SHORT[(d.getDay() + 6) % 7]}
-          </div>
-          <div
-            className={`text-sm font-semibold ${
-              isToday(d) ? "text-[#ff5a36]" : "text-[#0f172a]"
-            }`}
-          >
-            {d.getDate()}.{d.getMonth() + 1}
-          </div>
-        </div>
-      ))}
-
-      {/* Body – hour rows */}
-      {Array.from({ length: HOURS }).map((_, hi) => {
-        const hour = HOUR_START + hi;
-        return (
-          <div key={hour} className="contents">
-            <div className="border-b border-[#e7e5e4] text-[10px] text-[#94a3b8] pr-2 text-right pt-1 relative" style={{ height: SLOT_PX * SLOTS_PER_HOUR }}>
-              <span className="absolute -top-2 right-2 bg-white px-1">
+    <div className="flex select-none" ref={gridRef}>
+      {/* Time labels column */}
+      <div className="w-[64px] shrink-0 border-r border-[#e7e5e4] bg-white">
+        <div className="h-14 bg-[#fbf9f6] border-b border-[#e7e5e4]" />
+        <div className="relative" style={{ height: bodyHeight }}>
+          {Array.from({ length: HOURS + 1 }).map((_, hi) => {
+            const hour = HOUR_START + hi;
+            const top = hi * SLOTS_PER_HOUR * SLOT_PX;
+            return (
+              <div
+                key={hi}
+                className="absolute right-2 -translate-y-1/2 text-[10px] text-[#94a3b8] font-medium bg-white px-1"
+                style={{ top }}
+              >
                 {String(hour).padStart(2, "0")}:00
-              </span>
-            </div>
-            {days.map((d, di) => (
-              <div key={`${hour}-${di}`} className="border-b border-l border-[#e7e5e4] relative" style={{ height: SLOT_PX * SLOTS_PER_HOUR }}>
-                {Array.from({ length: SLOTS_PER_HOUR }).map((__, qi) => (
-                  <button
-                    key={qi}
-                    onClick={() => onSlotClick(d, hour, qi)}
-                    data-testid={`calendar-slot-${di}-${hour}-${qi}`}
-                    className="absolute left-0 right-0 hover:bg-[#fef2f2] hover:border-[#fecaca] border border-transparent transition-colors"
-                    style={{ top: qi * SLOT_PX, height: SLOT_PX }}
-                    aria-label={`Neuer Termin ${String(hour).padStart(2,"0")}:${String(qi*SLOT_MIN).padStart(2,"0")}`}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Day columns */}
+      <div className="flex-1 flex min-w-0">
+        {days.map((day, di) => {
+          const dayAppointments = appointments.filter((a) => sameDay(new Date(a.start_datetime), day));
+          const isDragOver = drag !== null;
+          return (
+            <div
+              key={di}
+              ref={(el) => (columnRefs.current[di] = el)}
+              className="flex-1 border-r border-[#e7e5e4] min-w-0 last:border-r-0"
+              onPointerMove={(e) => handleColumnPointerMove(e, di)}
+              onPointerUp={(e) => handleColumnPointerUp(e, di)}
+              data-testid={`calendar-day-column-${di}`}
+            >
+              {/* Header */}
+              <div
+                className="h-14 border-b border-[#e7e5e4] px-3 py-2 text-center bg-[#fbf9f6]"
+                data-testid={`calendar-day-header-${di}`}
+              >
+                <div className="text-[10px] tracking-widest uppercase text-[#78716c]">
+                  {DAY_NAMES_SHORT[(day.getDay() + 6) % 7]}
+                </div>
+                <div
+                  className={`text-sm font-semibold ${
+                    isToday(day) ? "text-[#ff5a36]" : "text-[#0f172a]"
+                  }`}
+                >
+                  {day.getDate()}.{day.getMonth() + 1}
+                </div>
+              </div>
+
+              {/* Body */}
+              <div
+                className={`relative ${isDragOver ? "bg-[#fef2f2]/40" : ""}`}
+                style={{ height: bodyHeight }}
+              >
+                {/* Hour separator lines (top of every hour) */}
+                {Array.from({ length: HOURS }).map((_, hi) => (
+                  <div
+                    key={`sep-${hi}`}
+                    className="absolute left-0 right-0 border-t border-[#e7e5e4] pointer-events-none"
+                    style={{ top: hi * SLOTS_PER_HOUR * SLOT_PX }}
                   />
                 ))}
-              </div>
-            ))}
-          </div>
-        );
-      })}
+                {/* Half-hour dashed lines */}
+                {Array.from({ length: HOURS }).map((_, hi) => (
+                  <div
+                    key={`half-${hi}`}
+                    className="absolute left-0 right-0 border-t border-dashed border-[#f1f5f9] pointer-events-none"
+                    style={{ top: (hi * SLOTS_PER_HOUR + 1) * SLOT_PX }}
+                  />
+                ))}
+                {/* Clickable slots */}
+                {Array.from({ length: HOURS * SLOTS_PER_HOUR }).map((_, si) => {
+                  const hour = HOUR_START + Math.floor(si / SLOTS_PER_HOUR);
+                  const quarter = si % SLOTS_PER_HOUR;
+                  return (
+                    <button
+                      key={si}
+                      type="button"
+                      onClick={() => onSlotClick(day, hour, quarter)}
+                      data-testid={`calendar-slot-${di}-${hour}-${quarter}`}
+                      className="absolute left-0 right-0 hover:bg-[#fef2f2] transition-colors"
+                      style={{ top: si * SLOT_PX, height: SLOT_PX }}
+                      aria-label={`Neuer Termin ${String(hour).padStart(2, "0")}:${String(quarter * SLOT_MIN).padStart(2, "0")}`}
+                    />
+                  );
+                })}
 
-      {/* Events overlay – rendered absolutely inside their day column */}
-      {appointments.map((a) => {
-        const col = dayIdx(a.start_datetime);
-        if (col < 0) return null;
-        const top = eventTop(a.start_datetime);
-        const dur = a.duration_min || 60;
-        const height = (dur / SLOT_MIN) * SLOT_PX - 2;
-        return (
-          <div
-            key={a.id}
-            style={{ gridColumnStart: col + 2, gridRowStart: 2, gridRowEnd: HOURS + 2 }}
-            className="relative pointer-events-none"
-          >
-            <EventPill
-              appt={a}
-              onClick={() => onEventClick(a)}
-              style={{ top, height }}
-            />
-          </div>
-        );
-      })}
+                {/* Now-indicator (thin red line on today) */}
+                {isToday(day) && <NowLine />}
+
+                {/* Events */}
+                {dayAppointments.map((a) => {
+                  const top = eventTop(a.start_datetime);
+                  const dur = a.duration_min || 60;
+                  const height = (dur / SLOT_MIN) * SLOT_PX - 2;
+                  const isDragging = drag?.id === a.id;
+                  return (
+                    <EventPill
+                      key={a.id}
+                      appt={a}
+                      onClick={() => !isDragging && onEventClick(a)}
+                      onPointerDown={(e) => startDrag(e, a)}
+                      style={{ top, height }}
+                      dragging={isDragging}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function EventPill({ appt, onClick, style }) {
+function EventPill({ appt, onClick, onPointerDown, style, dragging }) {
   const status = appt.status || "pending";
   const isPending = status === "pending";
   const isCancelled = status === "cancelled";
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick?.()}
+      onPointerDown={onPointerDown}
       data-testid={`calendar-event-${appt.id}`}
       style={style}
-      className={`absolute left-1 right-1 rounded-lg px-2 py-1 text-left text-[11px] leading-tight overflow-hidden border pointer-events-auto transition-transform hover:scale-[1.02] hover:z-10 ${
+      className={`absolute left-1 right-1 rounded-lg px-2 py-1 text-left text-[11px] leading-tight overflow-hidden border transition-shadow cursor-grab active:cursor-grabbing ${
+        dragging
+          ? "opacity-70 ring-2 ring-[#ff5a36] shadow-lg z-20"
+          : "hover:shadow-md hover:z-10"
+      } ${
         isCancelled
           ? "bg-[#f1f5f9] border-[#e2e8f0] text-[#94a3b8] line-through"
           : isPending
@@ -458,19 +570,25 @@ function EventPill({ appt, onClick, style }) {
       }`}
     >
       <div className="text-[9px] tracking-widest uppercase font-semibold opacity-70">
-        {new Date(appt.start_datetime).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}
+        {new Date(appt.start_datetime).toLocaleTimeString("de-CH", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
         {" · "}
         {appt.duration_min} min
       </div>
       <div className="font-semibold truncate">
-        {appt.customer_name || `${appt.first_name || ""} ${appt.last_name || ""}`.trim() || "Termin"}
+        {appt.customer_name ||
+          `${appt.first_name || ""} ${appt.last_name || ""}`.trim() ||
+          "Termin"}
       </div>
       {appt.pickup_location && (
         <div className="opacity-70 truncate text-[10px] mt-0.5">
-          <MapPin size={9} className="inline mr-0.5" />{appt.pickup_location}
+          <MapPin size={9} className="inline mr-0.5" />
+          {appt.pickup_location}
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -480,6 +598,35 @@ function isToday(d) {
     t.getFullYear() === d.getFullYear() &&
     t.getMonth() === d.getMonth() &&
     t.getDate() === d.getDate()
+  );
+}
+
+function sameDay(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function NowLine() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const h = now.getHours();
+  if (h < HOUR_START || h >= HOUR_END) return null;
+  const top = ((h - HOUR_START) * 60 + now.getMinutes()) / SLOT_MIN * SLOT_PX;
+  return (
+    <div
+      className="absolute left-0 right-0 pointer-events-none z-10"
+      style={{ top }}
+      data-testid="calendar-now-line"
+    >
+      <div className="h-0.5 bg-[#ff5a36]" />
+      <div className="w-2 h-2 rounded-full bg-[#ff5a36] -ml-1 -mt-[5px]" />
+    </div>
   );
 }
 
@@ -831,7 +978,7 @@ function IcalModal({ settings, onClose, onRegenerate }) {
             <div className="font-semibold text-[#1d4ed8] mb-1">Auf dem iPhone einrichten</div>
             <ol className="list-decimal pl-4 space-y-0.5">
               <li>Einstellungen → Kalender → Accounts → Account hinzufügen → Andere</li>
-              <li>„Kalenderabo hinzufügen" antippen</li>
+              <li>{'„Kalenderabo hinzufügen" antippen'}</li>
               <li>URL oben einfügen → Weiter → Sichern</li>
             </ol>
             <div className="mt-2">
