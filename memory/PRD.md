@@ -292,3 +292,33 @@ admin@saferide.ch / SafeRide2026!
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
+
+- ✅ **Iteration 32 (09.02.2026) — Invoice-PDF-Redesign + Logo-Upload + Monatsjournal + DB-Backup (DONE, smoke-tested only):**
+  - **Invoice-PDF neu**: Coral-Titel entfernt (schwarze Schrift), Logo prominent oben rechts, Empfängerblock mit mehr Whitespace, kompaktere Metadata-Grid, freundlicher Footer mit Bankdaten.
+  - **Logo-Upload**: `POST /api/settings/business/logo` (Multipart PNG/JPG ≤ 2 MB) speichert nach `/api/files/…` und setzt `business_settings.logo_url`. `DELETE /api/settings/business/logo` setzt zurück auf Default-Asset `/api/assets/logo/default`.
+  - **Monatsjournal PDF**: `GET /api/accounting/monthly/{year}/{month}/pdf` liefert kombiniertes Monats-Journal (Einnahmen + Ausgaben chronologisch mit Zwischensummen + Nettogewinn).
+  - **Erfolgsrechnung PDF**: `GET /api/accounting/income-statement/{year}/pdf` liefert Jahres-Erfolgsrechnung mit 12-Monats-Tabelle und Konto-Aufteilung.
+  - **DB-Backup**: `GET /api/backup/mongo` liefert gzip-komprimierten Dump (alle Collections, ex `runtime_state`). `GET /api/backup/scripts` gibt 3 Skripte (Windows-Batch, Mac-Bash, Linux-Bash) für automatisches Herunterladen des Backups vom lokalen PC.
+  - **Business-Settings-Refactor**: `business_settings.py` gesplittet in `router` (Firma/Adresse/MWST) + `assets_router` (Logo-Upload).
+
+- ✅ **Iteration 33 (09.02.2026) — Benutzerverwaltung + SMTP-Rechnungsversand (DONE, 21/21 Backend + Frontend 100 % grün via testing_agent_v3_fork):**
+  - **Benutzerverwaltung** — Neuer Admin-Tab „Benutzer" (`/admin?tab=users`):
+    - Backend `routers/users.py` – `GET /api/users`, `POST /api/users`, `PATCH /api/users/{id}`, `DELETE /api/users/{id}`. bcrypt via bestehender `core.security.hash_password`. Unique-Index auf `email` (bereits durch `seeds/startup.py` seeded).
+    - Zwei Safeguards: eigenen Account nicht löschbar (HTTP 400 „Du kannst deinen eigenen Account nicht löschen."), letzter Benutzer nicht löschbar (HTTP 400 „Der letzte Benutzer kann nicht gelöscht werden.").
+    - Frontend `UsersManager.jsx` – Create-Formular (Name/E-Mail/Passwort ≥ 6 Zeichen), Row-Liste mit Autosave onBlur (Name + E-Mail), Passwort neu setzen pro Zeile, „DU"-Badge + disabled Trash-Button auf eigenem Account. Duplicate-E-Mail → HTTP 409 mit Toast.
+  - **E-Mail-Versand für Rechnungen (SMTP)**:
+    - `models/schemas.py` erweitert `BusinessSettings`/`BusinessSettingsPatch` um `smtp_host`, `smtp_port` (587), `smtp_username`, `smtp_password`, `smtp_from_email`, `smtp_from_name`, `smtp_use_tls` (True), `email_subject_template` und `email_body_template` (mit Platzhaltern `{first_name}`, `{number}`, `{total}`, `{business_name}`, `{lesson_date}`).
+    - Backend `routers/invoice_email.py` – `POST /api/students/{sid}/invoices/{iid}/email` sendet die konfigurierte Rechnung als PDF-Anhang via `smtplib.SMTP` (Port 465 → SSL, 587 → STARTTLS). `POST /api/settings/business/smtp/test` prüft nur Verbindung + Auth (kein Send).
+    - SMTP-Fehler geben **HTTP 400** zurück (nicht 502), damit die deutsche Fehlermeldung nicht vom Cloudflare-CDN durch generisches HTML ersetzt wird.
+    - Frontend `BusinessSettingsManager.jsx` – neue `SmtpSection` (unter DB-Backup): 7 SMTP-Felder + STARTTLS-Checkbox + Betreff-/Body-Templates, alle autospeichernd onBlur. „Verbindung testen"-Button ist disabled ohne Host.
+    - Frontend `InvoicesTab.jsx` – neuer Coral-Button „E-Mail" pro Rechnung, öffnet `prompt()` mit Schüler-E-Mail vorbelegt, sendet PDF-Anhang. Zeigt Loader während Request und Toast auf Erfolg/Fehler.
+  - **Tests**: `/app/backend/tests/test_iteration32_33.py` (21/21 grün) deckt Benutzer-CRUD-Roundtrip inkl. Login mit neuer Passwort-Hash, Self-Delete-Guard, Last-User-Guard, SMTP-Config-PATCH, SMTP-Test-400, Invoice-Email-400-ohne-SMTP, Logo-Upload/Reset, Invoice-PDF-Download, Accounting-PDF-Exports und Backup-Endpoints ab.
+
+## Test Credentials (aktuell)
+admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
+
+## Offene Punkte / Backlog
+- 🇨🇭 **Swiss QR-Bill (Rechnungs-QR-Slip)** — blockiert, wartet auf User-Input (IBAN).
+- 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
+- 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
+- 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).

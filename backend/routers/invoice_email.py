@@ -100,10 +100,11 @@ def _open_smtp(cfg: dict) -> smtplib.SMTP | smtplib.SMTP_SSL:
         return server
     except smtplib.SMTPAuthenticationError as e:
         raise HTTPException(
-            status_code=502, detail=f"SMTP-Anmeldung fehlgeschlagen: {e.smtp_error.decode('utf-8', 'replace') if hasattr(e, 'smtp_error') else e}"
+            status_code=400,
+            detail=f"SMTP-Anmeldung fehlgeschlagen: {e.smtp_error.decode('utf-8', 'replace') if hasattr(e, 'smtp_error') else e}",
         )
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"SMTP-Verbindung fehlgeschlagen: {e}")
+        raise HTTPException(status_code=400, detail=f"SMTP-Verbindung fehlgeschlagen: {e}")
 
 
 def _render_template(tpl: str, ctx: dict) -> str:
@@ -197,7 +198,7 @@ async def send_invoice_email(
     try:
         server.send_message(msg)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"E-Mail-Versand fehlgeschlagen: {e}")
+        raise HTTPException(status_code=400, detail=f"E-Mail-Versand fehlgeschlagen: {e}")
     finally:
         try:
             server.quit()
