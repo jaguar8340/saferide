@@ -1,11 +1,11 @@
 /**
  * AdminStudentDetail — full-page view for one student. Six sub-tabs:
- *   1. Übersicht          – headline info + placeholder for future analytics
- *   2. Fahrstunden        – (placeholder for Phase 2)
- *   3. Rechnungen         – (placeholder for Phase 2)
- *   4. Aktivitäten        – (placeholder for Phase 2)
- *   5. Dokumente          – (placeholder for Phase 2)
- *   6. Fahrkontrolle      – the main matrix module (Phase 1 focus)
+ *   1. Übersicht          – headline info + editable master data
+ *   2. Fahrstunden        – flat list of lessons with autosave
+ *   3. Rechnungen         – invoice CRUD with status pills
+ *   4. Aktivitäten        – auto-logged read-only audit trail
+ *   5. Dokumente          – file uploads scoped to the student
+ *   6. Fahrkontrolle      – the main matrix module
  */
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -24,6 +24,10 @@ import {
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import FahrkontrolleTab from "@/components/admin/students/FahrkontrolleTab";
+import LessonsTab from "@/components/admin/students/LessonsTab";
+import InvoicesTab from "@/components/admin/students/InvoicesTab";
+import ActivitiesTab from "@/components/admin/students/ActivitiesTab";
+import DocumentsTab from "@/components/admin/students/DocumentsTab";
 
 const SUB_TABS = [
   { id: "overview",     icon: LayoutDashboard, label: "Übersicht" },
@@ -153,10 +157,10 @@ export default function AdminStudentDetail() {
 
       <main className="p-4 md:p-8 max-w-7xl mx-auto">
         {tab === "overview" && <OverviewTab student={student} onSave={saveField} />}
-        {tab === "lessons" && <PlaceholderTab title="Fahrstunden" phase="2" />}
-        {tab === "invoices" && <PlaceholderTab title="Rechnungen" phase="2" />}
-        {tab === "activities" && <PlaceholderTab title="Aktivitäten" phase="2" />}
-        {tab === "documents" && <PlaceholderTab title="Dokumente" phase="2" />}
+        {tab === "lessons" && <LessonsTab student={student} />}
+        {tab === "invoices" && <InvoicesTab student={student} />}
+        {tab === "activities" && <ActivitiesTab student={student} />}
+        {tab === "documents" && <DocumentsTab student={student} />}
         {tab === "fahrkontrolle" && <FahrkontrolleTab student={student} />}
       </main>
     </div>
@@ -211,27 +215,6 @@ function EditField({ label, value, onSave, type = "text" }) {
         data-testid={`overview-field-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
         className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
       />
-    </div>
-  );
-}
-
-function PlaceholderTab({ title, phase }) {
-  return (
-    <div className="max-w-3xl">
-      <h2 className="font-display text-3xl md:text-4xl leading-none tracking-tight mb-6">
-        {title}
-      </h2>
-      <div className="bg-white border border-dashed border-[#e7e5e4] rounded-2xl p-10 text-center">
-        <div className="inline-flex items-center gap-2 bg-[#fff7f3] text-[#ff5a36] text-[10px] font-semibold tracking-[0.22em] uppercase px-3 py-1.5 rounded-full mb-4">
-          Phase {phase} · geplant
-        </div>
-        <p className="text-[#78716c] text-sm max-w-md mx-auto leading-relaxed">
-          Dieser Bereich ist für Phase {phase} vorbereitet und wird im nächsten
-          Iterationsschritt gebaut. Die Datenstruktur ist bereits so aufgebaut,
-          dass Fahrstunden, Rechnungen, Aktivitäten und Dokumente sauber
-          integriert werden können.
-        </p>
-      </div>
     </div>
   );
 }

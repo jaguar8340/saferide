@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 29 (Student Sub-Tabs) fully verified. Backend: 32/32 tests pass across it26/it27/it27_extra/it28/it29. Frontend: All 6 tabs (Übersicht, Fahrstunden, Rechnungen, Aktivitäten, Dokumente, Fahrkontrolle) render on Stefan Haas admin detail page; each has correct data-testid. Live UI integration test executed end-to-end: created invoice via form (CHF 125.75) → totals updated CHF 320.50 → CHF 446.25; status pill cycled OFFEN→BEZAHLT; Aktivitäten feed shows newest-first with 'Rechnung R-TEST-2026-09 aktualisiert' + 'Rechnung R-TEST-2026-09 erstellt (CHF 125.75)' with correct actor + relative time; delete removed row + toast 'Gelöscht'; feed data cleanup restored. LessonsTab shows 5 lesson rows for pre-seeded student with L1-L5 badges + duration + strecken + rating/comment counts + add button. DocumentsTab shows category dropdown, label input, 'Datei wählen' button, empty state 'Noch kein Dokument hochgeladen.'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/students/{id}/documents", "issue": "Occasional 500 from upstream Emergent object storage (https://integrations.emergentagent.com/objstore) — flaky, passes on retry. Not a code bug; storage backend transient error. put_object() bubbles HTTPError as 500 instead of a friendlier 502/503."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Rechnungen tab date input", "issues": ["Uses browser native date picker (<input type=\"date\">) instead of a styled shadcn date-picker. Minor UX inconsistency vs. rest of app but functional."]},
+      {"screen": "AdminStudentDetail initial load", "issues": ["Full-screen 'LADE…' spinner can occasionally exceed 30s on cold navigation causing playwright networkidle to time out. Retry/reload resolves. Consider skeleton per section instead of blocking spinner."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration29_subtabs.py",
+    "/app/test_reports/pytest/it29_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Wrap put_object() HTTPError from Emergent object storage in a try/except and return HTTP 502 with detail 'Speicher aktuell nicht erreichbar, bitte erneut versuchen.' rather than a raw 500 — this is the ONE observed transient issue and only surfaces during upstream storage flake.",
+    "(Optional) Replace full-screen LADE spinner on AdminStudentDetail with per-section skeletons so initial nav feels faster.",
+    "(Optional/design) Consider swapping native <input type=\"date\"> in InvoicesTab for the shadcn date-picker used elsewhere in the app for visual consistency."
+  ],
+  "critical_code_review_comments": [
+    "core/storage.py put_object(): resp.raise_for_status() lets any upstream 5xx propagate as an uncaught HTTPError which FastAPI turns into 500. Consider catching HTTPError and mapping to HTTPException(502, 'Speicher aktuell nicht erreichbar').",
+    "student_documents.py delete_document does NOT delete the underlying storage object (comment acknowledges limitation). Fine for now, but budget/cleanup story open.",
+    "Frontend LessonsTab shows 'strecken' count and rating count on lesson rows — matches spec. Good.",
+    "Activities feed emits both 'invoice.create' and 'invoice.update' on status change — matches spec and 'Rechnung {number} erstellt (CHF X.XX)' formatting is correct.",
+    "AdminStudentDetail lazy-loads tab content: reduces initial payload but shows only a full-screen spinner while student data loads — one-shot fetch is a single point of visible latency."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (32/32)", "frontend": "100% (all 6 tabs + invoice CRUD + status cycle + activity feed + delete cleanup)"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "None permanent. Ephemeral invoice R-TEST-2026-09 was created and deleted within the same test run. Pre-seeded student 443c0166-8f6e-4274-8c6a-9dfd6cc27e27 (Stefan Haas) still has 5 lessons + 36 assessments + 1 invoice R-2026-001 as expected.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Iteration 29 endpoints and UI verified. When testing AdminStudentDetail, always wait_for_selector('[data-testid=\"admin-student-tabs\"]') with 45s timeout — the full-page LADE spinner can take 15-30s on first cold nav. If it times out, page.reload() typically fixes it (backend was warming). The Emergent object storage upstream can flake with 500 on POST /students/{id}/documents — retry the single test rather than treating as regression. Activity feed is NEWEST FIRST. Invoice status pill click cycles open→paid→cancelled→open. LessonsTab autosave triggers on input blur.",
+  "rca of the issue": "No production RCA. The only failure observed was a transient upstream 500 from Emergent object storage (integrations.emergentagent.com/objstore). Reproduction: POST /api/students/{id}/documents intermittently returns 500 with 'Internal Server Error' from the storage service. Mitigation: current code retries once on 403 (re-init storage key) but not on 5xx — recommend wrapping put_object() to map upstream 5xx to HTTP 502 so the client shows a friendlier error and can retry. All backend tests pass on retry, and normal browser use exercises the endpoint fine."
+}

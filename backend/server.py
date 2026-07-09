@@ -33,6 +33,9 @@ from routers import (
     gallery,
     locations,
     sitemap,
+    student_activities,
+    student_documents,
+    student_invoices,
     students,
     testimonials,
     uploads,
@@ -57,6 +60,9 @@ api.include_router(entities.router)
 api.include_router(sitemap.router)
 api.include_router(vku.router)
 api.include_router(students.router)
+api.include_router(student_invoices.router)
+api.include_router(student_documents.router)
+api.include_router(student_activities.router)
 api.include_router(fahrkontrolle.router)
 api.include_router(fahrkontrolle_pdf.router)
 

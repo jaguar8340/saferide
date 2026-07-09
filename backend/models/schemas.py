@@ -291,3 +291,61 @@ class Assessment(BaseModel):
     comment: str = ""
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
+
+
+# ---------- Student invoices ----------
+class StudentInvoiceCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    number: str = Field(default="", max_length=40)     # optional invoice reference
+    date: str = Field(default="", max_length=40)       # ISO date the invoice was issued
+    amount_chf: float = Field(default=0.0, ge=0, le=1_000_000)
+    status: str = Field(default="open", max_length=20) # open | paid | cancelled
+    note: str = Field(default="", max_length=2000)
+    file_url: str = Field(default="", max_length=500)  # optional /api/files/… link
+
+
+class StudentInvoice(StudentInvoiceCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    student_id: str
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: str = ""
+
+
+class StudentInvoicePatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    number: Optional[str] = None
+    date: Optional[str] = None
+    amount_chf: Optional[float] = None
+    status: Optional[str] = None
+    note: Optional[str] = None
+    file_url: Optional[str] = None
+
+
+# ---------- Student documents ----------
+class StudentDocument(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    student_id: str
+    label: str = ""                                    # human-friendly filename
+    original_filename: str = ""
+    storage_path: str = ""                             # opaque object storage path
+    url: str = ""                                      # /api/files/…
+    content_type: str = ""
+    size: int = 0
+    kind: str = "document"                             # document | image | pdf
+    category: str = "misc"                             # misc | permit | id | contract | invoice | other
+    note: str = Field(default="", max_length=1000)
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    uploaded_by: str = ""
+
+
+# ---------- Student activity feed ----------
+class StudentActivity(BaseModel):
+    """Auto-populated by other endpoints (patch student, add/edit lesson,
+    upsert assessment, add/delete invoice/document). Read-only for the UI."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    student_id: str
+    kind: str                                           # student.update, lesson.create, ...
+    message: str                                        # short human-readable summary (DE)
+    meta: dict = Field(default_factory=dict)            # opaque details (e.g., field, from, to)
+    actor: str = ""                                     # email of the admin who did it
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

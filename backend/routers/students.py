@@ -3,6 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from core.activity import log_activity
 from core.db import db
 from core.security import get_current_admin
 from models.schemas import Student, StudentCreate, StudentPatch
@@ -19,6 +20,12 @@ async def list_students(admin=Depends(get_current_admin)):
 async def create_student(payload: StudentCreate, admin=Depends(get_current_admin)):
     student = Student(**payload.model_dump())
     await db.students.insert_one(student.model_dump())
+    await log_activity(
+        student.id,
+        "student.create",
+        f"Schüler:in {student.first_name} {student.last_name} erstellt",
+        actor=admin.get("email"),
+    )
     return student
 
 
@@ -37,9 +44,19 @@ async def update_student(
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="Keine Änderungen übergeben")
-    res = await db.students.update_one({"id": student_id}, {"$set": updates})
-    if res.matched_count == 0:
+    existing = await db.students.find_one({"id": student_id}, {"_id": 0})
+    if not existing:
         raise HTTPException(status_code=404, detail="Schüler nicht gefunden")
+    await db.students.update_one({"id": student_id}, {"$set": updates})
+    # Log ONE compact activity per PATCH (list of fields changed).
+    fields = ", ".join(updates.keys())
+    await log_activity(
+        student_id,
+        "student.update",
+        f"Stammdaten aktualisiert ({fields})",
+        actor=admin.get("email"),
+        meta={"changes": updates},
+    )
     doc = await db.students.find_one({"id": student_id}, {"_id": 0})
     return doc
 
@@ -49,8 +66,11 @@ async def delete_student(student_id: str, admin=Depends(get_current_admin)):
     res = await db.students.delete_one({"id": student_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Schüler nicht gefunden")
-    # Also clean up dependent data (lessons + assessments) so we don't
-    # leave orphaned rows behind.
+    # Also clean up dependent data (lessons + assessments + invoices +
+    # documents + activities) so we don't leave orphaned rows behind.
     await db.student_lessons.delete_many({"student_id": student_id})
     await db.student_assessments.delete_many({"student_id": student_id})
+    await db.student_invoices.delete_many({"student_id": student_id})
+    await db.student_documents.delete_many({"student_id": student_id})
+    await db.student_activities.delete_many({"student_id": student_id})
     return {"ok": True}

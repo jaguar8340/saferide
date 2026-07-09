@@ -10,6 +10,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from core.activity import log_activity
 from core.db import db
 from core.security import get_current_admin
 from models.schemas import (
@@ -213,6 +214,13 @@ async def create_student_lesson(
         student_id=student_id, lesson_number=next_num, **payload.model_dump()
     )
     await db.student_lessons.insert_one(lesson.model_dump())
+    await log_activity(
+        student_id,
+        "lesson.create",
+        f"Lektion {next_num} angelegt",
+        actor=admin.get("email"),
+        meta={"lesson_id": lesson.id, "lesson_number": next_num, "date": lesson.date},
+    )
     return lesson
 
 
@@ -236,6 +244,13 @@ async def update_student_lesson(
     doc = await db.student_lessons.find_one(
         {"id": lesson_id, "student_id": student_id}, {"_id": 0}
     )
+    await log_activity(
+        student_id,
+        "lesson.update",
+        f"Lektion {doc.get('lesson_number','?')} aktualisiert ({', '.join(updates.keys())})",
+        actor=admin.get("email"),
+        meta={"lesson_id": lesson_id, "changes": list(updates.keys())},
+    )
     return doc
 
 
@@ -243,6 +258,9 @@ async def update_student_lesson(
 async def delete_student_lesson(
     student_id: str, lesson_id: str, admin=Depends(get_current_admin)
 ):
+    doc = await db.student_lessons.find_one(
+        {"id": lesson_id, "student_id": student_id}, {"_id": 0}
+    )
     res = await db.student_lessons.delete_one(
         {"id": lesson_id, "student_id": student_id}
     )
@@ -250,6 +268,13 @@ async def delete_student_lesson(
         raise HTTPException(status_code=404, detail="Lektion nicht gefunden")
     # Purge all assessment cells for this lesson.
     await db.student_assessments.delete_many({"lesson_id": lesson_id})
+    await log_activity(
+        student_id,
+        "lesson.delete",
+        f"Lektion {(doc or {}).get('lesson_number','?')} gelöscht",
+        actor=admin.get("email"),
+        meta={"lesson_id": lesson_id},
+    )
     return {"ok": True}
 
 
@@ -271,6 +296,15 @@ async def upsert_assessment(
 ):
     """Upsert a single rating cell. Same (student_id, subitem_id, lesson_id)
     combination is unique. Empty value ("") deletes the row."""
+    # Look up lesson number & subitem title once so the activity log is
+    # human-readable ("Lektion 3 · 1.1 Rundumkontrolle → 4").
+    lesson = await db.student_lessons.find_one(
+        {"id": payload.lesson_id, "student_id": student_id}, {"_id": 0}
+    )
+    subitem = await db.fk_subitems.find_one({"id": payload.subitem_id}, {"_id": 0})
+    ctx_lesson = f"L{(lesson or {}).get('lesson_number', '?')}"
+    ctx_sub = (subitem or {}).get("title_de", "Punkt")
+
     if payload.value == "" and payload.comment == "":
         # Both cleared: delete the cell entirely.
         await db.student_assessments.delete_one(
@@ -279,6 +313,17 @@ async def upsert_assessment(
                 "subitem_id": payload.subitem_id,
                 "lesson_id": payload.lesson_id,
             }
+        )
+        await log_activity(
+            student_id,
+            "assessment.upsert",
+            f"{ctx_lesson} · {ctx_sub} → geleert",
+            actor=admin.get("email"),
+            meta={
+                "lesson_id": payload.lesson_id,
+                "subitem_id": payload.subitem_id,
+                "value": "",
+            },
         )
         return Assessment(
             student_id=student_id,
@@ -308,6 +353,19 @@ async def upsert_assessment(
             },
         )
         doc = await db.student_assessments.find_one(filter_, {"_id": 0})
+        await log_activity(
+            student_id,
+            "assessment.upsert",
+            f"{ctx_lesson} · {ctx_sub} → {payload.value or '—'}"
+            + (" (mit Kommentar)" if payload.comment else ""),
+            actor=admin.get("email"),
+            meta={
+                "lesson_id": payload.lesson_id,
+                "subitem_id": payload.subitem_id,
+                "value": payload.value,
+                "has_comment": bool(payload.comment),
+            },
+        )
         return doc
     assessment = Assessment(
         student_id=student_id,
@@ -319,4 +377,17 @@ async def upsert_assessment(
         updated_by=admin.get("email", ""),
     )
     await db.student_assessments.insert_one(assessment.model_dump())
+    await log_activity(
+        student_id,
+        "assessment.upsert",
+        f"{ctx_lesson} · {ctx_sub} → {payload.value or '—'}"
+        + (" (mit Kommentar)" if payload.comment else ""),
+        actor=admin.get("email"),
+        meta={
+            "lesson_id": payload.lesson_id,
+            "subitem_id": payload.subitem_id,
+            "value": payload.value,
+            "has_comment": bool(payload.comment),
+        },
+    )
     return assessment
