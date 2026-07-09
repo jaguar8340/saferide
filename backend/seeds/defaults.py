@@ -183,6 +183,9 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "badge_role_en": "Driving instructor · since 2014",
         "trust_de": "Lizenzierte Fahrlehrerin",
         "trust_en": "Licensed driving instructor",
+        "dog_photo_url": "",
+        "dog_caption_de": "Immer mit dabei: unser vierbeiniger Beifahrer.",
+        "dog_caption_en": "Always along for the ride: our four-legged co-pilot.",
     },
     "services": [
         {
@@ -335,6 +338,9 @@ DEFAULT_CONTENT: Dict[str, Any] = {
         "title_en": "Ready for your first lesson?",
         "sub_de": "Melde dich – ich freue mich auf dich.",
         "sub_en": "Get in touch – I'm looking forward to meeting you.",
+        "footer_image_url": "",
+        "footer_image_alt_de": "Audi Silhouette",
+        "footer_image_alt_en": "Audi silhouette",
     },
     "services_overline_de": "Was du bekommst",
     "services_overline_en": "What you get",
@@ -496,3 +502,127 @@ DEFAULT_GALLERY = [
         "caption_en": "Steering wheel close-up",
     },
 ]
+
+
+
+# ---------- Central FAQ template used by every location page ----------
+# Every location page renders these identical FAQs — with `{name}` replaced
+# by the actual location name at render time. Editing the answer once in
+# the CMS updates it on all 16 landing pages simultaneously.
+DEFAULT_LOCATION_FAQ_TEMPLATE = [
+    {
+        "id": "f1",
+        "question_de": "Wo treffen wir uns für die Fahrstunde in {name}?",
+        "question_en": "Where do we meet for the lesson in {name}?",
+        "answer_de": "Standardmässig treffen wir uns am Bahnhof {name}. Nach Absprache kann der Treffpunkt auch in deiner Nähe sein – schreib mir einfach per WhatsApp.",
+        "answer_en": "By default we meet at {name} station. On request we can adjust to a spot closer to you – just send me a WhatsApp.",
+    },
+    {
+        "id": "f2",
+        "question_de": "Welche Autos stehen für die Fahrausbildung zur Verfügung?",
+        "question_en": "Which cars are available for the training?",
+        "answer_de": "Du wählst zwischen Audi S3 (Automat), Opel OPC (Schaltung) und Range Rover Sport. Alle Fahrzeuge sind voll versichert, top gepflegt und werden regelmässig gewartet.",
+        "answer_en": "You can choose between Audi S3 (automatic), Opel OPC (manual) and Range Rover Sport. All vehicles are fully insured, perfectly maintained and serviced regularly.",
+    },
+    {
+        "id": "f3",
+        "question_de": "Wie lange dauert eine Fahrstunde?",
+        "question_en": "How long does a lesson last?",
+        "answer_de": "Du wählst zwischen 45-, 60- oder 90-Minuten-Lektionen. Für Anfänger:innen empfehle ich 60 Minuten – so haben wir genug Zeit, um Neues zu lernen, ohne dich zu überfordern.",
+        "answer_en": "You can choose between 45, 60 or 90 minute lessons. For beginners I recommend 60 minutes – enough time to learn without overwhelming you.",
+    },
+    {
+        "id": "f4",
+        "question_de": "Kann ich Lektionen flexibel verschieben oder absagen?",
+        "question_en": "Can I reschedule or cancel lessons flexibly?",
+        "answer_de": "Ja – Verschiebungen sind bis 24 Stunden vor dem Termin kostenlos möglich. Bei kurzfristigeren Absagen verrechne ich die Lektion fair.",
+        "answer_en": "Yes – rescheduling is free up to 24 hours before the lesson. For shorter-notice cancellations I charge the lesson fairly.",
+    },
+    {
+        "id": "f5",
+        "question_de": "Wie viele Fahrstunden brauche ich bis zur praktischen Prüfung?",
+        "question_en": "How many lessons do I need until the practical exam?",
+        "answer_de": "Das ist individuell. Der Schweizer Durchschnitt liegt bei 20–35 Lektionen à 45 Minuten. Nach den ersten 2–3 Lektionen kann ich dir eine realistische Schätzung geben.",
+        "answer_en": "It varies. The Swiss average is 20–35 lessons of 45 minutes. After 2–3 lessons I can give you a realistic estimate.",
+    },
+    {
+        "id": "f6",
+        "question_de": "Was kostet die Fahrausbildung in {name} insgesamt?",
+        "question_en": "What does the full driving training in {name} cost?",
+        "answer_de": "Rechne mit ca. CHF 2'500 – 4'500 (inkl. VKU, Versicherungspauschale, ca. 25 Fahrstunden). Der genaue Preis hängt von deinem Lernfortschritt ab. Wir sprechen offen darüber.",
+        "answer_en": "Budget approx. CHF 2,500 – 4,500 (incl. VKU, insurance, ~25 lessons). The exact price depends on your progress. We talk about it openly.",
+    },
+    {
+        "id": "f7",
+        "question_de": "Wie melde ich mich für eine Lektion an?",
+        "question_en": "How do I sign up for a lesson?",
+        "answer_de": "Am einfachsten via WhatsApp (+41 79 585 00 85) oder über das Kontaktformular auf der Startseite. Ich melde mich innerhalb von 24 Stunden bei dir.",
+        "answer_en": "Easiest via WhatsApp (+41 79 585 00 85) or the contact form on the homepage. I'll get back to you within 24 hours.",
+    },
+    {
+        "id": "f8",
+        "question_de": "Welche Zahlungsmittel akzeptiert ihr?",
+        "question_en": "Which payment methods do you accept?",
+        "answer_de": "Bar nach der Lektion, TWINT oder Banküberweisung. Für Karten- und Banktransaktionen kommt eine Administrationspauschale von CHF 10 dazu.",
+        "answer_en": "Cash after the lesson, TWINT or bank transfer. Card and bank transactions incur a CHF 10 admin fee.",
+    },
+    {
+        "id": "f9",
+        "question_de": "Bietet ihr auch Automat-Fahrstunden an?",
+        "question_en": "Do you offer automatic transmission lessons?",
+        "answer_de": "Ja – mit dem Audi S3. Wichtig zu wissen: Wer die Prüfung mit einem Automaten absolviert, darf später kein Schaltgetriebe-Auto fahren.",
+        "answer_en": "Yes – with the Audi S3. Note: if you pass the exam in an automatic car you may not drive manual transmissions later.",
+    },
+    {
+        "id": "f10",
+        "question_de": "Wie alt muss ich für den Lernfahrausweis Kategorie B sein?",
+        "question_en": "How old must I be for the learner permit (Cat. B)?",
+        "answer_de": "Du kannst das Gesuch frühestens 1 Monat vor deinem 17. Geburtstag einreichen. Vorher musst du den Nothelferkurs absolviert und die Theorieprüfung bestanden haben.",
+        "answer_en": "You can submit the application at the earliest 1 month before your 17th birthday. Beforehand, complete the first-aid course and pass the theory exam.",
+    },
+    {
+        "id": "f11",
+        "question_de": "Wo finde ich das Lernfahrgesuch für meinen Kanton?",
+        "question_en": "Where do I find the learner permit application for my canton?",
+        "answer_de": "Auf der Seite /ablauf habe ich die Lernfahrgesuch-PDFs für ZH, SZ, SG, ZG und GL verlinkt. Wenn dein Kanton fehlt, schreib mir – ich helfe gern.",
+        "answer_en": "On the /ablauf page I've linked the application PDFs for ZH, SZ, SG, ZG and GL. If your canton is missing, just message me – happy to help.",
+    },
+    {
+        "id": "f12",
+        "question_de": "Was ist der VKU und ist er obligatorisch?",
+        "question_en": "What is the VKU and is it mandatory?",
+        "answer_de": "Der Verkehrskundeunterricht (VKU) ist ein 8-Stunden-Pflichtkurs in 2 oder 4 Tagen. Er wird benötigt, um sich zur praktischen Prüfung anmelden zu können. Meine Empfehlung: gleich am Anfang absolvieren.",
+        "answer_en": "VKU is a mandatory 8-hour course across 2 or 4 days. It's required to register for the practical exam. My recommendation: do it at the start of your training.",
+    },
+    {
+        "id": "f13",
+        "question_de": "Üben wir auch die typischen Prüfungsstrecken in der Region {name}?",
+        "question_en": "Do we practice the typical exam routes in the {name} region?",
+        "answer_de": "Ja – ich kenne die häufigsten Prüfungsrouten rund um {name} genau und baue sie gezielt in die letzten Lektionen ein. So fährst du am Prüfungstag nichts Unbekanntes.",
+        "answer_en": "Yes – I know the most common exam routes around {name} and incorporate them into the final lessons. So nothing is unfamiliar on exam day.",
+    },
+    {
+        "id": "f14",
+        "question_de": "Kann ich die praktische Prüfung mit eurem Fahrzeug absolvieren?",
+        "question_en": "Can I take the practical exam with your vehicle?",
+        "answer_de": "Selbstverständlich – das ist sogar empfohlen. Du fährst die Prüfung mit dem Auto, das du bereits kennst. Das gibt dir Sicherheit am wichtigsten Tag.",
+        "answer_en": "Of course – it's even recommended. You take the exam in the car you already know. That gives you confidence on the most important day.",
+    },
+    {
+        "id": "f15",
+        "question_de": "Bietet ihr Intensiv-Wochenkurse an?",
+        "question_en": "Do you offer intensive week courses?",
+        "answer_de": "Auf Anfrage organisiere ich Intensivblöcke (z. B. mehrere Lektionen pro Woche oder Doppellektionen). Schreib mir deine Wunschtermine und wir finden eine Lösung.",
+        "answer_en": "On request I organise intensive blocks (e.g. multiple lessons per week or double lessons). Send me your preferred dates and we'll work something out.",
+    },
+]
+
+
+# Add to DEFAULT_CONTENT so it's seeded once and editable via inline CMS.
+DEFAULT_CONTENT["location_faq_template"] = {
+    "title_de": "Häufige Fragen",
+    "title_en": "Frequently asked questions",
+    "intro_de": "Antworten auf die häufigsten Fragen rund um die Fahrausbildung. Bearbeite hier zentral – die Antworten erscheinen auf allen Standort-Seiten.",
+    "intro_en": "Answers to the most common questions around driving training. Edit centrally here – the answers appear on every location page.",
+    "faqs": DEFAULT_LOCATION_FAQ_TEMPLATE,
+}

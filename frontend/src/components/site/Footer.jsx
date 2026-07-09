@@ -5,11 +5,12 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import { api } from "@/lib/api";
 import Editable from "@/components/edit/Editable";
+import EditableImage from "@/components/edit/EditableImage";
 import BrandLogo from "@/components/site/BrandLogo";
 
 export default function Footer({ data }) {
   const { t, lang, pick } = useLang();
-  const { content } = useEdit();
+  const { content, editMode } = useEdit();
   const [locations, setLocations] = useState([]);
   const year = new Date().getFullYear();
   const tagline = pick(content?.footer_tagline_de, content?.footer_tagline_en) || t.footer.tagline;
@@ -95,6 +96,23 @@ export default function Footer({ data }) {
                 </a>
               )}
             </div>
+
+            {/* Audi silhouette – editable via inline CMS. Only rendered
+                when the admin has uploaded an image or is in edit mode. */}
+            {(editMode || data?.footer_image_url) && (
+              <div className="mt-6" data-testid="footer-brand-image-slot">
+                <EditableImage
+                  path="contact.footer_image_url"
+                  src={
+                    data?.footer_image_url ||
+                    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80"
+                  }
+                  alt="Audi Silhouette"
+                  className="block rounded-xl overflow-hidden border border-white/10"
+                  imgClassName="w-full h-auto max-h-32 object-contain bg-black"
+                />
+              </div>
+            )}
           </div>
 
           {/* Standorte */}

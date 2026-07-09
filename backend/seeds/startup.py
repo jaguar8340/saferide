@@ -75,6 +75,11 @@ async def run_startup_seeds() -> None:
 
     # ----- Location landing pages -----
     await db.locations.create_index("slug", unique=True)
+    # One-time removal of the deprecated 'st-gallen' landing page (customer
+    # requested Kaltbrunn instead). Only removes the SG capital city entry,
+    # all Kanton-SG data on other pages remains untouched.
+    await db.locations.delete_one({"slug": "st-gallen"})
+
     for default_loc in DEFAULT_LOCATIONS:
         slug = default_loc["slug"]
         existing = await db.locations.find_one({"slug": slug})
@@ -105,6 +110,35 @@ async def run_startup_seeds() -> None:
                     {"slug": slug},
                     {"$set": {"hero_image_url": default_loc["hero_image_url"]}},
                 )
+            # Migrate exam_routes → "Hier fahren wir" (features + places).
+            # If the current title still equals the old "Typische Prüfungsstrecken"
+            # we rewrite it and its intro to the new compact copy. Also seed
+            # here_we_drive_features/places if they don't exist yet.
+            title_update: dict = {}
+            if existing.get("exam_routes_title_de") in (
+                "Typische Prüfungsstrecken",
+                "Prüfungsstrecken",
+                None,
+                "",
+            ):
+                title_update["exam_routes_title_de"] = default_loc.get("exam_routes_title_de", "Hier fahren wir")
+                title_update["exam_routes_title_en"] = default_loc.get("exam_routes_title_en", "Where we drive")
+                title_update["exam_routes_intro_de"] = default_loc.get("exam_routes_intro_de", "")
+                title_update["exam_routes_intro_en"] = default_loc.get("exam_routes_intro_en", "")
+                title_update["exam_routes_outro_de"] = default_loc.get("exam_routes_outro_de", "")
+                title_update["exam_routes_outro_en"] = default_loc.get("exam_routes_outro_en", "")
+            for k in (
+                "here_we_drive_features",
+                "here_we_drive_places",
+                "here_we_drive_features_label_de",
+                "here_we_drive_features_label_en",
+                "here_we_drive_places_label_de",
+                "here_we_drive_places_label_en",
+            ):
+                if k not in existing and k in default_loc:
+                    title_update[k] = default_loc[k]
+            if title_update:
+                await db.locations.update_one({"slug": slug}, {"$set": title_update})
 
     # ----- Blog posts -----
     await db.blog_posts.create_index("slug", unique=True)
