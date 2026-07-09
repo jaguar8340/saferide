@@ -301,6 +301,13 @@ admin@saferide.ch / SafeRide2026!
   - **DB-Backup**: `GET /api/backup/mongo` liefert gzip-komprimierten Dump (alle Collections, ex `runtime_state`). `GET /api/backup/scripts` gibt 3 Skripte (Windows-Batch, Mac-Bash, Linux-Bash) für automatisches Herunterladen des Backups vom lokalen PC.
   - **Business-Settings-Refactor**: `business_settings.py` gesplittet in `router` (Firma/Adresse/MWST) + `assets_router` (Logo-Upload).
 
+- ✅ **Iteration 34 (09.02.2026) — Mobile-Admin + Datensicherung als eigener Tab (DONE, 9/9 Backend + Frontend 100 % via testing_agent_v3_fork auf iPhone 390×844 / iPad 768×1024 / Desktop 1920):**
+  - **Mobile-Bug behoben**: Nach Login-Redirect ging es auf `/` (Startseite) — auf Mobile war der „Verwaltung"-Link in der AdminToolbar zusätzlich mit `hidden md:inline-flex` unsichtbar → man kam nie in die Verwaltung rein. Fix in `AdminLogin.jsx`: `Navigate to="/admin"` + `nav('/admin')`. Fix in `AdminToolbar.jsx`: Link jetzt auf allen Breakpoints sichtbar (Icon-only auf Mobile).
+  - **Mobile-Sidebar → Off-Canvas-Drawer**: `AdminDashboard.jsx` komplett überarbeitet — auf `<lg` (1024 px) neues Layout mit sticky Header + Burger-Button + Sub-Header „aktueller Tab · Bereich wechseln" + Off-Canvas-Drawer (`data-testid=admin-drawer`). Body-Scroll wird während offenem Drawer via `document.body.style.overflow = 'hidden'` gesperrt. Drawer schliesst automatisch bei Tab-Wechsel via useEffect.
+  - **Neuer Tab „Datensicherung"** (`data-testid=admin-tab-backup`, HardDriveDownload-Icon): eigene `BackupManager.jsx` Komponente mit KPI-Cards (Datensätze + Sammlungen), großem „Jetzt herunterladen"-Button und aufklappbarem „Tägliche Auto-Sicherung"-Bereich mit OS-Auto-Detection (`navigator.platform`) + 3 Tabs Windows/macOS/Linux + Kopieren-Button. Extrahiert aus `BusinessSettingsManager.jsx` — Backup ist jetzt SOFORT auffindbar in der Tab-Navigation.
+  - **iOS-Touch-Target**: „Verwaltung"-Toolbar-Link auf 44 px angehoben (Cosmetic, war 29 px auf Mobile).
+  - Backend-Änderungen: KEINE. Alle Backup-Endpoints (`/api/backup/status`, `/api/backup/mongo`, `/api/backup/scripts`) sind unverändert.
+
 - ✅ **Iteration 33 (09.02.2026) — Benutzerverwaltung + SMTP-Rechnungsversand (DONE, 21/21 Backend + Frontend 100 % grün via testing_agent_v3_fork):**
   - **Benutzerverwaltung** — Neuer Admin-Tab „Benutzer" (`/admin?tab=users`):
     - Backend `routers/users.py` – `GET /api/users`, `POST /api/users`, `PATCH /api/users/{id}`, `DELETE /api/users/{id}`. bcrypt via bestehender `core.security.hash_password`. Unique-Index auf `email` (bereits durch `seeds/startup.py` seeded).

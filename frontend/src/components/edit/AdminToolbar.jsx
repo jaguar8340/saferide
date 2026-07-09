@@ -46,10 +46,10 @@ export default function AdminToolbar() {
       <Link
         to="/admin"
         data-testid="toolbar-manage"
-        className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold tracking-wide uppercase text-white/80 hover:bg-white/10 transition-colors"
+        className="inline-flex items-center gap-2 rounded-full px-3.5 py-3 sm:py-2 text-[11px] font-semibold tracking-wide uppercase text-white/80 hover:bg-white/10 transition-colors"
         title="Verwaltung (Schüler, Rechnungen, Buchhaltung, Datensicherung)"
       >
-        <Settings2 size={13} />
+        <Settings2 size={14} />
         <span className="hidden sm:inline">Verwaltung</span>
       </Link>
 
