@@ -8,7 +8,7 @@
  *   6. Fahrkontrolle      – the main matrix module
  */
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Loader2,
   ArrowLeft,
@@ -41,9 +41,24 @@ const SUB_TABS = [
 export default function AdminStudentDetail() {
   const { studentId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [student, setStudent] = useState(null);
-  const [tab, setTab] = useState("fahrkontrolle");
+  // Initialize the active sub-tab from the ?tab=... query param so deep
+  // links (e.g. /admin/students/{id}?tab=invoices) work on first paint.
+  const validIds = SUB_TABS.map((t) => t.id);
+  const initialTab = validIds.includes(searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "fahrkontrolle";
+  const [tab, setTab] = useState(initialTab);
   const [saving, setSaving] = useState(false);
+
+  const changeTab = (next) => {
+    setTab(next);
+    // Keep the URL in sync so refresh / back-forward preserves the tab.
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const load = async () => {
     try {
@@ -140,7 +155,7 @@ export default function AdminStudentDetail() {
           return (
             <button
               key={tb.id}
-              onClick={() => setTab(tb.id)}
+              onClick={() => changeTab(tb.id)}
               data-testid={`admin-student-tab-${tb.id}`}
               className={`flex items-center gap-2 px-3.5 py-3 text-xs font-semibold tracking-widest uppercase whitespace-nowrap border-b-2 transition-colors ${
                 active

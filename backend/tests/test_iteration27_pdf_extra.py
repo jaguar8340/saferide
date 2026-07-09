@@ -58,8 +58,9 @@ def _create_student(auth_headers, last="Zeta", first="Alpha"):
     return r.json()["id"]
 
 
-def test_pdf_single_page_when_no_comments(auth_headers):
-    """A student with lessons but no comments must produce exactly 1 page."""
+def test_pdf_always_has_chart_page(auth_headers):
+    """As of Iteration 30 the PDF always contains a second page with the
+    Fortschritts-Chart, even when the student has no comments."""
     sid = _create_student(auth_headers, last="TESTNoComm", first="Karin")
     try:
         # Add a lesson but NO assessment/comment
@@ -91,7 +92,7 @@ def test_pdf_single_page_when_no_comments(auth_headers):
         )
         assert r.status_code == 200
 
-        # PDF – expected exactly ONE page (no journal)
+        # PDF – matrix + chart page = 2 pages
         r = requests.get(
             f"{BASE_URL}/api/students/{sid}/fahrkontrolle.pdf",
             headers=auth_headers,
@@ -100,7 +101,7 @@ def test_pdf_single_page_when_no_comments(auth_headers):
         assert r.status_code == 200
         assert r.content[:4] == b"%PDF"
         pages = _count_pages(r.content)
-        assert pages == 1, f"expected 1 page for no-comments student, got {pages}"
+        assert pages == 2, f"expected 2 pages (matrix + chart), got {pages}"
     finally:
         requests.delete(
             f"{BASE_URL}/api/students/{sid}", headers=auth_headers, timeout=15

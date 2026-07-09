@@ -274,7 +274,21 @@ admin@saferide.ch / SafeRide2026!
     - Neue Admin-Tab **„Fahrschul-Daten"** (`BusinessSettingsManager.jsx`) mit 4 Sektionen (Firma/Adresse, Kontakt, Bank/IBAN, MWST/Rechnungs-Einstellungen), autospeichernd onBlur, gelbe Info-Box.
     - Default-Werte für Fahrschule Safe Ride: „Fahrschule Safe Ride by Nadine Stäubli · Schnabelsberg 8836 Benau · 079 585 00 85 · www.saferide.ch · IBAN folgt · Bank folgt · BIC folgt · MWST-Nr. leer (nicht MWST-pflichtig) · MWST-Satz 0 %".
   - **Tests**: `test_iteration29_subtabs.py` erweitert auf 10/10 grün inkl. neuer Invoice-PDF-Test + Business-Settings-Singleton-Test + Accounting-Endpoint-Test.
-  - **Nächste Iteration**: Iteration 31 = Buchhaltungsmenü (Alle Rechnungen + Offene Posten Übersicht) + Ausgaben-Modul (Monatsansicht + Upload). Iteration 32 = Kontenplan + Erfolgsrechnung.
+- ✅ **Iteration 31 (09.02.2026) — Buchhaltung + Ausgaben + Kontenplan + Erfolgsrechnung (DONE, 22/22 Backend + Frontend 100 % grün):**
+  - **Neuer Top-Level Admin-Tab „Buchhaltung"** (`AccountingPage.jsx`) mit 5 Sub-Tabs:
+    - **Übersicht**: 4 KPI-Kacheln (Umsatz gesamt, Bezahlt, Offen, Ausgaben) + große Gewinn/Verlust-Kachel + 3 Quick-Actions. Year-Selector oben rechts.
+    - **Rechnungen**: Globale Liste über alle Schüler mit Status-Filter (Alle/Offen/Bezahlt/Storniert), Schüler-Name enriched (n+1-frei), sortiert nach Datum desc.
+    - **Ausgaben**: Formular (Datum, Betrag, Bezeichnung, Konto-Dropdown, Beleg-Upload JPG/PDF), Gruppierung nach Monat mit Monatstotalen, Inline-Autosave, Delete mit Confirm.
+    - **Kontenplan**: Auto-Seed 13 KMU-Konten (4 Ertrag 3200-3400, 9 Aufwand 4000-6800), zweispaltiges Layout, Inline-Bearbeitung, neue Konten anlegen, Delete refused wenn referenziert.
+    - **Erfolgsrechnung**: 3 Jahres-KPIs (Ertrag/Aufwand/Gewinn) + 12-Monats-Tabelle mit tfoot Jahres-Total + Aufteilung nach Konto.
+  - **Backend `accounting.py`**: 8 Endpunkte für Konten CRUD, Ausgaben CRUD + Filter (year/month/account_id), Beleg-Upload (Multipart), Summary, Income-Statement (`/api/accounting/income-statement/{year}`).
+  - **Neue Modelle**: `Account`, `AccountPatch`, `Expense(Create|Patch)`, Konstanten `ACCOUNT_TYPES=["ertrag","aufwand"]`.
+  - **Kaskaden-Schutz**: Konto kann nicht gelöscht werden solange es in Ausgaben referenziert wird (HTTP 400 mit deutscher Meldung).
+  - **Erfolgsrechnung-Logik**: Erträge kommen aus BEZAHLTEN Rechnungen (`status='paid'`), standardmässig gebucht auf Konto 3200 („Erlöse Fahrstunden"); Aufwände nach individueller Konto-Zuordnung.
+  - **Frontend Deep-Link-Fix** (Post-Testing): `AdminStudentDetail` liest jetzt den `?tab=…` Query-Param beim ersten Rendern → z. B. `/admin/students/{id}?tab=invoices` öffnet direkt Rechnungen-Sub-Tab.
+  - **Test-Update**: `test_iteration27_pdf_extra::test_pdf_single_page_when_no_comments` → `test_pdf_always_has_chart_page` (jetzt 2 Seiten erwartet — Chart-Seite ist immer da).
+  - **Tests**: `test_iteration30_31_accounting.py` 8/8 + Iteration-27-Fix 5/5 grün. Gesamt-Regression: 34/34.
+  - **Nächste Iteration (Iteration 32)**: falls User wünscht — PDF-Export für Buchhaltung (Excel/CSV), oder KI-Assistent (Phase 4).
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
