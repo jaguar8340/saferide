@@ -68,6 +68,13 @@ def put_object(path: str, data: bytes, content_type: str) -> dict:
             data=data,
             timeout=120,
         )
+    # Map upstream 5xx flakes to a friendlier 502 so the client can retry
+    # instead of showing a raw "Internal Server Error".
+    if resp.status_code >= 500:
+        raise HTTPException(
+            status_code=502,
+            detail="Speicher aktuell nicht erreichbar, bitte erneut versuchen.",
+        )
     resp.raise_for_status()
     return resp.json()
 

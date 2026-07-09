@@ -245,7 +245,21 @@ admin@saferide.ch / SafeRide2026!
   - **Frontend PDF-Button**: In `FahrkontrolleTab`-Toolbar neben „+ Neue Lektion". Ausgegraut solange 0 Lektionen, aktiv ab 1 Lektion. Löst Blob-Download via Axios `responseType: "blob"` aus. testid `fahrkontrolle-export-pdf`.
   - **Backend-Tests**: `test_iteration27_fahrkontrolle_pdf.py` (3 Tests) + `test_iteration27_pdf_extra.py` (4 pypdf-basierte Tests). 20/20 grün inkl. Iteration-26-Regression.
   - **Frontend-Testing (Playwright)**: 15/15 Flows verifiziert – Login → Student öffnen → PDF-Button disabled/enabled State → Autosave → Fertig / X / Overlay-Klick / Leeren-Button → Kommentar bleibt bei Wiederöffnen → Datei-Download funktional.
-- **Nächste Phase (Backlog)**: Phase 3 = Ausbildungsfortschritt in % pro Kategorie + gesamt, farbliche Themen-Hervorhebung, Änderungs-Historie. Phase 4 = KI-Assistent (Prüfungsreife, Themenvorschläge, Zusammenfassung).
+- ✅ **Iteration 29 (09.02.2026) — PHASE 3: 4 Sub-Tabs mit echter Funktionalität + Aktivitäts-Feed (DONE, 32/32 Backend + Frontend 100%):**
+  - **Neue Backend-Router (3)**: `student_invoices.py` (CRUD Rechnungen mit Status open|paid|cancelled), `student_documents.py` (Multipart-Upload/List/Delete, Kategorien permit/id/contract/invoice/other/misc, nutzt Emergent Object Storage), `student_activities.py` (Read-only Feed).
+  - **Neue Modelle**: `StudentInvoice(Create|Patch)`, `StudentDocument`, `StudentActivity` in `models/schemas.py`.
+  - **Activity-Logger `core/activity.py`**: Fire-and-forget Helper — swallowt Exceptions, damit Business-Actions nie an Log-Fails scheitern. Kinds: student.create/update, lesson.create/update/delete, assessment.upsert, invoice.create/update/delete, document.upload/delete.
+  - **Instrumentierung**: Alle existierenden Endpunkte (`students.py`, `fahrkontrolle.py`) schreiben jetzt automatisch Activities. Kaskade beim `DELETE /students/{id}` erweitert um invoices/documents/activities/lessons/assessments.
+  - **4 Frontend-Tabs (ersetzen alte Placeholder)**:
+    - **`LessonsTab.jsx`** — Flache Lektions-Liste, L{n} Badge, Datum DD/MM/YYYY, Dauer/Strecken/Bewertungen-Counter, Inline-Autosave, Delete mit Confirm.
+    - **`InvoicesTab.jsx`** — CRUD-Formular oben + Row-Liste mit Inline-Autosave (Nummer, Datum, Betrag CHF, Notiz), Status-Pill mit 3-State-Cycling (Offen→Bezahlt→Storniert→Offen), Summen-Header (Total, offen, bezahlt) in `de-CH`/CHF.
+    - **`ActivitiesTab.jsx`** — Chronologische Timeline mit Icon + farbigem Label + „vor 5 min"-Formatierung + Actor-Email. Empty-State „Noch keine Aktivitäten".
+    - **`DocumentsTab.jsx`** — Multipart-Upload (Kategorie-Dropdown, Label-Input, „Datei wählen"-Button für PDF/JPG/PNG/WebP/GIF), Kategoriebasierte Gruppierung, Image-Thumbnails, PDF-Badge mit „Öffnen"-Link, Delete mit Confirm.
+  - **`AdminStudentDetail.jsx` aufgeräumt**: `PlaceholderTab` gelöscht, 4 neue Tab-Komponenten importiert und verdrahtet.
+  - **Backend-Hardening**: `core/storage.py` mappt jetzt Upstream 5xx vom Emergent Object Storage auf **HTTP 502 mit deutscher Fehlermeldung** („Speicher aktuell nicht erreichbar, bitte erneut versuchen.") — verhindert nackte 500er beim Client.
+  - **Tests**: `test_iteration29_subtabs.py` mit 6 pytest-Blöcken (Invoice-CRUD, Auth, Document-Upload, Activity-Feed-Autopopulation, 401/404 Guards). 32/32 gesamt grün inkl. gesamte Iteration-26–28 Regression.
+  - **Verifiziert live**: Rechnung R-2026-001 CHF 320.50 erstellt → Activity-Feed zeigt „Rechnung R-2026-001 erstellt (CHF 320.50) vor 5 min · admin@saferide.ch". Status-Cycle Offen→Bezahlt→Storniert funktioniert. Delete cleanup atomisch.
+  - **Nächstes**: Phase 4 = KI-Assistent (Prüfungsreife-Analyse, Themenvorschläge, Zusammenfassung).
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
