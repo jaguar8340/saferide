@@ -167,6 +167,9 @@ async def update_appointment(
         raise HTTPException(status_code=404, detail="Termin nicht gefunden")
 
     updates = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    # Reject a malformed start_datetime (POST already does this — mirror it here)
+    if "start_datetime" in updates and not _parse_iso(updates["start_datetime"]):
+        raise HTTPException(status_code=400, detail="Ungültiges Start-Datum/Zeit")
     # Recompute end_datetime when either start or duration change
     if "start_datetime" in updates or "duration_min" in updates:
         new_start = updates.get("start_datetime") or existing.get("start_datetime", "")

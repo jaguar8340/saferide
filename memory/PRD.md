@@ -330,6 +330,13 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 36 (09.02.2026) — Kalender-Layout-Fix + Drag & Drop (DONE, 19/19 Backend + Frontend 100 % via testing_agent_v3_fork):**
+  - **Layout-Bug behoben**: `CalendarGrid` nutzt jetzt Flexbox statt CSS-Grid. Zeit-Achse links (64 px absolute Labels), rechts `flex-1 flex` mit N gleichbreiten `flex-1` Tages-Spalten (border-r zwischen ihnen). Jede Spalte ist ein eigener positioning-Kontext — Event-Pills mit `absolute left-1 right-1` können nicht mehr überschiessen. Verifiziert: pill.width (167) < column.width (176), pill.x fällt in column.x-Range.
+  - **Drag & Drop**: Pointer-Events auf `EventPill.onPointerDown` startet Drag mit `{id, offsetY}`. `DayColumn.onPointerUp` berechnet Ziel-Slot via `pickupSlot()` mit 30-min-Snap und ruft `handleEventMove(id, newDate)` auf → optimistic setState + PATCH `/api/appointments/{id}` mit Rollback bei Fehler. Toast bestätigt Ziel-Datum/Zeit. Same-day + Cross-day-Moves funktionieren.
+  - **NowLine**: Orangener horizontaler Strich mit Punkt-Marker auf der „heute"-Spalte zwischen 06:00-22:00, auto-refresh alle 60 s.
+  - **30-min-Trennlinien**: Zarte gestrichelte Linien in `border-[#f1f5f9]` markieren jede halbe Stunde, durchgezogene `border-[#e7e5e4]` jede volle Stunde.
+  - **Backend-Härtung**: `PATCH /api/appointments/{id}` validiert jetzt `start_datetime` via `_parse_iso()` und gibt 400 „Ungültiges Start-Datum/Zeit" bei malformed Input zurück (spiegelt POST-Verhalten). Erlaubt Rollback-Path im Frontend bei Drag & Drop.
+
 - ✅ **Iteration 35 (09.02.2026) — Kalender + E-Mail-Tab + Student-Dashboard + iOS PWA (DONE, 15/15 Backend + Frontend 100 % via testing_agent_v3_fork auf Desktop + iPhone 390×844):**
   - **Kalender-Modul** (ersetzt „Buchungen"):
     - Backend `routers/calendar.py`: neue Endpoints `GET/POST/PATCH/DELETE /api/appointments`, öffentliches `GET /api/calendar/{token}.ics` (constant-time-token-Check), `POST /api/calendar/regenerate-token`, `GET /api/students/{id}/summary`.
