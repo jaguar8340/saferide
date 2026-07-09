@@ -15,7 +15,7 @@ export default function AdminLogin() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/admin" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +24,7 @@ export default function AdminLogin() {
     setSubmitting(false);
     if (res.ok) {
       toast.success("Willkommen zurück");
-      nav("/");
+      nav("/admin");
     } else {
       toast.error(res.error);
     }

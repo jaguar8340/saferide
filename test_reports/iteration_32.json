@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 34 mobile-admin + Datensicherung tab tested end-to-end. All 7 required behaviors pass: (1) /admin/login → /admin redirect after login on iPhone 390×844; (2) burger + sub-header + off-canvas drawer with body-scroll-lock, X-close, backdrop-close, auto-close on tab select all work; (3) new Datensicherung tab renders BackupManager with status KPIs (Datensätze=196, Sammlungen=26), download button, schedule toggle exposing Windows/macOS/Linux scripts + Kopieren button; (4) AdminToolbar 'Verwaltung' icon visible + clickable on mobile viewport, navigates to /admin; (5) bs-backup-section removed from BusinessSettingsManager while bs-smtp-section + logo section preserved; (6) Desktop 1920 keeps sidebar visible, burger hidden, sub-header hidden, tab order confirms backup as 5th item between business and users; (7) Iteration 33 regression pytest suite (9 tests: backup status/mongo/scripts + users CRUD) all pass. iPad 768×1024 also uses drawer (Tailwind lg=1024).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iteration32_33.py",
+    "/app/test_reports/pytest/it34_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminDashboard.jsx renders the SidebarTabs helper twice (Desktop sidebar + Mobile drawer). This creates duplicate data-testid=admin-tab-* nodes at viewports where BOTH are rendered simultaneously (only the drawer is conditionally rendered via menuOpen so in practice at most one set is in DOM at a time, but tests must still scope by parent test-id). Non-blocking.",
+    "AdminLogin.jsx correctly uses <Navigate to='/admin' replace/> for already-authenticated visitors AND nav('/admin') after successful login — both paths verified.",
+    "BackupManager.jsx: OS auto-detection via navigator.platform is fine, but consider navigator.userAgentData.platform as fallback for future browsers deprecating navigator.platform. Cosmetic only.",
+    "Mobile drawer uses onClick on the outer container for backdrop-close and e.stopPropagation on the inner panel — clean pattern. body.overflow reset is done in the cleanup of the useEffect which correctly handles unmount.",
+    "AdminToolbar's 'Verwaltung' link on mobile is icon-only (37×29 px hit-target) — this is at the lower bound of the recommended 44 px iOS touch-target but still tappable. Consider bumping padding on Mobile."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (9/9 regression pytest)", "frontend": "100% (all 7 required behaviors verified on iPhone/iPad/Desktop)"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None (existing admin + existing 'Stefan Haas' + 'Tim TESTJ...' students reused). Users CRUD test creates + deletes its own throw-away user.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 34 was frontend-only (mobile admin drawer + new Datensicherung tab). Backend backup endpoints (/api/backup/status, /api/backup/mongo, /api/backup/scripts) were untouched and remain green. Data-testid scoping tip: because AdminDashboard renders the SidebarTabs helper twice (desktop <aside data-testid=admin-sidebar> + mobile <div data-testid=admin-drawer>), always scope tab-clicks by their parent test-id: page.locator('[data-testid=admin-drawer] [data-testid=admin-tab-XXX]') or page.locator('[data-testid=admin-sidebar] [data-testid=admin-tab-XXX]') to avoid ambiguity. At mobile viewport only the drawer is rendered, at desktop only the sidebar is rendered — but tests should stay scope-safe. Mobile breakpoint = Tailwind lg (>=1024px shows sidebar).",
+  "rca of the issue": "N/A — no bugs found. First run of the playwright script had a click-race (wait_for_url('**/admin**') matches '/admin/login' immediately), fixed by waiting for [data-testid=admin-dashboard] instead. This is a test-script issue, not an app issue."
+}
