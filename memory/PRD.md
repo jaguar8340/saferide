@@ -208,6 +208,15 @@ admin@saferide.ch / SafeRide2026!
   - **Storage**: `core/storage.py` erweitert um `ALLOWED_DOCUMENT_TYPES={"application/pdf":"pdf"}` und `MAX_DOCUMENT_BYTES=8*1024*1024` (getrennt von IMAGE 10 MB / VIDEO 60 MB).
   - **Admin-Viewer**: `VkuRegistrationsViewer.jsx` zeigt bei ausgewählter Anmeldung eine neue "Lernfahrerausweis"-Sektion mit Öffnen-Link (`vku-registration-permit-link`) sobald `permit_file_url` gesetzt.
   - Verifiziert per Playwright E2E: anonymous Formular ausfüllen → PNG hochladen → Success → Admin sieht Row mit funktionierendem Datei-Link.
+
+- ✅ **Iteration 25 (07.02.2026) — Locations, FAQ-Template, Dog-Photo, Footer-Silhouette (DONE, 40/40 Backend + 12/12 Frontend green):**
+  - **Neue Standorte + Kaltbrunn statt St. Gallen**: 4 neue Locations (Reichenburg SZ, Kaltbrunn SG, Zizers GR, Landquart GR). St. Gallen entfernt via `db.locations.delete_one({"slug": "st-gallen"})` in `startup.py`. Total jetzt **17 Landing Pages** (vorher 14).
+  - **"Hier fahren wir" ersetzt "Prüfungsstrecken"**: Neuer kompakter 2-Karten-Layout in `LocRoutes.jsx`: Card 1 mit Feature-Chips (Autobahn, Kreisel, Landstrasse, Tempo 30, …), Card 2 mit Nachbar-Ortschafts-Chips (SEO). Beide via Inline-CMS als kommagetrennte Strings editierbar (`here_we_drive_features`, `here_we_drive_places`). Migration in `startup.py` benennt `exam_routes_title_de` auf allen bestehenden Locations um.
+  - **Zentrales FAQ-Template**: Neues `content.location_faq_template` mit 15 FAQs und `{name}`-Platzhalter. `LocFaq.jsx` liest daraus, ersetzt `{name}` zur Render-Zeit mit `loc.name`. Bearbeitung EINMAL zentral → erscheint sofort auf ALLEN 17 Standort-Seiten. Im Edit-Mode wird der RAW-Text mit `{name}`-Platzhalter angezeigt (damit Admin ihn nicht versehentlich hart durch einen Ortsnamen ersetzt). Fallback auf legacy `loc.faqs` wenn Template fehlt.
+  - **Hunde-Foto-Slot in About**: Neuer editierbarer Bild-Slot unter dem Portrait mit "AN BORD"-Badge + Bildunterschrift. Fields: `about.dog_photo_url`, `about.dog_caption_de/en`. Nur im Edit-Mode sichtbar wenn leer (Placeholder-Bild); für Besucher sichtbar sobald hochgeladen. testid `about-dog-slot`.
+  - **Audi-Silhouette-Slot im Footer**: Neuer editierbarer Bild-Slot unter Kontakt (Phone/Email). Field: `contact.footer_image_url`. Nur im Edit-Mode sichtbar wenn leer; für Besucher sichtbar sobald hochgeladen. testid `footer-brand-image-slot`.
+  - **Migration in `startup.py`**: löscht st-gallen, ergänzt fehlende Felder auf allen bestehenden Locations (title-Umbenennung nur wenn noch auf altem Default, sonst unverändert).
+  - Verifiziert per Playwright: 4 neue Pages rendern, Reichenburg zeigt 5 Feature-Chips + 5 Place-Chips, FAQ-Substitution funktioniert (`Fahrstunde in Reichenburg` vs `Fahrstunde in Kaltbrunn`), Admin-Edit zeigt `{name}`-Raw-Placeholder, beide Slots im Edit-Mode sichtbar mit Placeholder, im Read-Mode korrekt versteckt.
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).
