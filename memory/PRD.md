@@ -329,3 +329,22 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
+
+- ✅ **Iteration 35 (09.02.2026) — Kalender + E-Mail-Tab + Student-Dashboard + iOS PWA (DONE, 15/15 Backend + Frontend 100 % via testing_agent_v3_fork auf Desktop + iPhone 390×844):**
+  - **Kalender-Modul** (ersetzt „Buchungen"):
+    - Backend `routers/calendar.py`: neue Endpoints `GET/POST/PATCH/DELETE /api/appointments`, öffentliches `GET /api/calendar/{token}.ics` (constant-time-token-Check), `POST /api/calendar/regenerate-token`, `GET /api/students/{id}/summary`.
+    - `BusinessSettings.calendar_token` – zufällig generiert (secrets.token_urlsafe(32)) bei erstem Aufruf; lazy backfill für bestehende Datensätze.
+    - Legacy `/api/bookings` bleibt für Backward-Compatibility; `_resolve_public_bookings` normalisiert `preferred_date + preferred_time` zu `start_datetime` beim Rendern.
+    - Frontend `CalendarManager.jsx`: Wochen- (Mo-So) und Tagesansicht, 6-22 Uhr, 30-min Slots (SLOT_PX=32), klickbare Slots öffnen Termin-Modal, Event-Pills bunt nach Status (confirmed=orange, pending=gelb, cancelled=grau), 7 Felder (Kunde, Datum & Zeit, Dauer, Abholort, Bemerkungen, Telefon, E-Mail) + Status-Dropdown im Edit-Modus.
+    - **Nicht-bestätigte Buchungen** als Karten UNTER dem Kalender mit `datetime-local`-Input + „In Kalender"-Button → verschiebt aus dem Anfrage-Pool ins Kalender-Grid.
+    - **iCal-Sync-Modal** („iPhone-Sync"-Button oben rechts): zeigt vollständige URL `https://.../api/calendar/{token}.ics`, Kopieren-Button, iOS-Anleitung, „mit einem Tap abonnieren" (webcal://-Prefix), Token-Regeneration mit Bestätigung.
+    - Neuer Tab „Kalender" auf Position 2 (Calendar-Icon), alter „Buchungen"-Tab entfernt.
+  - **E-Mail-Versand als eigener Tab** (Position 6, Mail-Icon):
+    - Neue Komponente `EmailSettingsManager.jsx` extrahiert aus BusinessSettingsManager. `BusinessSettingsManager.jsx` von 442 → 269 Zeilen (SmtpSection samt ihrer 170 Zeilen entfernt, Imports Mail/PlugZap/Download/Copy/ShieldCheck gecleant).
+  - **Kunden-Übersicht als Dashboard**:
+    - Backend `GET /api/students/{id}/summary` → `{open_invoices_count, open_invoices_sum_chf, invoice_count, upcoming_appointments_count, next_appointment, completed_appointments_count, logged_lessons_count}`.
+    - Frontend `AdminStudentDetail.jsx` OverviewTab: neues 4-Kachel-Grid (data-testid=student-summary-tiles) OBEN vor dem Formular: „Offene Rechnungen" (warning-akzentuiert, mit CHF-Summe), „Kommende Termine" (primary-akzentuiert, nächster Termin), „Erledigte Termine", „Geloggte Lektionen".
+  - **iOS PWA**:
+    - Neu `frontend/public/manifest.json` mit `start_url=/admin?tab=students`, `display=standalone`, `theme_color=#0f172a`, `background_color=#fbf9f6`, Icons 192×192 + 512×512.
+    - `index.html` Meta-Tags: `apple-mobile-web-app-capable=yes`, `apple-mobile-web-app-title=SafeRide`, `apple-mobile-web-app-status-bar-style=default`, `mobile-web-app-capable=yes`, `format-detection=telephone=no`, `<link rel="manifest">`.
+    - iPhone: „Zum Home-Bildschirm hinzufügen" öffnet CMS direkt in der Schülerliste im Vollbildmodus mit Safe-Ride-Logo.

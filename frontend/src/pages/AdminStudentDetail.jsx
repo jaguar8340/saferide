@@ -226,7 +226,9 @@ function OverviewTab({ student, onSave }) {
         <SummaryTile
           label="Erledigte Termine"
           value={summary ? summary.completed_appointments_count : "—"}
-          sub={summary ? `${summary.completed_appointments_count} Termine geplant + erfolgt` : ""}
+          sub={summary
+            ? (summary.completed_appointments_count > 0 ? "Bereits durchgeführt" : "Noch keine")
+            : ""}
           testid="summary-completed"
           accent="muted"
         />
