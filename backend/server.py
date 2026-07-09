@@ -24,6 +24,8 @@ from seeds.startup import run_startup_seeds
 from routers import (
     accounting,
     auth,
+    backup,
+    backup_scripts,
     blog,
     bookings,
     business_settings,
@@ -69,6 +71,9 @@ api.include_router(accounting.router)
 api.include_router(student_documents.router)
 api.include_router(student_activities.router)
 api.include_router(business_settings.router)
+api.include_router(business_settings.assets_router)
+api.include_router(backup.router)
+api.include_router(backup_scripts.router)
 api.include_router(fahrkontrolle.router)
 api.include_router(fahrkontrolle_pdf.router)
 

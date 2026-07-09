@@ -291,9 +291,131 @@ async def accounting_summary(
     }
 
 
+@router.get("/monthly/{year}/{month}")
+async def monthly_journal(year: int, month: int, admin=Depends(get_current_admin)):
+    """Chronological month journal — every Einnahme (paid invoice) + every
+    Ausgabe combined into a single sorted list with type tags.
+
+    Returned rows look like:
+        { date, kind: "income"|"expense", label, amount, meta:{...} }
+    Sorted ASCending by date. Also carries a totals block for the month.
+    """
+    import calendar as _cal
+    if not 1 <= month <= 12:
+        raise HTTPException(status_code=400, detail="Ungültiger Monat")
+    last = _cal.monthrange(year, month)[1]
+    date_from = f"{year}-{month:02d}-01"
+    date_to = f"{year}-{month:02d}-{last:02d}"
+    date_filter = {"$gte": date_from, "$lte": date_to}
+
+    invoices = await db.student_invoices.find(
+        {"date": date_filter}, {"_id": 0}
+    ).to_list(5000)
+    expenses = await db.expenses.find({"date": date_filter}, {"_id": 0}).to_list(5000)
+
+    # Enrich invoices with student names for the PDF
+    student_ids = list({i["student_id"] for i in invoices})
+    students = await db.students.find(
+        {"id": {"$in": student_ids}},
+        {"_id": 0, "id": 1, "first_name": 1, "last_name": 1},
+    ).to_list(2000) if student_ids else []
+    student_map = {s["id"]: s for s in students}
+
+    accounts = await db.accounts.find({}, {"_id": 0}).to_list(500)
+    account_map = {a["id"]: a for a in accounts}
+
+    rows: list[dict] = []
+    revenue = 0.0
+    revenue_open = 0.0
+    revenue_cancelled = 0.0
+
+    for inv in invoices:
+        student = student_map.get(inv["student_id"]) or {}
+        student_name = f"{student.get('first_name','')} {student.get('last_name','')}".strip()
+        amount = float(inv.get("price_chf") or 0)
+        if inv.get("status") == "paid":
+            revenue += amount
+        elif inv.get("status") == "open":
+            revenue_open += amount
+        elif inv.get("status") == "cancelled":
+            revenue_cancelled += amount
+        rows.append({
+            "date": inv.get("date"),
+            "kind": "income",
+            "label": f"Rechnung {inv.get('number','')} · {student_name}",
+            "amount": amount,
+            "status": inv.get("status"),
+            "payment_method": inv.get("payment_method"),
+            "note": inv.get("note", ""),
+        })
+
+    expense_total = 0.0
+    for e in expenses:
+        acct = account_map.get(e.get("account_id") or "") or {}
+        amount = float(e.get("amount_chf") or 0)
+        expense_total += amount
+        rows.append({
+            "date": e.get("date"),
+            "kind": "expense",
+            "label": e.get("description", ""),
+            "amount": amount,
+            "account_number": acct.get("number", ""),
+            "account_name": acct.get("name", "— unzugeordnet —"),
+            "receipt_url": e.get("receipt_url", ""),
+        })
+
+    rows.sort(key=lambda r: (r["date"] or "", r["kind"]))
+
+    return {
+        "year": year,
+        "month": month,
+        "rows": rows,
+        "totals": {
+            "revenue_paid": round(revenue, 2),
+            "revenue_open": round(revenue_open, 2),
+            "revenue_cancelled": round(revenue_cancelled, 2),
+            "expenses_total": round(expense_total, 2),
+            "profit": round(revenue - expense_total, 2),
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
-#  Erfolgsrechnung (Income statement) – monthly / yearly view
+#  PDF exports
 # ---------------------------------------------------------------------------
+from routers.accounting_pdf import (   # noqa: E402
+    build_monthly_pdf,
+    build_income_statement_pdf,
+)
+from fastapi.responses import Response  # noqa: E402
+
+
+@router.get("/monthly/{year}/{month}/pdf")
+async def monthly_journal_pdf(year: int, month: int, admin=Depends(get_current_admin)):
+    """PDF export of the monthly journal (Einnahmen + Ausgaben combined)."""
+    data = await monthly_journal(year, month, admin=admin)
+    settings = await db.business_settings.find_one({"id": "default"}, {"_id": 0}) or {}
+    pdf = build_monthly_pdf(data, settings)
+    filename = f"Monatsjournal_{year}-{month:02d}.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/income-statement/{year}/pdf")
+async def income_statement_pdf(year: int, admin=Depends(get_current_admin)):
+    """PDF export of the annual Erfolgsrechnung."""
+    data = await income_statement(year, admin=admin)
+    settings = await db.business_settings.find_one({"id": "default"}, {"_id": 0}) or {}
+    pdf = build_income_statement_pdf(data, settings)
+    filename = f"Erfolgsrechnung_{year}.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 @router.get("/income-statement/{year}")
 async def income_statement(year: int, admin=Depends(get_current_admin)):
     """Return monthly income statement for the given year.

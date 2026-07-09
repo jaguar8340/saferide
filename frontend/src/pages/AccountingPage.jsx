@@ -21,12 +21,15 @@ import {
   Paperclip,
   ChevronLeft,
   ChevronRight,
+  FileDown,
+  CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
 const SUBTABS = [
   { id: "overview",       icon: LayoutDashboard, label: "Übersicht" },
+  { id: "monthly",        icon: CalendarDays,    label: "Monatsjournal" },
   { id: "invoices",       icon: Receipt,         label: "Rechnungen" },
   { id: "expenses",       icon: ArrowDownLeft,   label: "Ausgaben" },
   { id: "accounts",       icon: BookOpenCheck,   label: "Kontenplan" },
@@ -92,6 +95,7 @@ export default function AccountingPage() {
       </div>
 
       {subtab === "overview"  && <OverviewSubtab year={year} onGoto={setSubtab} />}
+      {subtab === "monthly"   && <MonthlyJournalSubtab year={year} />}
       {subtab === "invoices"  && <InvoicesSubtab year={year} />}
       {subtab === "expenses"  && <ExpensesSubtab year={year} />}
       {subtab === "accounts"  && <AccountsSubtab />}
@@ -909,6 +913,7 @@ function AccountList({ title, accounts, onPatch, onDelete, testidPrefix }) {
 function IncomeStatementSubtab({ year }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -926,6 +931,28 @@ function IncomeStatementSubtab({ year }) {
     return () => { cancelled = true; };
   }, [year]);
 
+  const downloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const res = await api.get(`/accounting/income-statement/${year}/pdf`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Erfolgsrechnung_${year}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="flex items-center gap-2 text-sm text-[#78716c]">
@@ -936,6 +963,18 @@ function IncomeStatementSubtab({ year }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <button
+          onClick={downloadPdf}
+          disabled={downloading}
+          data-testid="is-pdf-export"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+        >
+          {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
+          PDF-Export
+        </button>
+      </div>
+
       {/* Yearly totals */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <KpiCard label={`Ertrag ${year}`}   value={money(data.totals.revenue)}  tint="green" testid="is-yearly-revenue" />
@@ -1035,3 +1074,193 @@ function IncomeStatementSubtab({ year }) {
     </div>
   );
 }
+
+// -----------------------------------------------------------------------------
+//  Monthly journal — chronological list of income + expense for one month
+// -----------------------------------------------------------------------------
+function MonthlyJournalSubtab({ year }) {
+  const now = new Date();
+  const isThisYear = year === now.getFullYear();
+  const [month, setMonth] = useState(isThisYear ? now.getMonth() + 1 : 1);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const r = await api.get(`/accounting/monthly/${year}/${month}`);
+        if (!cancelled) setData(r.data);
+      } catch (e) {
+        if (!cancelled) toast.error(formatApiError(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [year, month]);
+
+  const downloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const res = await api.get(`/accounting/monthly/${year}/${month}/pdf`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Monatsjournal_${year}-${String(month).padStart(2, "0")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Month selector + PDF export */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="inline-flex items-center gap-2 bg-white border border-[#e7e5e4] rounded-full px-3 py-1.5">
+          <button
+            onClick={() => setMonth((m) => (m > 1 ? m - 1 : 12))}
+            data-testid="monthly-prev"
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f5f5f4] text-[#475569]"
+          >
+            <ChevronLeft size={13} />
+          </button>
+          <span
+            className="text-sm font-semibold w-32 text-center"
+            data-testid="monthly-value"
+          >
+            {MONTHS_DE[month - 1]} {year}
+          </span>
+          <button
+            onClick={() => setMonth((m) => (m < 12 ? m + 1 : 1))}
+            data-testid="monthly-next"
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f5f5f4] text-[#475569]"
+          >
+            <ChevronRight size={13} />
+          </button>
+        </div>
+        <button
+          onClick={downloadPdf}
+          disabled={downloading || loading}
+          data-testid="monthly-pdf-export"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+        >
+          {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
+          PDF-Export
+        </button>
+      </div>
+
+      {loading || !data ? (
+        <div className="flex items-center gap-2 text-sm text-[#78716c]">
+          <Loader2 size={14} className="animate-spin" /> Lade Monatsjournal …
+        </div>
+      ) : (
+        <>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Einnahmen"  value={money(data.totals.revenue_paid)}      tint="green" testid="monthly-kpi-revenue" />
+            <KpiCard label="Offen"       value={money(data.totals.revenue_open)}      tint="coral" testid="monthly-kpi-open" />
+            <KpiCard label="Ausgaben"    value={money(data.totals.expenses_total)}    tint="red"   testid="monthly-kpi-expenses" />
+            <KpiCard
+              label={data.totals.profit >= 0 ? "Gewinn" : "Verlust"}
+              value={money(data.totals.profit)}
+              tint={data.totals.profit >= 0 ? "green" : "red"}
+              testid="monthly-kpi-profit"
+            />
+          </div>
+
+          {/* Row list */}
+          {data.rows.length === 0 ? (
+            <div className="bg-white border border-dashed border-[#e7e5e4] rounded-2xl p-10 text-center text-sm text-[#78716c]">
+              Keine Einträge in diesem Monat.
+            </div>
+          ) : (
+            <div className="bg-white border border-[#e7e5e4] rounded-2xl overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#fafaf9] text-[10px] font-semibold tracking-widest uppercase text-[#475569]">
+                  <tr>
+                    <th className="text-left px-4 py-3 w-24">Datum</th>
+                    <th className="text-left px-4 py-3 w-24">Typ</th>
+                    <th className="text-left px-4 py-3">Bezeichnung</th>
+                    <th className="text-left px-4 py-3 w-56">Konto / Status</th>
+                    <th className="text-right px-4 py-3 w-32">Betrag CHF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((r, idx) => (
+                    <tr
+                      key={idx}
+                      data-testid={`monthly-row-${idx}`}
+                      className="border-t border-[#f1f5f9]"
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap tabular-nums text-[#334155]">
+                        {formatDMY(r.date)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.kind === "income" ? (
+                          <span className="text-[10px] font-bold tracking-widest uppercase text-[#166534]">
+                            EINGANG
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold tracking-widest uppercase text-[#b91c1c]">
+                            AUSGABE
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-[#0f172a]">{r.label}</td>
+                      <td className="px-4 py-3 text-xs text-[#78716c]">
+                        {r.kind === "income"
+                          ? [
+                              { paid: "Bezahlt", open: "Offen", cancelled: "Storniert" }[r.status] || "",
+                              PAYMENT_LABEL[r.payment_method],
+                            ].filter(Boolean).join(" · ")
+                          : `${r.account_number || "—"} · ${r.account_name || "unzugeordnet"}`}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right font-semibold tabular-nums whitespace-nowrap ${
+                          r.kind === "income"
+                            ? r.status === "paid" ? "text-[#166534]" : "text-[#78716c]"
+                            : "text-[#b91c1c]"
+                        }`}
+                      >
+                        {r.kind === "expense" ? "-" : (r.status === "paid" ? "+" : "")}
+                        {money(r.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-[#0f172a] text-white">
+                  <tr>
+                    <td colSpan={4} className="px-4 py-3 font-semibold uppercase tracking-widest text-[10px]">
+                      Total {MONTHS_DE[month - 1]} {year}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right tabular-nums font-semibold ${
+                        data.totals.profit >= 0 ? "text-[#86efac]" : "text-[#fca5a5]"
+                      }`}
+                      data-testid="monthly-total-profit"
+                    >
+                      {money(data.totals.profit)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+

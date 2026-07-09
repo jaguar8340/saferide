@@ -2,9 +2,10 @@
  * Fahrschul-Settings — global business identity used on every generated
  * invoice PDF. Auto-loaded via GET /api/settings/business, autosaved
  * via PATCH on blur so Nadine can nachtragen ohne "Speichern"-Button.
+ * Includes logo upload + backup helper section.
  */
-import { useEffect, useState } from "react";
-import { Loader2, Building2, Info } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Building2, Info, Upload, RefreshCw, Download, Copy, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
@@ -120,6 +121,8 @@ export default function BusinessSettingsManager() {
         </div>
       </div>
 
+      <LogoSection data={data} setData={setData} />
+
       <div className="space-y-6">
         {SECTIONS.map((section) => (
           <div key={section.title} className="bg-white border border-[#e7e5e4] rounded-2xl p-5">
@@ -159,6 +162,265 @@ export default function BusinessSettingsManager() {
           </div>
         ))}
       </div>
+
+      <BackupSection />
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+//  Logo section
+// -----------------------------------------------------------------------------
+function LogoSection({ data, setData }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const doUpload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await api.post("/settings/business/logo", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setData(r.data);
+      toast.success("Logo aktualisiert");
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const doReset = async () => {
+    if (!window.confirm("Auf das Standard-Safe-Ride-Logo zurücksetzen?")) return;
+    setResetting(true);
+    try {
+      const r = await api.delete("/settings/business/logo");
+      setData(r.data);
+      toast.success("Auf Standard-Logo zurückgesetzt");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const logoSrc = data.logo_url?.startsWith("/api/")
+    ? `${process.env.REACT_APP_BACKEND_URL}${data.logo_url}`
+    : data.logo_url;
+
+  return (
+    <div className="bg-white border border-[#e7e5e4] rounded-2xl p-5 mb-6">
+      <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-3">
+        Firmen-Logo (erscheint oben links auf jeder Rechnung)
+      </div>
+      <div className="flex items-center gap-5 flex-wrap">
+        <div
+          data-testid="bs-logo-preview"
+          className="w-40 h-24 rounded-xl bg-[#0f172a] flex items-center justify-center overflow-hidden shrink-0"
+        >
+          {logoSrc ? (
+            <img
+              src={logoSrc}
+              alt="Logo Vorschau"
+              className="max-w-full max-h-full object-contain"
+            />
+          ) : (
+            <span className="text-white text-xs opacity-70">Kein Logo</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-[220px]">
+          <p className="text-xs text-[#475569] leading-relaxed mb-3">
+            PNG oder JPG, empfohlen mit transparentem Hintergrund und mindestens
+            400 × 200 px. Wird proportional skaliert.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label
+              className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full cursor-pointer hover:opacity-90"
+              data-testid="bs-logo-upload"
+            >
+              {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+              {uploading ? "Lade…" : "Neues Logo hochladen"}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={(e) => e.target.files?.[0] && doUpload(e.target.files[0])}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={doReset}
+              disabled={resetting}
+              data-testid="bs-logo-reset"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-[#475569] bg-white border border-[#e2e8f0] px-4 py-2 rounded-full hover:border-[#ff5a36]"
+            >
+              {resetting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+              Standard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+//  Backup section — download once + set up daily auto-backup
+// -----------------------------------------------------------------------------
+function BackupSection() {
+  const [status, setStatus] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [scripts, setScripts] = useState(null);
+  const [showScripts, setShowScripts] = useState(false);
+  const [os, setOs] = useState("windows_batch");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.get("/backup/status");
+        setStatus(r.data);
+      } catch {
+        /* ignore, we still show the download button */
+      }
+    })();
+  }, []);
+
+  const downloadNow = async () => {
+    setDownloading(true);
+    try {
+      const res = await api.get("/backup/mongo", { responseType: "blob" });
+      const blob = new Blob([res.data], { type: "application/gzip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.download = `saferide-backup-${stamp}.json.gz`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Backup wurde heruntergeladen");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const openScripts = async () => {
+    if (!scripts) {
+      try {
+        const r = await api.get("/backup/scripts");
+        setScripts(r.data);
+      } catch (e) {
+        toast.error(formatApiError(e));
+        return;
+      }
+    }
+    setShowScripts(true);
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Script kopiert");
+    } catch {
+      toast.error("Kopieren fehlgeschlagen — bitte manuell auswählen");
+    }
+  };
+
+  return (
+    <div
+      className="mt-8 bg-white border border-[#e7e5e4] rounded-2xl p-5"
+      data-testid="bs-backup-section"
+    >
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-9 h-9 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center shrink-0">
+          <ShieldCheck size={14} />
+        </div>
+        <div>
+          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569]">
+            Datenbank-Sicherung
+          </div>
+          <div className="text-sm text-[#0f172a] leading-tight mt-0.5">
+            Backup manuell laden oder täglich automatisch auf deinem PC speichern.
+          </div>
+        </div>
+      </div>
+
+      {status && (
+        <div className="text-xs text-[#78716c] mb-4">
+          <span className="font-semibold text-[#0f172a]">{status.total_documents}</span>{" "}
+          Datensätze in{" "}
+          <span className="font-semibold text-[#0f172a]">{status.collection_count}</span>{" "}
+          Sammlungen bereit.
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={downloadNow}
+          disabled={downloading}
+          data-testid="bs-backup-download"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2.5 rounded-full hover:opacity-90 disabled:opacity-50"
+        >
+          {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+          Backup jetzt herunterladen
+        </button>
+        <button
+          onClick={openScripts}
+          data-testid="bs-backup-schedule"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-[#0f172a] bg-white border border-[#0f172a] px-4 py-2.5 rounded-full hover:bg-[#0f172a] hover:text-white transition-colors"
+        >
+          Tägliche Auto-Sicherung einrichten
+        </button>
+      </div>
+
+      {showScripts && scripts && (
+        <div className="mt-5 bg-[#0f172a] rounded-2xl p-5 text-white">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div className="text-[10px] font-semibold tracking-widest uppercase text-white/60">
+              Backup-Script
+            </div>
+            <div className="inline-flex gap-1 bg-white/10 rounded-full p-1">
+              {[
+                ["windows_batch", "Windows"],
+                ["mac_bash", "macOS"],
+                ["linux_bash", "Linux"],
+              ].map(([k, l]) => (
+                <button
+                  key={k}
+                  onClick={() => setOs(k)}
+                  className={`text-[10px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full transition-colors ${
+                    os === k ? "bg-white text-[#0f172a]" : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => copyToClipboard(scripts[os])}
+              data-testid="bs-backup-copy-script"
+              className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-white/10 text-white px-3 py-1.5 rounded-full hover:bg-white/20"
+            >
+              <Copy size={11} /> Kopieren
+            </button>
+          </div>
+          <pre className="text-[11px] font-mono whitespace-pre-wrap leading-relaxed text-white/80 max-h-80 overflow-y-auto">
+            {scripts[os]}
+          </pre>
+          <div className="mt-3 text-[11px] text-white/70 leading-relaxed">
+            <strong className="text-white">Hinweis:</strong> {scripts.auth_hint}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -420,6 +420,7 @@ class BusinessSettings(BaseModel):
     mwst_rate: float = 0.0                                  # default MWST rate (%)
     invoice_prefix: str = "RE"                              # RE-2026-0001
     invoice_footer_note: str = "Vielen Dank für Ihr Vertrauen. Zahlbar innert 30 Tagen."
+    logo_url: str = ""                                      # /api/files/... path to uploaded logo
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
 
@@ -443,6 +444,7 @@ class BusinessSettingsPatch(BaseModel):
     mwst_rate: Optional[float] = None
     invoice_prefix: Optional[str] = None
     invoice_footer_note: Optional[str] = None
+    logo_url: Optional[str] = None
 
 
 

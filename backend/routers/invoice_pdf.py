@@ -1,46 +1,30 @@
 """PDF generator for a single student invoice.
 
-Follows a clean Swiss B2B layout (portrait A4):
-
-  ┌──────────────────────────────────────────────────────────┐
-  │  Fahrschule Safe Ride by Nadine Stäubli                  │   ← Absender block
-  │  Schnabelsberg · 8836 Benau                              │
-  │                                                          │
-  │                                Schüler-Name              │   ← Empfänger block
-  │                                Adresse                   │
-  │                                                          │
-  │       Rechnung RE-2026-0001                              │   ← Titel
-  │       Fahrstunde vom 09/02/2026                          │
-  │                                                          │
-  │  Datum: 09/02/2026        Zahlbar bis: 09/03/2026        │   ← Metadaten
-  │  Kundennummer: 00001      MwSt.-Nr.: —                   │
-  │                                                          │
-  │  Sehr geehrte(r) …                                       │
-  │  Wir erlauben uns, folgendes in Rechnung zu stellen:     │
-  │                                                          │
-  │  Pos  Beschreibung             Menge   Einzelpreis  CHF  │   ← Positions-Tabelle
-  │  1    Fahrstunde 45 min …      1       120.00       120  │
-  │                                                          │
-  │                            Total     CHF 120.00          │
-  │                            MWST 0%   CHF 0.00            │
-  │                            Total     CHF 120.00          │
-  │                                                          │
-  │  Zahlungsweise: Twint                                    │
-  │  Freundliche Grüsse, Nadine Stäubli                      │
-  │                                                          │
-  │  ─── Fusszeile ───                                       │
-  │  Bank: … · IBAN: … · MWST-Nr.: …                         │
-  └──────────────────────────────────────────────────────────┘
+Design goals (Iteration 32):
+  * Clean, calm Swiss B2B layout in portrait A4
+  * NO colored subtitles (calm greys + navy, no coral text)
+  * Smaller, better-balanced typography — Rechnung + Nr. 16 pt / Firma 13 pt
+  * Bigger breathing room between Absender-Kopf and Empfänger-Block
+  * Firmen-Logo top-left (from BusinessSettings.logo_url)
+  * Optional Swiss QR-Bill at the bottom (only when a valid CH-IBAN is
+    stored in the settings — otherwise a plain footer is drawn instead).
 """
 from __future__ import annotations
 
+import io
+import os
+import re
 from datetime import datetime, timedelta
 from io import BytesIO
 
+import requests
+from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
+from svglib.svglib import svg2rlg
 
 PAYMENT_LABEL = {
     "bar": "Bar",
@@ -53,6 +37,13 @@ STATUS_LABEL = {
     "paid": "Bezahlt",
     "cancelled": "Storniert",
 }
+
+# Colour palette — kept intentionally quiet.
+NAVY = colors.HexColor("#0f172a")
+INK = colors.HexColor("#111827")
+MUTED = colors.HexColor("#6b7280")
+LIGHT = colors.HexColor("#e5e7eb")
+FAINT = colors.HexColor("#9ca3af")
 
 
 def _fmt_dmy(iso: str | None) -> str:
@@ -68,6 +59,140 @@ def _money(n: float) -> str:
     return f"{n:,.2f}".replace(",", "’")
 
 
+def _iban_looks_valid_ch(iban: str) -> bool:
+    """Very lenient sanity check — QR-Bill lib will do the strict check.
+
+    Accepts strings starting with 'CH' or 'LI' after removing spaces and
+    having 21 alnum chars total.
+    """
+    if not iban:
+        return False
+    cleaned = iban.replace(" ", "").upper()
+    if not re.match(r"^(CH|LI)\d{2}[A-Z0-9]{17}$", cleaned):
+        return False
+    return True
+
+
+def _load_logo(settings: dict) -> ImageReader | None:
+    """Return a ReportLab ImageReader for the current logo, or None."""
+    url = (settings.get("logo_url") or "").strip()
+    if not url:
+        return None
+
+    # Local bundled default logo — read straight from disk.
+    if url == "/api/assets/logo/default":
+        default_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "assets",
+            "saferide_logo.jpg",
+        )
+        if os.path.exists(default_path):
+            return ImageReader(default_path)
+        return None
+
+    # /api/files/... paths → fetch via the local backend (fast, in-cluster)
+    if url.startswith("/api/"):
+        internal = f"http://127.0.0.1:8001{url}"
+        try:
+            resp = requests.get(internal, timeout=10)
+            if resp.status_code == 200:
+                return ImageReader(BytesIO(resp.content))
+        except Exception:
+            return None
+        return None
+
+    # Absolute URL — best-effort fetch (image_url points at a CDN)
+    try:
+        resp = requests.get(url, timeout=15)
+        if resp.status_code == 200:
+            return ImageReader(BytesIO(resp.content))
+    except Exception:
+        return None
+    return None
+
+
+def _draw_qr_bill(
+    c: canvas.Canvas,
+    invoice: dict,
+    student: dict,
+    settings: dict,
+    total: float,
+    y_top: float,
+    page_w: float,
+) -> bool:
+    """Render a Swiss QR-bill at the bottom of the page.
+
+    Returns True when a QR-bill was drawn, False when the IBAN is missing
+    or invalid — the caller can then fall back to the plain bank footer.
+    """
+    iban = (settings.get("iban") or "").replace(" ", "").upper()
+    if not _iban_looks_valid_ch(iban):
+        return False
+
+    try:
+        from qrbill import QRBill        # deferred import — heavy lib
+
+        # Build creditor block
+        creditor = {
+            "name": settings.get("business_name") or "Fahrschule Safe Ride",
+            "street": settings.get("address_line1") or "",
+            "pcode": settings.get("zip") or "",
+            "city": settings.get("city") or "",
+            "country": "CH",
+        }
+        debtor = None
+        if student.get("first_name") or student.get("last_name"):
+            debtor = {
+                "name": f"{student.get('first_name','')} {student.get('last_name','')}".strip(),
+                "street": student.get("street") or "",
+                "pcode": student.get("zip") or "",
+                "city": student.get("city") or "",
+                "country": "CH",
+            }
+
+        bill = QRBill(
+            account=iban,
+            creditor=creditor,
+            amount=f"{total:.2f}" if total > 0 else None,
+            debtor=debtor,
+            additional_information=(
+                f"Rechnung {invoice.get('number', '')} · "
+                f"Fahrstunde {_fmt_dmy(invoice.get('lesson_date'))}"
+            )[:140],
+            language="de",
+            top_line=False,      # we handle the perforation line ourselves
+        )
+        # Render to SVG in-memory
+        svg_buf = io.StringIO()
+        bill.as_svg(svg_buf)
+        svg_buf.seek(0)
+        drawing = svg2rlg(svg_buf)
+
+        # QR-bill payment slip is 210 × 105 mm (A6 landscape). Scale so
+        # width matches the page width (with 2 mm bleed on each side).
+        target_w = page_w
+        scale = target_w / drawing.width
+        drawing.scale(scale, scale)
+        # Draw at the very bottom of the page
+        renderPDF.draw(drawing, c, 0, 0)
+
+        # Draw the perforation line 105 mm above the bottom
+        c.setStrokeColor(FAINT)
+        c.setDash(2, 3)
+        c.setLineWidth(0.4)
+        c.line(0, 105 * mm, page_w, 105 * mm)
+        c.setDash()
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica-Oblique", 7)
+        c.drawCentredString(page_w / 2, 105 * mm + 1 * mm, "Vor der Einzahlung abzutrennen")
+        return True
+    except Exception as e:
+        # QR-Bill generation failed (invalid data, missing fields, etc.).
+        # Silent fallback — caller draws the plain bank footer instead.
+        print(f"[invoice_pdf] QR-Bill skipped: {e}")
+        return False
+
+
 def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
@@ -75,50 +200,68 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
 
     left = 20 * mm
     right = page_w - 20 * mm
-    top = page_h - 20 * mm
-    bottom = 20 * mm
-
-    NAVY = colors.HexColor("#0f172a")
-    CORAL = colors.HexColor("#ff5a36")
-    MUTED = colors.HexColor("#64748b")
-    LIGHT = colors.HexColor("#e2e8f0")
+    top = page_h - 22 * mm
+    bottom = 18 * mm
 
     # ------------------------------------------------------------------
-    #  Sender / letterhead
+    #  Letterhead — Logo (left) + business identity (right of logo)
     # ------------------------------------------------------------------
+    logo = _load_logo(settings)
+    logo_max_h = 20 * mm
+    logo_max_w = 50 * mm
+    text_x = left  # starting x for the sender text block
+    if logo is not None:
+        try:
+            iw, ih = logo.getSize()
+            scale = min(logo_max_w / iw, logo_max_h / ih)
+            draw_w = iw * scale
+            draw_h = ih * scale
+            c.drawImage(
+                logo,
+                left,
+                top - draw_h + 2 * mm,
+                width=draw_w,
+                height=draw_h,
+                mask="auto",
+                preserveAspectRatio=True,
+            )
+            text_x = left + draw_w + 6 * mm
+        except Exception:
+            pass
+
     c.setFillColor(NAVY)
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(left, top, settings.get("business_name") or "")
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(text_x, top - 3 * mm, settings.get("business_name") or "")
 
     c.setFillColor(MUTED)
-    c.setFont("Helvetica", 9)
-    addr_line = " · ".join(
-        p for p in [
-            settings.get("address_line1", ""),
-            settings.get("address_line2", ""),
-            f"{settings.get('zip', '')} {settings.get('city', '')}".strip(),
-        ] if p
-    )
-    c.drawString(left, top - 5.5 * mm, addr_line)
+    c.setFont("Helvetica", 8.5)
+    addr_parts = [
+        settings.get("address_line1", ""),
+        settings.get("address_line2", ""),
+        f"{settings.get('zip', '')} {settings.get('city', '')}".strip(),
+    ]
+    addr_line = " · ".join(p for p in addr_parts if p)
+    c.drawString(text_x, top - 8 * mm, addr_line)
 
-    contact_line = " · ".join(
-        p for p in [
-            f"Tel {settings.get('phone', '')}" if settings.get("phone") else "",
-            settings.get("email") or "",
-            settings.get("website") or "",
-        ] if p
-    )
+    contact_parts = [
+        f"Tel {settings.get('phone', '')}" if settings.get("phone") else "",
+        settings.get("email") or "",
+        settings.get("website") or "",
+    ]
+    contact_line = " · ".join(p for p in contact_parts if p)
     if contact_line:
-        c.drawString(left, top - 9.5 * mm, contact_line)
+        c.drawString(text_x, top - 12 * mm, contact_line)
 
     # ------------------------------------------------------------------
-    #  Recipient block (upper right)
+    #  Recipient block — sits with generous breathing room below sender
     # ------------------------------------------------------------------
-    rcpt_y = top - 22 * mm
+    rcpt_y = top - 40 * mm         # was 22 mm — bigger gap now
     c.setFillColor(NAVY)
     c.setFont("Helvetica-Bold", 10.5)
     name = f"{student.get('first_name', '')} {student.get('last_name', '')}".strip()
     c.drawString(left, rcpt_y, name or "—")
+
+    c.setFillColor(INK)
     c.setFont("Helvetica", 10)
     line_y = rcpt_y - 4.5 * mm
     for line in [
@@ -131,27 +274,27 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
             line_y -= 4.2 * mm
 
     # ------------------------------------------------------------------
-    #  Title + metadata
+    #  Title + soft subtitle (no coral colour anymore)
     # ------------------------------------------------------------------
-    title_y = rcpt_y - 32 * mm
+    title_y = rcpt_y - 30 * mm
     c.setFillColor(NAVY)
-    c.setFont("Helvetica-Bold", 22)
+    c.setFont("Helvetica-Bold", 16)                # was 22
     c.drawString(left, title_y, f"Rechnung {invoice.get('number', '')}")
 
+    c.setFillColor(MUTED)                           # muted grey, no red
+    c.setFont("Helvetica", 10)
     subtitle = f"Fahrstunde vom {_fmt_dmy(invoice.get('lesson_date'))}"
-    c.setFillColor(CORAL)
-    c.setFont("Helvetica", 11)
-    c.drawString(left, title_y - 6.5 * mm, subtitle)
+    c.drawString(left, title_y - 5.5 * mm, subtitle)
 
-    # Metadata table (2 columns)
-    meta_y = title_y - 16 * mm
+    # Metadata table (2 rows × 3 cols)
+    meta_y = title_y - 15 * mm
 
     def meta_pair(x: float, label: str, value: str) -> None:
-        c.setFillColor(MUTED)
-        c.setFont("Helvetica-Bold", 7)
+        c.setFillColor(FAINT)
+        c.setFont("Helvetica-Bold", 6.5)
         c.drawString(x, meta_y, label.upper())
-        c.setFillColor(NAVY)
-        c.setFont("Helvetica", 10)
+        c.setFillColor(INK)
+        c.setFont("Helvetica", 9.5)
         c.drawString(x, meta_y - 4.2 * mm, value or "—")
 
     invoice_date = _fmt_dmy(invoice.get("date") or datetime.utcnow().date().isoformat())
@@ -166,38 +309,38 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     meta_pair(left + 115 * mm, "MwSt.-Nr.", settings.get("mwst_number") or "nicht MWST-pflichtig")
 
     meta_y -= 12 * mm
-    meta_pair(left, "Kundennummer", student.get("id", "")[:8].upper() if student.get("id") else "—")
+    meta_pair(left, "Kundennummer", (student.get("id") or "")[:8].upper() or "—")
     meta_pair(left + 60 * mm, "Zahlungsweise", PAYMENT_LABEL.get(invoice.get("payment_method"), "—"))
     meta_pair(left + 115 * mm, "Status", STATUS_LABEL.get(invoice.get("status"), "—"))
 
     # ------------------------------------------------------------------
     #  Salutation
     # ------------------------------------------------------------------
-    salut_y = meta_y - 16 * mm
-    c.setFillColor(NAVY)
-    c.setFont("Helvetica", 10.5)
+    salut_y = meta_y - 15 * mm
+    c.setFillColor(INK)
+    c.setFont("Helvetica", 10)
     c.drawString(left, salut_y, f"Hallo {student.get('first_name', '')},")
     c.drawString(left, salut_y - 5 * mm, "wir erlauben uns, Ihnen wie folgt in Rechnung zu stellen:")
 
     # ------------------------------------------------------------------
-    #  Line items table (single row for now)
+    #  Positions table (single row for now)
     # ------------------------------------------------------------------
-    table_top = salut_y - 15 * mm
+    table_top = salut_y - 12 * mm
     col_pos = left
     col_desc = left + 12 * mm
     col_qty = left + 118 * mm
     col_price = left + 140 * mm
     col_total = right
 
-    c.setFillColor(LIGHT)
-    c.rect(left, table_top - 8 * mm, right - left, 8 * mm, fill=1, stroke=0)
-    c.setFillColor(NAVY)
-    c.setFont("Helvetica-Bold", 8.5)
-    c.drawString(col_pos + 1 * mm, table_top - 5 * mm, "POS.")
-    c.drawString(col_desc, table_top - 5 * mm, "BESCHREIBUNG")
-    c.drawRightString(col_qty, table_top - 5 * mm, "MENGE")
-    c.drawRightString(col_price, table_top - 5 * mm, "EINZELPREIS")
-    c.drawRightString(col_total, table_top - 5 * mm, "PREIS IN CHF")
+    c.setFillColor(colors.HexColor("#f8fafc"))
+    c.rect(left, table_top - 7 * mm, right - left, 7 * mm, fill=1, stroke=0)
+    c.setFillColor(FAINT)
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(col_pos + 1 * mm, table_top - 4.5 * mm, "POS.")
+    c.drawString(col_desc, table_top - 4.5 * mm, "BESCHREIBUNG")
+    c.drawRightString(col_qty, table_top - 4.5 * mm, "MENGE")
+    c.drawRightString(col_price, table_top - 4.5 * mm, "EINZELPREIS")
+    c.drawRightString(col_total, table_top - 4.5 * mm, "PREIS IN CHF")
 
     price = float(invoice.get("price_chf") or 0)
     duration = int(invoice.get("duration_min") or 0)
@@ -205,16 +348,16 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     description = f"Fahrstunde ({duration} min) am {lesson_date}"
     note = invoice.get("note") or ""
 
-    row_y = table_top - 12 * mm
-    c.setFillColor(NAVY)
+    row_y = table_top - 11 * mm
+    c.setFillColor(INK)
     c.setFont("Helvetica", 10)
     c.drawString(col_pos + 1 * mm, row_y, "1")
     c.drawString(col_desc, row_y, description)
     if note:
         c.setFillColor(MUTED)
-        c.setFont("Helvetica-Oblique", 9)
-        c.drawString(col_desc, row_y - 4.5 * mm, note[:110])
-        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Oblique", 8.5)
+        c.drawString(col_desc, row_y - 4 * mm, note[:110])
+        c.setFillColor(INK)
         c.setFont("Helvetica", 10)
     c.drawRightString(col_qty, row_y, "1")
     c.drawRightString(col_price, row_y, _money(price))
@@ -223,13 +366,13 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     # Row separator
     c.setStrokeColor(LIGHT)
     c.setLineWidth(0.4)
-    row_bottom = row_y - (10 * mm if note else 5 * mm)
+    row_bottom = row_y - (9 * mm if note else 4 * mm)
     c.line(left, row_bottom, right, row_bottom)
 
     # ------------------------------------------------------------------
     #  Totals block (right-aligned)
     # ------------------------------------------------------------------
-    total_y = row_bottom - 8 * mm
+    total_y = row_bottom - 7 * mm
     mwst_rate = float(invoice.get("mwst_rate") or 0.0)
     subtotal = price
     mwst_amount = round(subtotal * mwst_rate / 100.0, 2)
@@ -237,9 +380,9 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
 
     def total_row(y: float, label: str, value: str, bold: bool = False) -> None:
         c.setFont("Helvetica-Bold" if bold else "Helvetica", 10.5 if bold else 10)
-        c.setFillColor(NAVY if bold else MUTED)
+        c.setFillColor(MUTED if not bold else NAVY)
         c.drawRightString(col_price, y, label)
-        c.setFillColor(NAVY)
+        c.setFillColor(INK)
         c.drawRightString(col_total, y, value)
 
     total_row(total_y, "Zwischentotal", f"CHF {_money(subtotal)}")
@@ -252,10 +395,10 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     total_row(total_y - 12 * mm, "Total inkl. MWST", f"CHF {_money(total_incl)}", bold=True)
 
     # ------------------------------------------------------------------
-    #  Payment / closing paragraph
+    #  Closing paragraph
     # ------------------------------------------------------------------
     close_y = total_y - 24 * mm
-    c.setFillColor(NAVY)
+    c.setFillColor(INK)
     c.setFont("Helvetica", 10)
     payment_line = f"Zahlungsweise: {PAYMENT_LABEL.get(invoice.get('payment_method'), '—')}"
     c.drawString(left, close_y, payment_line)
@@ -266,36 +409,44 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
         c.setFont("Helvetica-Oblique", 9.5)
         c.drawString(left, close_y - 6 * mm, footer_note)
 
-    c.setFillColor(NAVY)
+    c.setFillColor(INK)
     c.setFont("Helvetica", 10)
     c.drawString(left, close_y - 14 * mm, "Freundliche Grüsse")
     c.setFont("Helvetica-Bold", 10.5)
     c.drawString(left, close_y - 19 * mm, settings.get("business_name") or "")
 
     # ------------------------------------------------------------------
-    #  Footer bank details
+    #  Bottom: Swiss QR-Bill (auto) OR plain bank details footer
     # ------------------------------------------------------------------
-    c.setStrokeColor(LIGHT)
-    c.setLineWidth(0.4)
-    c.line(left, bottom + 20 * mm, right, bottom + 20 * mm)
+    qr_drawn = _draw_qr_bill(
+        c, invoice, student, settings, total=total_incl,
+        y_top=105 * mm, page_w=page_w,
+    )
 
-    c.setFillColor(MUTED)
-    c.setFont("Helvetica", 7.5)
+    if not qr_drawn:
+        # Plain footer line + bank details grid.
+        c.setStrokeColor(LIGHT)
+        c.setLineWidth(0.4)
+        c.line(left, bottom + 20 * mm, right, bottom + 20 * mm)
 
-    footer_rows = [
-        [("Bank", settings.get("bank")), ("Kontoinhaber", settings.get("account_holder") or settings.get("business_name")), ("BIC", settings.get("bic"))],
-        [("IBAN", settings.get("iban")), ("MWST-Nr.", settings.get("mwst_number") or "—"), ("Website", settings.get("website"))],
-    ]
-    for i, row in enumerate(footer_rows):
-        y = bottom + 15 * mm - i * 6 * mm
-        for j, (label, value) in enumerate(row):
-            x = left + j * ((right - left) / 3)
-            c.setFillColor(MUTED)
-            c.setFont("Helvetica-Bold", 6.5)
-            c.drawString(x, y, label.upper())
-            c.setFillColor(NAVY)
-            c.setFont("Helvetica", 8.5)
-            c.drawString(x, y - 3.5 * mm, value or "—")
+        footer_rows = [
+            [("Bank", settings.get("bank")),
+             ("Kontoinhaber", settings.get("account_holder") or settings.get("business_name")),
+             ("BIC", settings.get("bic"))],
+            [("IBAN", settings.get("iban")),
+             ("MWST-Nr.", settings.get("mwst_number") or "—"),
+             ("Website", settings.get("website"))],
+        ]
+        for i, row in enumerate(footer_rows):
+            y = bottom + 15 * mm - i * 6 * mm
+            for j, (label, value) in enumerate(row):
+                x = left + j * ((right - left) / 3)
+                c.setFillColor(FAINT)
+                c.setFont("Helvetica-Bold", 6.5)
+                c.drawString(x, y, label.upper())
+                c.setFillColor(INK)
+                c.setFont("Helvetica", 8.5)
+                c.drawString(x, y - 3.5 * mm, value or "—")
 
     c.showPage()
     c.save()
