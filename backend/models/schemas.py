@@ -421,6 +421,21 @@ class BusinessSettings(BaseModel):
     invoice_prefix: str = "RE"                              # RE-2026-0001
     invoice_footer_note: str = "Vielen Dank für Ihr Vertrauen. Zahlbar innert 30 Tagen."
     logo_url: str = ""                                      # /api/files/... path to uploaded logo
+    # E-Mail-Versand (SMTP – wird meist zusammen mit IMAP-Zugangsdaten vom Mail-Provider geliefert)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_from_name: str = ""
+    smtp_use_tls: bool = True                               # STARTTLS on 587 / implicit SSL on 465
+    email_subject_template: str = "Rechnung {number} – {business_name}"
+    email_body_template: str = (
+        "Hallo {first_name},\n\n"
+        "im Anhang findest du deine Rechnung {number} über CHF {total}.\n\n"
+        "Bei Fragen melde dich jederzeit.\n\n"
+        "Herzlichen Dank und liebe Grüsse\n{business_name}"
+    )
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
 
@@ -445,6 +460,15 @@ class BusinessSettingsPatch(BaseModel):
     invoice_prefix: Optional[str] = None
     invoice_footer_note: Optional[str] = None
     logo_url: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from_email: Optional[str] = None
+    smtp_from_name: Optional[str] = None
+    smtp_use_tls: Optional[bool] = None
+    email_subject_template: Optional[str] = None
+    email_body_template: Optional[str] = None
 
 
 

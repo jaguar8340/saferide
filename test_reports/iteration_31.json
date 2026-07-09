@@ -1,0 +1,47 @@
+{
+  "summary": "Full backend + frontend test of Iteration 33 (Benutzerverwaltung, SMTP config, Rechnung-per-E-Mail) plus Iteration 32 regression (Logo upload, Invoice PDF, Accounting PDFs, DB Backup). 21/21 pytest cases pass. Frontend UI verified end-to-end via Playwright: user create/rename/password/delete flow works, self-account is protected in UI+API, SMTP test button gating works, invoice email button correctly returns 400+German toast when SMTP is unconfigured. One UX issue found around SMTP test failure toast (CDN 502 body replacement).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/settings/business/smtp/test",
+        "issue": "Backend returns 502 + JSON detail on unreachable SMTP host as designed, but the Emergent/Cloudflare ingress rewrites the response body (HTML 'origin server returned invalid response') so the frontend toast shows Cloudflare's error text instead of the intended 'SMTP-Verbindung fehlgeschlagen: …' message. Consider returning 400 (client-error) instead of 502 for SMTP test failures so the CDN passes the JSON detail through unchanged."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "SMTP-Verbindung testen (Business Settings → E-Mail-Versand)",
+        "issue": "When the SMTP host is unreachable the user sees a Cloudflare HTML error text as toast ('The origin web server returned an invalid or incomplete response to Cloudflare…') instead of the German error the backend produces. Root cause: backend returns 502, ingress replaces body. Fix on backend side (see backend_issues.minor).",
+        "affected_selectors": ["[data-testid=bs-smtp-test]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration32_33.py",
+    "/app/test_reports/pytest/it33_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL/UX: In routers/invoice_email.py::_open_smtp, return HTTPException(status_code=400 …) instead of 502 for SMTP connection/auth errors so the Emergent CDN does not replace the JSON body with its own 502 HTML page. This will make the 'Verbindung testen' toast show the intended German error message.",
+    "OPTIONAL: Add an /api/auth/me exposure of the current user's id (currently returned – confirmed used) so future tests can rely on it consistently."
+  ],
+  "critical_code_review_comments": [
+    "Users CRUD is clean, uses bcrypt via core.security.hash_password, has unique email index (seeded in startup.py:25) and correctly returns 409 on duplicate. Two safeguards (self-delete + last-user) are enforced in the router and match the UI (disabled trash button + 'Du' badge).",
+    "invoice_email.py correctly separates transport (SMTP) and content (Pydantic + template rendering). Templates use a Safe dict so missing placeholders don't crash. Consider streaming attachment for very large PDFs (currently loads full PDF into memory – fine for invoices).",
+    "business_settings.py: get_or_create_settings back-fills logo_url on legacy docs, good migration pattern. SMTP fields have sensible defaults in the Pydantic model (port=587, use_tls=True) so existing rows expose valid data on GET.",
+    "AccountingPage.jsx uses actual routes /accounting/monthly/{y}/{m}/pdf and /accounting/income-statement/{y}/pdf – not the /...-.pdf?year= form quoted in the review request. This was a discrepancy in the E1 review-request text; the code itself is consistent."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration32_33.py"
+  ],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "100% (all critical flows)"},
+  "seed_data_creation": "None. Test creates one throw-away user per run (email prefix 'test_user_' / 'e2e_') and deletes it in the same test. Existing student 'Stefan Haas' + his RE-2026-0001 invoice were reused for the invoice-email flow.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (as per /app/memory/test_credentials.md)",
+  "context_for_next_testing_agent": "test_iteration32_33.py is the current regression baseline for iterations 32+33. It covers: user CRUD + login round-trip, SMTP config PATCH persistence, SMTP test 400/502, invoice email 400-without-SMTP path, logo upload/reset + default asset, invoice PDF download, monthly journal & income statement PDF, backup status/mongo/scripts. The SMTP unreachable test is tolerant of the CDN rewriting the 502 body (only status is asserted). Actual accounting PDF routes are /accounting/monthly/{y}/{m}/pdf and /accounting/income-statement/{y}/pdf (not the URL form in the E1 request).",
+  "rca of the issue": "SMTP toast garbled text – The Emergent preview ingress (Cloudflare) intercepts any 5xx upstream response and returns its own error HTML, discarding the JSON body FastAPI produced. Since routers/invoice_email.py maps SMTP errors to HTTPException(status_code=502), the frontend's formatApiError falls back to the raw HTML because there is no JSON detail to parse. Two possible mitigations: (a) return 400 instead of 502 for SMTP handshake/auth failures – 4xx passes through the CDN unchanged; (b) return 200 + structured {ok:false,error:…} and treat it in the UI. Recommended (a) as it is a one-line change and preserves REST semantics (client-supplied SMTP config is invalid = client error)."
+}

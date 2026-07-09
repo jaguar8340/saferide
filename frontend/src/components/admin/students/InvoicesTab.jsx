@@ -8,7 +8,7 @@
  * on top. A "PDF" button per row streams a formatted invoice PDF.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown } from "lucide-react";
+import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
@@ -43,6 +43,7 @@ export default function InvoicesTab({ student }) {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [downloading, setDownloading] = useState(null);
+  const [sending, setSending] = useState(null);
   const [draft, setDraft] = useState({
     lesson_date: new Date().toISOString().slice(0, 10),
     duration_min: 45,
@@ -158,6 +159,30 @@ export default function InvoicesTab({ student }) {
       toast.error(formatApiError(e));
     } finally {
       setDownloading(null);
+    }
+  };
+
+  const sendEmail = async (inv) => {
+    const defaultTo = student.email || "";
+    const to = window.prompt(
+      `Rechnung ${inv.number} per E-Mail an:`,
+      defaultTo,
+    );
+    if (to === null) return;                     // cancelled
+    if (!to.trim()) {
+      toast.error("Bitte Empfänger-E-Mail angeben");
+      return;
+    }
+    setSending(inv.id);
+    try {
+      await api.post(`/students/${student.id}/invoices/${inv.id}/email`, {
+        to: to.trim(),
+      });
+      toast.success(`E-Mail an ${to.trim()} versendet`);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSending(null);
     }
   };
 
@@ -400,6 +425,20 @@ export default function InvoicesTab({ student }) {
                       <FileDown size={11} />
                     )}
                     PDF
+                  </button>
+                  <button
+                    onClick={() => sendEmail(inv)}
+                    disabled={sending === inv.id}
+                    data-testid={`invoice-send-email-${inv.id}`}
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-3 py-2 rounded-full hover:opacity-90 disabled:opacity-40"
+                    title="Rechnung per E-Mail senden"
+                  >
+                    {sending === inv.id ? (
+                      <Loader2 size={11} className="animate-spin" />
+                    ) : (
+                      <Mail size={11} />
+                    )}
+                    E-Mail
                   </button>
                   <button
                     onClick={() => removeInvoice(inv.id)}

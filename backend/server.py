@@ -35,6 +35,7 @@ from routers import (
     fahrkontrolle,
     fahrkontrolle_pdf,
     gallery,
+    invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
     sitemap,
@@ -44,6 +45,7 @@ from routers import (
     students,
     testimonials,
     uploads,
+    users,
     vku,
 )
 
@@ -76,6 +78,9 @@ api.include_router(backup.router)
 api.include_router(backup_scripts.router)
 api.include_router(fahrkontrolle.router)
 api.include_router(fahrkontrolle_pdf.router)
+api.include_router(users.router)
+api.include_router(invoice_email.invoice_router)
+api.include_router(invoice_email.settings_router)
 
 app.include_router(api)
 
