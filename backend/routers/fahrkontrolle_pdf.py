@@ -22,6 +22,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any
 
+import qrcode
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
@@ -29,6 +30,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 
@@ -63,11 +65,37 @@ def _fmt_dmy(iso: str | None) -> str:
     return f"{part[8:10]}/{part[5:7]}/{part[0:4]}"
 
 
+def _make_qr(text: str) -> ImageReader | None:
+    """Render a QR code PNG in-memory for embedding in the PDF."""
+    if not text:
+        return None
+    try:
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=1,
+        )
+        qr.add_data(text)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0f172a", back_color="#ffffff")
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        return ImageReader(buf)
+    except Exception:
+        return None
+
+
 # --------------------------------------------------------------------
 #  Main endpoint
 # --------------------------------------------------------------------
 @router.get("/{student_id}/fahrkontrolle.pdf")
-async def export_fahrkontrolle_pdf(student_id: str, admin=Depends(get_current_admin)):
+async def export_fahrkontrolle_pdf(
+    student_id: str,
+    back_url: str | None = None,
+    admin=Depends(get_current_admin),
+):
     student = await db.students.find_one({"id": student_id}, {"_id": 0})
     if not student:
         raise HTTPException(status_code=404, detail="Schüler nicht gefunden")
@@ -111,6 +139,14 @@ async def export_fahrkontrolle_pdf(student_id: str, admin=Depends(get_current_ad
     bottom = 10 * mm
 
     # --------------------------------------------------------------
+    #  Prepare optional QR-code (page 1 footer only). Frontend passes
+    #  a `back_url` query param pointing at the student's admin
+    #  detail page so instructors can scan the print & jump back.
+    # --------------------------------------------------------------
+    qr_target = (back_url or "").strip()
+    qr_image = _make_qr(qr_target) if qr_target else None
+
+    # --------------------------------------------------------------
     #  PAGE 1 – Matrix
     # --------------------------------------------------------------
     _draw_header(c, student, left, right, top)
@@ -129,11 +165,15 @@ async def export_fahrkontrolle_pdf(student_id: str, admin=Depends(get_current_ad
         left=left,
         right=right,
         top=matrix_top,
-        bottom=matrix_bottom,
+        bottom=matrix_bottom + (20 * mm if qr_image is not None else 0),
     )
 
-    # Footer
-    _draw_footer(c, student, left, right, bottom, page_num=1)
+    # Footer (with QR bottom-right on page 1 only)
+    _draw_footer(
+        c, student, left, right, bottom, page_num=1,
+        qr=qr_image,
+        qr_caption="Scannen für digitalen Datensatz" if qr_image else None,
+    )
 
     # --------------------------------------------------------------
     #  PAGE 2+ – Ausbildungsjournal (chronological comments)
@@ -436,12 +476,26 @@ def _draw_matrix(
 
 
 def _draw_footer(c: canvas.Canvas, student: dict, left: float, right: float,
-                 bottom: float, page_num: int) -> None:
+                 bottom: float, page_num: int, qr: ImageReader | None = None,
+                 qr_caption: str | None = None) -> None:
     c.setFillColor(colors.HexColor("#94a3b8"))
     c.setFont("Helvetica", 6.5)
     name = f"{student.get('first_name', '')} {student.get('last_name', '')}".strip()
     c.drawString(left, bottom - 4 * mm, f"Fahrschule Safe Ride · {name}")
     c.drawRightString(right, bottom - 4 * mm, f"Seite {page_num}")
+
+    if qr is not None:
+        # Bottom-right QR code (18×18 mm) sitting ABOVE the footer text.
+        qr_size = 18 * mm
+        qr_x = right - qr_size
+        qr_y = bottom - 0.5 * mm
+        c.drawImage(qr, qr_x, qr_y, width=qr_size, height=qr_size,
+                    mask="auto", preserveAspectRatio=True)
+        # Caption below (small, muted).
+        if qr_caption:
+            c.setFillColor(colors.HexColor("#94a3b8"))
+            c.setFont("Helvetica", 5.5)
+            c.drawRightString(right, qr_y - 1.8 * mm, qr_caption)
 
 
 def _draw_journal(

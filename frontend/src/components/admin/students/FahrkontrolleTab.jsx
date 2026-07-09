@@ -24,12 +24,22 @@ import {
   Route as RouteIcon,
   ChevronDown,
   FileDown,
+  AlertCircle,
+  CircleDashed,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
+import {
+  categoryPercent,
+  categoryWarning,
+  overallPercent,
+  subitemWarning,
+  WARN_STYLES,
+} from "@/components/admin/students/progress";
 
 /** Format an ISO date (YYYY-MM-DD) as strict DD/MM/YYYY.
  *  Returns "—" for empty/invalid input. */
@@ -59,9 +69,13 @@ export default function FahrkontrolleTab({ student }) {
     if (lessons.length === 0) return;
     setExportingPdf(true);
     try {
+      const backUrl = `${window.location.origin}/admin/students/${student.id}`;
       const res = await api.get(
         `/students/${student.id}/fahrkontrolle.pdf`,
-        { responseType: "blob" },
+        {
+          params: { back_url: backUrl },
+          responseType: "blob",
+        },
       );
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -233,6 +247,29 @@ export default function FahrkontrolleTab({ student }) {
     return m;
   }, [routes]);
 
+  // Progress + warning computations (memoized on data changes)
+  const overallPct = useMemo(
+    () => overallPercent(categories, subitems, lessons, assessments),
+    [categories, subitems, lessons, assessments],
+  );
+  const catStats = useMemo(() => {
+    const map = {};
+    for (const c of categories) {
+      map[c.id] = {
+        percent: categoryPercent(c.id, subitems, lessons, assessments),
+        warning: categoryWarning(c.id, subitems, lessons, assessments),
+      };
+    }
+    return map;
+  }, [categories, subitems, lessons, assessments]);
+  const subWarnings = useMemo(() => {
+    const map = {};
+    for (const s of subitems) {
+      map[s.id] = subitemWarning(s.id, lessons, assessments);
+    }
+    return map;
+  }, [subitems, lessons, assessments]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24 text-[#78716c]">
@@ -287,6 +324,15 @@ export default function FahrkontrolleTab({ student }) {
         </div>
       </div>
 
+      {/* Progress panel */}
+      {lessons.length > 0 && (
+        <ProgressPanel
+          overall={overallPct}
+          categoriesSorted={categoriesSorted}
+          catStats={catStats}
+        />
+      )}
+
       {/* Matrix (horizontal scroll on narrow screens) */}
       {lessons.length === 0 ? (
         <div className="py-16 text-center bg-white border border-dashed border-[#e7e5e4] rounded-2xl text-[#78716c] text-sm">
@@ -336,47 +382,103 @@ export default function FahrkontrolleTab({ student }) {
                 const catSubs = subitems
                   .filter((s) => s.category_id === cat.id)
                   .sort((a, b) => a.order - b.order);
+                const cStat = catStats[cat.id] || { percent: 0, warning: "neutral" };
+                const cWarn = WARN_STYLES[cStat.warning];
                 return (
                   <Fragment key={cat.id}>
                     <tr className="bg-[#0f172a] text-white">
                       <td
                         colSpan={lessons.length + 1}
                         className="px-4 py-2.5 font-display text-base leading-tight sticky left-0"
+                        data-testid={`fk-category-row-${cat.id}`}
                       >
-                        {catNumberFor(cat)}. {cat.title_de}
+                        <div className="flex items-center gap-3">
+                          <span>{catNumberFor(cat)}. {cat.title_de}</span>
+                          <span
+                            data-testid={`fk-category-warning-${cat.id}`}
+                            className="inline-flex items-center gap-1 text-[10px] tracking-[0.18em] uppercase font-semibold px-2 py-0.5 rounded-full"
+                            style={{ background: cWarn.bg, color: cWarn.text }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ background: cWarn.dot }}
+                            />
+                            {cWarn.label}
+                          </span>
+                          <span
+                            data-testid={`fk-category-percent-${cat.id}`}
+                            className="ml-auto text-xs font-semibold tabular-nums text-[#94a3b8]"
+                          >
+                            {cStat.percent}%
+                          </span>
+                        </div>
                       </td>
                     </tr>
-                    {catSubs.map((sub) => (
-                      <tr
-                        key={sub.id}
-                        className="border-b border-[#f5f5f4] last:border-0"
-                      >
-                        <td className="px-4 py-2 sticky left-0 bg-white z-[1]">
-                          <div className="text-xs text-[#a8a29e] font-semibold tabular-nums">
-                            {catNumberFor(cat)}.{subNumberFor(cat, sub)}
-                          </div>
-                          <div className="text-sm text-[#0f172a] font-medium leading-tight">
-                            {sub.title_de}
-                          </div>
-                        </td>
-                        {lessons.map((l) => {
-                          const key = `${sub.id}:${l.id}`;
-                          const cell = assessments[key];
-                          const value = cell?.value || "";
-                          const hasComment = !!(cell?.comment);
-                          const meta = value ? RATING_META[value] : null;
-                          return (
-                            <td
-                              key={l.id}
-                              className="px-1.5 py-1.5 text-center w-[76px] min-w-[76px]"
-                            >
-                              <button
-                                onClick={() =>
-                                  setPopupCell({ subitem: sub, lesson: l, category: cat })
-                                }
-                                data-testid={`fk-cell-${sub.id}-${l.id}`}
-                                className={`relative w-11 h-11 mx-auto rounded-xl font-display text-lg leading-none flex items-center justify-center transition-all ${
-                                  meta
+                    {catSubs.map((sub) => {
+                      const sWarn = WARN_STYLES[subWarnings[sub.id] || "neutral"];
+                      return (
+                        <tr
+                          key={sub.id}
+                          className="border-b border-[#f5f5f4] last:border-0"
+                        >
+                          <td
+                            className="px-4 py-2 sticky left-0 bg-white z-[1] border-l-4"
+                            style={{ borderLeftColor: sWarn.dot }}
+                            data-testid={`fk-subitem-row-${sub.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className="text-xs text-[#a8a29e] font-semibold tabular-nums">
+                                  {catNumberFor(cat)}.{subNumberFor(cat, sub)}
+                                </div>
+                                <div className="text-sm text-[#0f172a] font-medium leading-tight">
+                                  {sub.title_de}
+                                </div>
+                              </div>
+                              {(subWarnings[sub.id] === "red" || subWarnings[sub.id] === "yellow") && (
+                                <span
+                                  className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                                  style={{ background: sWarn.bg }}
+                                  title={sWarn.label}
+                                  data-testid={`fk-subitem-warning-${sub.id}`}
+                                >
+                                  {subWarnings[sub.id] === "red" ? (
+                                    <AlertCircle size={11} style={{ color: sWarn.text }} strokeWidth={2.5} />
+                                  ) : (
+                                    <CircleDashed size={11} style={{ color: sWarn.text }} strokeWidth={2.5} />
+                                  )}
+                                </span>
+                              )}
+                              {subWarnings[sub.id] === "green" && (
+                                <span
+                                  className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                                  style={{ background: sWarn.bg }}
+                                  title={sWarn.label}
+                                  data-testid={`fk-subitem-warning-${sub.id}`}
+                                >
+                                  <CheckCircle2 size={11} style={{ color: sWarn.text }} strokeWidth={2.5} />
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          {lessons.map((l) => {
+                            const key = `${sub.id}:${l.id}`;
+                            const cell = assessments[key];
+                            const value = cell?.value || "";
+                            const hasComment = !!(cell?.comment);
+                            const meta = value ? RATING_META[value] : null;
+                            return (
+                              <td
+                                key={l.id}
+                                className="px-1.5 py-1.5 text-center w-[76px] min-w-[76px]"
+                              >
+                                <button
+                                  onClick={() =>
+                                    setPopupCell({ subitem: sub, lesson: l, category: cat })
+                                  }
+                                  data-testid={`fk-cell-${sub.id}-${l.id}`}
+                                  className={`relative w-11 h-11 mx-auto rounded-xl font-display text-lg leading-none flex items-center justify-center transition-all ${
+                                    meta
                                     ? "shadow-sm active:scale-95"
                                     : "border border-dashed border-[#e7e5e4] text-[#a8a29e] hover:border-[#ff5a36]"
                                 }`}
@@ -404,7 +506,8 @@ export default function FahrkontrolleTab({ student }) {
                           );
                         })}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </Fragment>
                 );
               })}
@@ -555,5 +658,140 @@ export default function FahrkontrolleTab({ student }) {
         onClose={() => setPopupCell(null)}
       />
     </div>
+  );
+}
+
+
+/** Big progress panel shown above the matrix.
+ *  - Overall percent (large left card + arc)
+ *  - Category chips with mini progress bar + warning color
+ */
+function ProgressPanel({ overall, categoriesSorted, catStats }) {
+  return (
+    <div
+      data-testid="fahrkontrolle-progress-panel"
+      className="bg-white border border-[#e7e5e4] rounded-2xl p-5 md:p-6"
+    >
+      <div className="flex items-start gap-6 flex-wrap">
+        {/* Overall progress */}
+        <div className="flex items-center gap-4 min-w-[190px]">
+          <ProgressRing percent={overall} size={72} />
+          <div>
+            <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#475569]">
+              Ausbildungsfortschritt
+            </div>
+            <div
+              className="font-display text-4xl leading-none mt-1 tabular-nums"
+              data-testid="fahrkontrolle-progress-overall"
+            >
+              {overall}%
+            </div>
+            <div className="text-[11px] text-[#78716c] mt-1">
+              Gesamt · Höchstbewertung pro Punkt
+            </div>
+          </div>
+        </div>
+
+        {/* Category chips grid */}
+        <div className="flex-1 min-w-[260px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {categoriesSorted.map((cat, idx) => {
+            const st = catStats[cat.id] || { percent: 0, warning: "neutral" };
+            const warn = WARN_STYLES[st.warning];
+            return (
+              <div
+                key={cat.id}
+                data-testid={`fahrkontrolle-progress-category-${cat.id}`}
+                className="rounded-xl border p-3"
+                style={{ borderColor: warn.border, background: warn.bg }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: warn.dot }}
+                  />
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-widest truncate"
+                    style={{ color: warn.text }}
+                    title={cat.title_de}
+                  >
+                    {idx + 1}. {cat.title_de}
+                  </span>
+                  <span
+                    className="ml-auto text-xs font-semibold tabular-nums shrink-0"
+                    style={{ color: warn.text }}
+                  >
+                    {st.percent}%
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-white/60 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.max(2, st.percent)}%`,
+                      background: warn.dot,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 pt-3 border-t border-[#f1f5f9] flex flex-wrap items-center gap-3 text-[10px] tracking-widest uppercase text-[#94a3b8]">
+        <span className="inline-flex items-center gap-1.5">
+          <AlertCircle size={11} className="text-[#dc2626]" strokeWidth={2.5} />
+          Problemthema
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <CircleDashed size={11} className="text-[#eab308]" strokeWidth={2.5} />
+          Noch nie bewertet
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <CheckCircle2 size={11} className="text-[#16a34a]" strokeWidth={2.5} />
+          Sicher beherrscht
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Simple SVG progress ring for the overall percentage. */
+function ProgressRing({ percent = 0, size = 72, stroke = 8 }) {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (clamped / 100) * c;
+  // Colour ramp: red < 30, amber < 60, coral < 80, green ≥ 80
+  const ringColor =
+    clamped >= 80 ? "#16a34a"
+    : clamped >= 60 ? "#ff5a36"
+    : clamped >= 30 ? "#eab308"
+    : "#dc2626";
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="#f1f5f9"
+        strokeWidth={stroke}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={ringColor}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        style={{ transition: "stroke-dashoffset 400ms ease" }}
+      />
+    </svg>
   );
 }
