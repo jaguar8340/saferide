@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users, GraduationCap } from "lucide-react";
+import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users, GraduationCap, UserRound, ClipboardList } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -9,6 +9,8 @@ import GalleryManager from "@/components/admin/GalleryManager";
 import SubmissionsViewer from "@/components/admin/SubmissionsViewer";
 import VkuRegistrationsViewer from "@/components/admin/VkuRegistrationsViewer";
 import PagesManager from "@/components/admin/PagesManager";
+import StudentsManager from "@/components/admin/students/StudentsManager";
+import MasterDataTab from "@/components/admin/students/MasterDataTab";
 import {
   BlogManager,
   BookingsManager,
@@ -18,6 +20,8 @@ import {
 } from "@/components/admin/EntityManagers";
 
 const TABS = [
+  { id: "students", icon: UserRound, key: "students", label_de: "Schüler", label_en: "Students" },
+  { id: "fk_master", icon: ClipboardList, key: "fk_master", label_de: "Fahrkontrolle-Stammdaten", label_en: "Fahrkontrolle Masters" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
   { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
   { id: "blog", icon: BookOpen, key: "blog", label_de: "Blog", label_en: "Blog" },
@@ -39,7 +43,7 @@ export default function AdminDashboard() {
   const params = new URLSearchParams(location.search);
   const initial = params.get("tab");
   const [tab, setTab] = useState(
-    TABS.some((tb) => tb.id === initial) ? initial : "content",
+    TABS.some((tb) => tb.id === initial) ? initial : "students",
   );
 
   useEffect(() => {
@@ -116,6 +120,8 @@ export default function AdminDashboard() {
         </aside>
 
         <main className="flex-1 p-5 md:p-8 overflow-x-hidden">
+          {tab === "students" && <StudentsManager />}
+          {tab === "fk_master" && <MasterDataTab />}
           {tab === "content" && <ContentEditor />}
           {tab === "pages" && <PagesManager />}
           {tab === "blog" && <BlogManager />}

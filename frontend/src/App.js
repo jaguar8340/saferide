@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import Home from "@/pages/Home";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminStudentDetail from "@/pages/AdminStudentDetail";
 import AblaufPage from "@/pages/AblaufPage";
 import VkuPage from "@/pages/VkuPage";
 import LocationPage from "@/pages/LocationPage";
@@ -83,6 +84,14 @@ function App() {
                   element={
                     <RequireAuth>
                       <AdminDashboard />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin/students/:studentId"
+                  element={
+                    <RequireAuth>
+                      <AdminStudentDetail />
                     </RequireAuth>
                   }
                 />

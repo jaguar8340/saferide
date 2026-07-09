@@ -1,0 +1,322 @@
+"""Fahrkontrolle – master data (categories, subitems, routes) + per-student
+lessons and rating cells.
+
+All endpoints require admin auth. Data is fully database-driven so the
+category/subitem/route lists can be edited via the admin UI without any
+code changes.
+"""
+from datetime import datetime, timezone
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from core.db import db
+from core.security import get_current_admin
+from models.schemas import (
+    Assessment,
+    AssessmentUpsert,
+    FkCategory,
+    FkCategoryCreate,
+    FkOrderRequest,
+    FkRoute,
+    FkRouteCreate,
+    FkSubitem,
+    FkSubitemCreate,
+    StudentLesson,
+    StudentLessonCreate,
+    StudentLessonPatch,
+)
+
+router = APIRouter(prefix="/fahrkontrolle", tags=["fahrkontrolle"])
+
+
+# ============================================================
+#  Categories
+# ============================================================
+@router.get("/categories", response_model=List[FkCategory])
+async def list_categories(admin=Depends(get_current_admin)):
+    return (
+        await db.fk_categories.find({}, {"_id": 0}).sort("order", 1).to_list(200)
+    )
+
+
+@router.post("/categories", response_model=FkCategory)
+async def create_category(payload: FkCategoryCreate, admin=Depends(get_current_admin)):
+    # If order not provided (0), append at end.
+    order = payload.order
+    if order == 0:
+        last = await db.fk_categories.find_one({}, sort=[("order", -1)])
+        order = ((last or {}).get("order", 0) or 0) + 1
+    cat = FkCategory(**payload.model_dump())
+    cat.order = order
+    await db.fk_categories.insert_one(cat.model_dump())
+    return cat
+
+
+@router.patch("/categories/{cat_id}", response_model=FkCategory)
+async def update_category(
+    cat_id: str, payload: FkCategoryCreate, admin=Depends(get_current_admin)
+):
+    res = await db.fk_categories.update_one(
+        {"id": cat_id}, {"$set": payload.model_dump()}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kategorie nicht gefunden")
+    doc = await db.fk_categories.find_one({"id": cat_id}, {"_id": 0})
+    return doc
+
+
+@router.delete("/categories/{cat_id}")
+async def delete_category(cat_id: str, admin=Depends(get_current_admin)):
+    res = await db.fk_categories.delete_one({"id": cat_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Kategorie nicht gefunden")
+    # Also delete all its subitems.
+    await db.fk_subitems.delete_many({"category_id": cat_id})
+    return {"ok": True}
+
+
+@router.post("/categories/reorder")
+async def reorder_categories(payload: FkOrderRequest, admin=Depends(get_current_admin)):
+    for item in payload.items:
+        await db.fk_categories.update_one(
+            {"id": item.id}, {"$set": {"order": item.order}}
+        )
+    return {"ok": True}
+
+
+# ============================================================
+#  Sub-items
+# ============================================================
+@router.get("/subitems", response_model=List[FkSubitem])
+async def list_subitems(admin=Depends(get_current_admin)):
+    return (
+        await db.fk_subitems.find({}, {"_id": 0}).sort("order", 1).to_list(2000)
+    )
+
+
+@router.post("/subitems", response_model=FkSubitem)
+async def create_subitem(payload: FkSubitemCreate, admin=Depends(get_current_admin)):
+    order = payload.order
+    if order == 0:
+        last = await db.fk_subitems.find_one(
+            {"category_id": payload.category_id}, sort=[("order", -1)]
+        )
+        order = ((last or {}).get("order", 0) or 0) + 1
+    item = FkSubitem(**payload.model_dump())
+    item.order = order
+    await db.fk_subitems.insert_one(item.model_dump())
+    return item
+
+
+@router.patch("/subitems/{item_id}", response_model=FkSubitem)
+async def update_subitem(
+    item_id: str, payload: FkSubitemCreate, admin=Depends(get_current_admin)
+):
+    res = await db.fk_subitems.update_one(
+        {"id": item_id}, {"$set": payload.model_dump()}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Unterpunkt nicht gefunden")
+    doc = await db.fk_subitems.find_one({"id": item_id}, {"_id": 0})
+    return doc
+
+
+@router.delete("/subitems/{item_id}")
+async def delete_subitem(item_id: str, admin=Depends(get_current_admin)):
+    res = await db.fk_subitems.delete_one({"id": item_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Unterpunkt nicht gefunden")
+    return {"ok": True}
+
+
+@router.post("/subitems/reorder")
+async def reorder_subitems(payload: FkOrderRequest, admin=Depends(get_current_admin)):
+    for item in payload.items:
+        await db.fk_subitems.update_one(
+            {"id": item.id}, {"$set": {"order": item.order}}
+        )
+    return {"ok": True}
+
+
+# ============================================================
+#  Routes (Gefahrene Strecken)
+# ============================================================
+@router.get("/routes", response_model=List[FkRoute])
+async def list_routes(admin=Depends(get_current_admin)):
+    return await db.fk_routes.find({}, {"_id": 0}).sort("order", 1).to_list(500)
+
+
+@router.post("/routes", response_model=FkRoute)
+async def create_route(payload: FkRouteCreate, admin=Depends(get_current_admin)):
+    order = payload.order
+    if order == 0:
+        last = await db.fk_routes.find_one({}, sort=[("order", -1)])
+        order = ((last or {}).get("order", 0) or 0) + 1
+    route = FkRoute(**payload.model_dump())
+    route.order = order
+    await db.fk_routes.insert_one(route.model_dump())
+    return route
+
+
+@router.patch("/routes/{route_id}", response_model=FkRoute)
+async def update_route(
+    route_id: str, payload: FkRouteCreate, admin=Depends(get_current_admin)
+):
+    res = await db.fk_routes.update_one({"id": route_id}, {"$set": payload.model_dump()})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Strecke nicht gefunden")
+    doc = await db.fk_routes.find_one({"id": route_id}, {"_id": 0})
+    return doc
+
+
+@router.delete("/routes/{route_id}")
+async def delete_route(route_id: str, admin=Depends(get_current_admin)):
+    res = await db.fk_routes.delete_one({"id": route_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Strecke nicht gefunden")
+    return {"ok": True}
+
+
+@router.post("/routes/reorder")
+async def reorder_routes(payload: FkOrderRequest, admin=Depends(get_current_admin)):
+    for item in payload.items:
+        await db.fk_routes.update_one(
+            {"id": item.id}, {"$set": {"order": item.order}}
+        )
+    return {"ok": True}
+
+
+# ============================================================
+#  Student lessons
+# ============================================================
+@router.get("/students/{student_id}/lessons", response_model=List[StudentLesson])
+async def list_student_lessons(student_id: str, admin=Depends(get_current_admin)):
+    return (
+        await db.student_lessons.find({"student_id": student_id}, {"_id": 0})
+        .sort("lesson_number", 1)
+        .to_list(500)
+    )
+
+
+@router.post("/students/{student_id}/lessons", response_model=StudentLesson)
+async def create_student_lesson(
+    student_id: str,
+    payload: StudentLessonCreate,
+    admin=Depends(get_current_admin),
+):
+    last = await db.student_lessons.find_one(
+        {"student_id": student_id}, sort=[("lesson_number", -1)]
+    )
+    next_num = ((last or {}).get("lesson_number", 0) or 0) + 1
+    lesson = StudentLesson(
+        student_id=student_id, lesson_number=next_num, **payload.model_dump()
+    )
+    await db.student_lessons.insert_one(lesson.model_dump())
+    return lesson
+
+
+@router.patch(
+    "/students/{student_id}/lessons/{lesson_id}", response_model=StudentLesson
+)
+async def update_student_lesson(
+    student_id: str,
+    lesson_id: str,
+    payload: StudentLessonPatch,
+    admin=Depends(get_current_admin),
+):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Keine Änderungen übergeben")
+    res = await db.student_lessons.update_one(
+        {"id": lesson_id, "student_id": student_id}, {"$set": updates}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lektion nicht gefunden")
+    doc = await db.student_lessons.find_one(
+        {"id": lesson_id, "student_id": student_id}, {"_id": 0}
+    )
+    return doc
+
+
+@router.delete("/students/{student_id}/lessons/{lesson_id}")
+async def delete_student_lesson(
+    student_id: str, lesson_id: str, admin=Depends(get_current_admin)
+):
+    res = await db.student_lessons.delete_one(
+        {"id": lesson_id, "student_id": student_id}
+    )
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lektion nicht gefunden")
+    # Purge all assessment cells for this lesson.
+    await db.student_assessments.delete_many({"lesson_id": lesson_id})
+    return {"ok": True}
+
+
+# ============================================================
+#  Assessments (single rating + comment per cell)
+# ============================================================
+@router.get("/students/{student_id}/assessments", response_model=List[Assessment])
+async def list_assessments(student_id: str, admin=Depends(get_current_admin)):
+    return await db.student_assessments.find(
+        {"student_id": student_id}, {"_id": 0}
+    ).to_list(50000)
+
+
+@router.put("/students/{student_id}/assessments", response_model=Assessment)
+async def upsert_assessment(
+    student_id: str,
+    payload: AssessmentUpsert,
+    admin=Depends(get_current_admin),
+):
+    """Upsert a single rating cell. Same (student_id, subitem_id, lesson_id)
+    combination is unique. Empty value ("") deletes the row."""
+    if payload.value == "" and payload.comment == "":
+        # Both cleared: delete the cell entirely.
+        await db.student_assessments.delete_one(
+            {
+                "student_id": student_id,
+                "subitem_id": payload.subitem_id,
+                "lesson_id": payload.lesson_id,
+            }
+        )
+        return Assessment(
+            student_id=student_id,
+            subitem_id=payload.subitem_id,
+            lesson_id=payload.lesson_id,
+            value="",
+            comment="",
+            updated_by=admin.get("email", ""),
+        )
+    now = datetime.now(timezone.utc).isoformat()
+    filter_ = {
+        "student_id": student_id,
+        "subitem_id": payload.subitem_id,
+        "lesson_id": payload.lesson_id,
+    }
+    existing = await db.student_assessments.find_one(filter_, {"_id": 0})
+    if existing:
+        await db.student_assessments.update_one(
+            filter_,
+            {
+                "$set": {
+                    "value": payload.value,
+                    "comment": payload.comment,
+                    "updated_at": now,
+                    "updated_by": admin.get("email", ""),
+                }
+            },
+        )
+        doc = await db.student_assessments.find_one(filter_, {"_id": 0})
+        return doc
+    assessment = Assessment(
+        student_id=student_id,
+        subitem_id=payload.subitem_id,
+        lesson_id=payload.lesson_id,
+        value=payload.value,
+        comment=payload.comment,
+        updated_at=now,
+        updated_by=admin.get("email", ""),
+    )
+    await db.student_assessments.insert_one(assessment.model_dump())
+    return assessment

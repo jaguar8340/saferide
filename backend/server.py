@@ -28,9 +28,11 @@ from routers import (
     contact,
     content,
     entities,
+    fahrkontrolle,
     gallery,
     locations,
     sitemap,
+    students,
     testimonials,
     uploads,
     vku,
@@ -53,6 +55,8 @@ api.include_router(bookings.router)
 api.include_router(entities.router)
 api.include_router(sitemap.router)
 api.include_router(vku.router)
+api.include_router(students.router)
+api.include_router(fahrkontrolle.router)
 
 app.include_router(api)
 

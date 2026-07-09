@@ -67,6 +67,15 @@ async def run_startup_seeds() -> None:
     # edited by the admin (differs from the previous default) is left alone.
     await _migrate_why_pillar_bodies_short()
 
+    # ----- Fahrkontrolle master data (Kategorien, Unterpunkte, Strecken) -----
+    from seeds.fahrkontrolle_seeds import seed_fahrkontrolle_defaults
+    await db.students.create_index("last_name")
+    await db.student_lessons.create_index([("student_id", 1), ("lesson_number", 1)])
+    await db.student_assessments.create_index(
+        [("student_id", 1), ("subitem_id", 1), ("lesson_id", 1)], unique=True
+    )
+    await seed_fahrkontrolle_defaults(db)
+
     # ----- Testimonials & Gallery -----
     if await db.testimonials.count_documents({}) == 0:
         await db.testimonials.insert_many([dict(t) for t in DEFAULT_TESTIMONIALS])
