@@ -217,6 +217,22 @@ admin@saferide.ch / SafeRide2026!
   - **Audi-Silhouette-Slot im Footer**: Neuer editierbarer Bild-Slot unter Kontakt (Phone/Email). Field: `contact.footer_image_url`. Nur im Edit-Mode sichtbar wenn leer; für Besucher sichtbar sobald hochgeladen. testid `footer-brand-image-slot`.
   - **Migration in `startup.py`**: löscht st-gallen, ergänzt fehlende Felder auf allen bestehenden Locations (title-Umbenennung nur wenn noch auf altem Default, sonst unverändert).
   - Verifiziert per Playwright: 4 neue Pages rendern, Reichenburg zeigt 5 Feature-Chips + 5 Place-Chips, FAQ-Substitution funktioniert (`Fahrstunde in Reichenburg` vs `Fahrstunde in Kaltbrunn`), Admin-Edit zeigt `{name}`-Raw-Placeholder, beide Slots im Edit-Mode sichtbar mit Placeholder, im Read-Mode korrekt versteckt.
+
+- ✅ **Iteration 26 (08.02.2026) — PHASE 1: Fahrkontrolle (elektronisches Schülerblatt) (DONE, 42/42 Backend + 12/12 Frontend green):**
+  - **Schüler-Datensatz**: Neue Collection `students` mit CRUD unter `/api/students` (Admin-Auth). Felder: first_name, last_name, street, zip, city, phone, email, category, instructor, start_date, prep_exam_date, exam_date, notes, archived, created_at.
+  - **Master-Daten (vollständig DB-getrieben, im Admin verwaltbar)**: Kategorien, Unterpunkte, Strecken jeweils in eigener Collection. Auto-Nummerierung durch `order`-Feld mit 10-er-Schritten. Reorder via ArrowUp/Down. Rename inline, Delete kaskadiert (Category-Delete löscht deren Unterpunkte).
+  - **Seed-Daten (idempotent, nur wenn Collections leer)**: 6 Kategorien (Vorschulung/Grundschulung/Hauptschulung/Perfektionsschulung/Manöver/Vorprüfung), 35 Unterpunkte verteilt 5/7/9/5/5/4, 12 Strecken (Passugg, Lenzerheide, Haldenstein, Landquart, Felsberg, Chur Zentrum, …). Alles nach Erstinstallation frei editierbar.
+  - **Lektionen**: Neue Collection `student_lessons`, pro Schüler auto-nummeriert (L1/L2/L3 …), Felder date/duration_min/routes (Multi-ID)/notes. DELETE Lektion → kaskadiert zu Assessments.
+  - **Assessments** (Bewertungs-Zellen): Neue Collection `student_assessments` mit UNIQUE-Index auf (student_id, subitem_id, lesson_id). PUT-Upsert. Werte `1/2/3/4/X`. Wenn value UND comment leer → Zelle wird gelöscht. Cascade auf Student-Delete + Lesson-Delete.
+  - **Frontend – Admin-Tab „Schüler" (jetzt Default-Tab)**: Liste + „+ Neuer Schüler" Inline-Form + Suche. Klick auf ÖFFNEN → `/admin/students/:id` Detail-Page.
+  - **Frontend – Student-Detail-Page mit 6 Sub-Tabs**: Übersicht (Felder editierbar), Fahrstunden/Rechnungen/Aktivitäten/Dokumente (Placeholder für Phase 2), **Fahrkontrolle** (Default aktiv).
+  - **Frontend – Fahrkontrolle-Matrix**: Kategorien × Unterpunkte × Lektionen. Sticky left column, horizontales Scrolling auf schmalen Geräten. Klick auf Zelle → **Touch-optimiertes RatingPopup** mit 5 grossen farbcodierten Buttons (1=rot / 2=orange / 3=hellgrün / 4=dunkelgrün / X=grau) + Kommentar-Textarea + Save/Leeren/Abbrechen. Zellen mit Kommentar zeigen kleines Notiz-Icon in der Ecke.
+  - **Frontend – Gefahrene Strecken**: Pro Lektion Popup mit Multi-Select der Strecken. Übersicht als blaue Pills unter der Matrix.
+  - **Frontend – Admin-Tab „Fahrkontrolle-Stammdaten"**: 3-Spalten-Layout für Kategorien, Unterpunkte (nach Kategorie gefiltert), Strecken. Add/Rename/Reorder/Delete pro Zeile.
+  - **iPad-Optimierung**: Touch-Targets ≥ 44 px, Popup slidet auf schmalen Screens von unten ein.
+  - **Backend-Tests** in `/app/backend/tests/test_iteration26_fahrkontrolle.py` (13 Tests, alle grün) — Cascade-Delete, Reorder, Assessment-Upsert-Semantik verifiziert.
+  - **Zukunftssicher**: Alle Daten DB-basiert (nichts hardcoded), Assessments-Struktur (Timestamp + Editor) so aufgebaut, dass Phase 2 (Ausbildungsfortschritt %, Historie, PDF) + Phase 3 (KI-Analyse) direkt anschliessen können.
+  - **Nächste Phasen (Backlog)**: Phase 2 = Fortschritts-Analyse in % pro Kategorie + gesamt, farbliche Themen-Hervorhebung, Änderungs-Historie, A4-PDF-Export mit Ausbildungsjournal. Phase 3 = KI-Assistent (Prüfungsreife, Themenvorschläge, Zusammenfassung).
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).

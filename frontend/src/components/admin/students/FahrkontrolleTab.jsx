@@ -15,7 +15,7 @@
  *   • GET /api/fahrkontrolle/students/{id}/lessons
  *   • GET /api/fahrkontrolle/students/{id}/assessments
  */
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -263,11 +263,8 @@ export default function FahrkontrolleTab({ student }) {
                   .filter((s) => s.category_id === cat.id)
                   .sort((a, b) => a.order - b.order);
                 return (
-                  <>
-                    <tr
-                      key={`c-${cat.id}`}
-                      className="bg-[#0f172a] text-white"
-                    >
+                  <Fragment key={cat.id}>
+                    <tr className="bg-[#0f172a] text-white">
                       <td
                         colSpan={lessons.length + 1}
                         className="px-4 py-2.5 font-display text-base leading-tight sticky left-0"
@@ -334,7 +331,7 @@ export default function FahrkontrolleTab({ student }) {
                         })}
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 );
               })}
               {/* Routes row */}
