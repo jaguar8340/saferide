@@ -8,6 +8,7 @@ Only one row exists (id='default'); GET auto-creates it on first call so
 the admin UI never sees a 404.
 """
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 
@@ -39,6 +40,7 @@ async def get_or_create_settings() -> dict:
         # Seed with sensible defaults + the bundled Safe Ride logo.
         seed = BusinessSettings().model_dump()
         seed["logo_url"] = DEFAULT_LOGO_URL
+        seed["calendar_token"] = secrets.token_urlsafe(32)
         await db.business_settings.insert_one(seed)
         return seed
     # Back-fill logo_url on rows created before it existed.
@@ -46,6 +48,13 @@ async def get_or_create_settings() -> dict:
         doc["logo_url"] = DEFAULT_LOGO_URL
         await db.business_settings.update_one(
             {"id": "default"}, {"$set": {"logo_url": DEFAULT_LOGO_URL}}
+        )
+    # Back-fill calendar_token on rows created before it existed.
+    if not doc.get("calendar_token"):
+        token = secrets.token_urlsafe(32)
+        doc["calendar_token"] = token
+        await db.business_settings.update_one(
+            {"id": "default"}, {"$set": {"calendar_token": token}}
         )
     return doc
 

@@ -29,6 +29,7 @@ from routers import (
     blog,
     bookings,
     business_settings,
+    calendar as calendar_router,
     contact,
     content,
     entities,
@@ -81,6 +82,9 @@ api.include_router(fahrkontrolle_pdf.router)
 api.include_router(users.router)
 api.include_router(invoice_email.invoice_router)
 api.include_router(invoice_email.settings_router)
+api.include_router(calendar_router.router)
+api.include_router(calendar_router.ical_router)
+api.include_router(calendar_router.student_summary_router)
 
 app.include_router(api)
 

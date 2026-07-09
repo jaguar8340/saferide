@@ -183,11 +183,62 @@ export default function AdminStudentDetail() {
 }
 
 function OverviewTab({ student, onSave }) {
+  const [summary, setSummary] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.get(`/students/${student.id}/summary`);
+        setSummary(r.data);
+      } catch {
+        /* summary is optional – tolerate failures */
+      }
+    })();
+  }, [student.id]);
+
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-4xl">
       <h2 className="font-display text-3xl md:text-4xl leading-none tracking-tight mb-6">
         Übersicht
       </h2>
+
+      {/* Dashboard tiles */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" data-testid="student-summary-tiles">
+        <SummaryTile
+          label="Offene Rechnungen"
+          value={summary ? summary.open_invoices_count : "—"}
+          sub={summary && summary.open_invoices_sum_chf > 0
+            ? `CHF ${summary.open_invoices_sum_chf.toFixed(2)}`
+            : (summary ? "Alles bezahlt" : "")}
+          testid="summary-open-invoices"
+          accent={summary && summary.open_invoices_count > 0 ? "warning" : "muted"}
+        />
+        <SummaryTile
+          label="Kommende Termine"
+          value={summary ? summary.upcoming_appointments_count : "—"}
+          sub={summary && summary.next_appointment
+            ? new Date(summary.next_appointment.start_datetime).toLocaleString("de-CH", {
+                day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+              })
+            : (summary ? "Nichts geplant" : "")}
+          testid="summary-upcoming"
+          accent="primary"
+        />
+        <SummaryTile
+          label="Erledigte Termine"
+          value={summary ? summary.completed_appointments_count : "—"}
+          sub={summary ? `${summary.completed_appointments_count} Termine geplant + erfolgt` : ""}
+          testid="summary-completed"
+          accent="muted"
+        />
+        <SummaryTile
+          label="Geloggte Lektionen"
+          value={summary ? summary.logged_lessons_count : "—"}
+          sub="Fahrkontrolle-Journal"
+          testid="summary-lessons"
+          accent="muted"
+        />
+      </div>
+
       <div className="bg-white border border-[#e7e5e4] rounded-2xl p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <EditField label="Vorname"           value={student.first_name}    onSave={(v) => onSave("first_name", v)} />
         <EditField label="Nachname"          value={student.last_name}     onSave={(v) => onSave("last_name", v)} />
@@ -208,6 +259,32 @@ function OverviewTab({ student, onSave }) {
         <EditField label="Datum Vorprüfung"  value={student.prep_exam_date} type="date" onSave={(v) => onSave("prep_exam_date", v)} />
         <EditField label="Datum Prüfung"     value={student.exam_date}     type="date" onSave={(v) => onSave("exam_date", v)} />
       </div>
+    </div>
+  );
+}
+
+function SummaryTile({ label, value, sub, testid, accent = "muted" }) {
+  const palette = {
+    primary: "bg-[#ff5a36]/10 text-[#ff5a36] border-[#ff5a36]/20",
+    warning: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
+    muted:   "bg-white text-[#0f172a] border-[#e7e5e4]",
+  }[accent];
+  return (
+    <div
+      data-testid={testid}
+      className={`rounded-2xl border p-4 ${palette}`}
+    >
+      <div className="text-[10px] font-semibold tracking-widest uppercase opacity-80">
+        {label}
+      </div>
+      <div className="font-display text-3xl leading-none mt-1">
+        {value}
+      </div>
+      {sub && (
+        <div className="text-xs opacity-70 mt-1 truncate" title={sub}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }

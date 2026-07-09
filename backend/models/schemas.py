@@ -92,6 +92,7 @@ class BookingPackagePatch(BaseModel):
 
 # ---------- Bookings ----------
 class BookingCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     first_name: str = Field(min_length=1, max_length=80)
     last_name: str = Field(min_length=1, max_length=80)
     email: EmailStr
@@ -101,6 +102,33 @@ class BookingCreate(BaseModel):
     preferred_time: Optional[str] = Field(default=None, max_length=40)
     location_slug: Optional[str] = Field(default=None, max_length=80)
     message: Optional[str] = Field(default=None, max_length=2000)
+
+
+class AdminAppointmentCreate(BaseModel):
+    """Admin creates an appointment directly on the calendar (bypasses package flow)."""
+    model_config = ConfigDict(extra="ignore")
+    customer_name: str = Field(min_length=1, max_length=200)     # displayed on calendar
+    student_id: Optional[str] = Field(default=None, max_length=64)   # link to /students entity
+    start_datetime: str = Field(min_length=10, max_length=40)    # ISO 8601 e.g. 2026-02-15T14:30
+    duration_min: int = Field(default=60, ge=15, le=600)
+    pickup_location: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=2000)
+    phone: str = Field(default="", max_length=40)
+    email: str = Field(default="", max_length=200)
+
+
+class AdminAppointmentPatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    customer_name: Optional[str] = None
+    student_id: Optional[str] = None
+    start_datetime: Optional[str] = None
+    duration_min: Optional[int] = None
+    pickup_location: Optional[str] = None
+    notes: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    status: Optional[str] = None
+    admin_note: Optional[str] = None
 
 
 # ---------- Certificates / Diplomas ----------
@@ -436,6 +464,8 @@ class BusinessSettings(BaseModel):
         "Bei Fragen melde dich jederzeit.\n\n"
         "Herzlichen Dank und liebe Grüsse\n{business_name}"
     )
+    # iCal-Sync – zufälliges Token, generiert bei get_or_create_settings falls leer
+    calendar_token: str = ""
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
 

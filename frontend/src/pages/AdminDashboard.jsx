@@ -21,6 +21,7 @@ import {
   HardDriveDownload,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,10 +37,11 @@ import MasterDataTab from "@/components/admin/students/MasterDataTab";
 import BusinessSettingsManager from "@/components/admin/BusinessSettingsManager";
 import UsersManager from "@/components/admin/UsersManager";
 import BackupManager from "@/components/admin/BackupManager";
+import CalendarManager from "@/components/admin/CalendarManager";
+import EmailSettingsManager from "@/components/admin/EmailSettingsManager";
 import AccountingPage from "@/pages/AccountingPage";
 import {
   BlogManager,
-  BookingsManager,
   PackagesManager,
   CertificatesManager,
   PartnersManager,
@@ -47,15 +49,16 @@ import {
 
 const TABS = [
   { id: "students", icon: UserRound, key: "students", label_de: "Schüler", label_en: "Students" },
+  { id: "calendar", icon: Calendar, key: "calendar", label_de: "Kalender", label_en: "Calendar" },
   { id: "accounting", icon: Wallet, key: "accounting", label_de: "Buchhaltung", label_en: "Accounting" },
   { id: "fk_master", icon: ClipboardList, key: "fk_master", label_de: "Fahrkontrolle-Stammdaten", label_en: "Fahrkontrolle Masters" },
   { id: "business", icon: Building2, key: "business", label_de: "Fahrschul-Daten", label_en: "Business Settings" },
+  { id: "email", icon: Mail, key: "email", label_de: "E-Mail-Versand", label_en: "Email" },
   { id: "backup", icon: HardDriveDownload, key: "backup", label_de: "Datensicherung", label_en: "Backup" },
   { id: "users", icon: UserCog, key: "users", label_de: "Benutzer", label_en: "Users" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
   { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
   { id: "blog", icon: BookOpen, key: "blog", label_de: "Blog", label_en: "Blog" },
-  { id: "bookings", icon: Calendar, key: "bookings", label_de: "Buchungen", label_en: "Bookings" },
   { id: "vku_registrations", icon: GraduationCap, key: "vku_registrations", label_de: "VKU-Anmeldungen", label_en: "VKU Registrations" },
   { id: "packages", icon: Package, key: "packages", label_de: "Pakete", label_en: "Packages" },
   { id: "certificates", icon: Award, key: "certificates", label_de: "Diplome", label_en: "Certificates" },
@@ -210,15 +213,16 @@ export default function AdminDashboard() {
 
         <main className="flex-1 p-4 md:p-8 overflow-x-hidden min-w-0">
           {tab === "students" && <StudentsManager />}
+          {tab === "calendar" && <CalendarManager />}
           {tab === "accounting" && <AccountingPage />}
           {tab === "fk_master" && <MasterDataTab />}
           {tab === "business" && <BusinessSettingsManager />}
+          {tab === "email" && <EmailSettingsManager />}
           {tab === "backup" && <BackupManager />}
           {tab === "users" && <UsersManager />}
           {tab === "content" && <ContentEditor />}
           {tab === "pages" && <PagesManager />}
           {tab === "blog" && <BlogManager />}
-          {tab === "bookings" && <BookingsManager />}
           {tab === "vku_registrations" && <VkuRegistrationsViewer />}
           {tab === "packages" && <PackagesManager />}
           {tab === "certificates" && <CertificatesManager />}
