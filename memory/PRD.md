@@ -259,7 +259,22 @@ admin@saferide.ch / SafeRide2026!
   - **Backend-Hardening**: `core/storage.py` mappt jetzt Upstream 5xx vom Emergent Object Storage auf **HTTP 502 mit deutscher Fehlermeldung** („Speicher aktuell nicht erreichbar, bitte erneut versuchen.") — verhindert nackte 500er beim Client.
   - **Tests**: `test_iteration29_subtabs.py` mit 6 pytest-Blöcken (Invoice-CRUD, Auth, Document-Upload, Activity-Feed-Autopopulation, 401/404 Guards). 32/32 gesamt grün inkl. gesamte Iteration-26–28 Regression.
   - **Verifiziert live**: Rechnung R-2026-001 CHF 320.50 erstellt → Activity-Feed zeigt „Rechnung R-2026-001 erstellt (CHF 320.50) vor 5 min · admin@saferide.ch". Status-Cycle Offen→Bezahlt→Storniert funktioniert. Delete cleanup atomisch.
-  - **Nächstes**: Phase 4 = KI-Assistent (Prüfungsreife-Analyse, Themenvorschläge, Zusammenfassung).
+- ✅ **Iteration 30 (09.02.2026) — PHASE 4: PDF-Fixes + Rechnungsmodul-Umbau + Fahrschul-Settings (DONE):**
+  - **PDF Fahrkontrolle-Matrix Titelfelder lesbar**: Category-Header-Zeilen jetzt mit fixem `cat_row_h=5.5mm` und Font 10pt bold + Coral-Akzentstreifen links — vorher waren die weißen Titel auf dunklem Grund kaum lesbar. Vertikal zentrierte Text-Baseline (32 % vom Row-Bottom). Alle 6 Kategorien passen nun sauber auf Seite 1 (Fahrkontrolle-A4-Landscape) inkl. QR-Code — verifiziert via `pdftoppm`-Screenshot.
+  - **QR-Code 18mm → 14mm** verkleinert um Platz für die Matrix zu schaffen.
+  - **Diagramm auf Seite 2**: Neuer `_draw_progress_chart` Helper zeichnet 6 horizontale Balken pro Kategorie mit Farbcode (Rot < 30 / Gelb < 60 / Coral < 80 / Grün ≥ 80) plus Gesamt-% rechts oben. Journal folgt darunter mit Empty-State "Noch keine Kommentare erfasst" wenn null Kommentare.
+  - **Rechnungsmodul komplett neu**:
+    - Model: `lesson_date`, `duration_min`, `price_chf`, `note`, `payment_method` (bar|rechnung|kreditkarte|twint), `status` (open|paid|cancelled). Rechnungsnr. **RE-2026-0001** systemgeneriert via atomarem MongoDB-Counter `invoice_counters` (year-reset).
+    - Neuer Endpoint `GET /api/students/{sid}/invoices/{iid}.pdf` — schlanke Swiss B2B Rechnung (A4 portrait, Sender-Header + Empfänger + Titel + Metadata-Grid + Positions-Tabelle + Totale mit MWST + Fusszeile mit Bank/IBAN).
+    - Global-Endpoint `GET /api/accounting/invoices` (mit Student-Name-Enrichment).
+    - Frontend `InvoicesTab.jsx` komplett neu: neue Felder + Zahlungsweise-Dropdown + PDF-Download-Button pro Zeile + Auto-Sum-Header.
+  - **Business-Settings-CMS** (Singleton-Doc `id="default"` in Collection `business_settings`):
+    - Model `BusinessSettings` mit business_name, address_line1/2, zip, city, country, phone, email, website, iban, bank, bic, account_holder, mwst_number, mwst_rate, invoice_prefix, invoice_footer_note.
+    - Endpoints `GET/PATCH /api/settings/business` — GET seedet die Row wenn nicht vorhanden (kein 404 im UI).
+    - Neue Admin-Tab **„Fahrschul-Daten"** (`BusinessSettingsManager.jsx`) mit 4 Sektionen (Firma/Adresse, Kontakt, Bank/IBAN, MWST/Rechnungs-Einstellungen), autospeichernd onBlur, gelbe Info-Box.
+    - Default-Werte für Fahrschule Safe Ride: „Fahrschule Safe Ride by Nadine Stäubli · Schnabelsberg 8836 Benau · 079 585 00 85 · www.saferide.ch · IBAN folgt · Bank folgt · BIC folgt · MWST-Nr. leer (nicht MWST-pflichtig) · MWST-Satz 0 %".
+  - **Tests**: `test_iteration29_subtabs.py` erweitert auf 10/10 grün inkl. neuer Invoice-PDF-Test + Business-Settings-Singleton-Test + Accounting-Endpoint-Test.
+  - **Nächste Iteration**: Iteration 31 = Buchhaltungsmenü (Alle Rechnungen + Offene Posten Übersicht) + Ausgaben-Modul (Monatsansicht + Upload). Iteration 32 = Kontenplan + Erfolgsrechnung.
 - P2: CSV-Export für Admin-Tabs (VKU-Anmeldungen, Kontaktanfragen, Buchungen).
 - P2: Stripe-Integration für Pakete/Gutscheine (Online-Zahlung, vom User bereits einmal deferred).
 - P3: Rich-Text-Toolbar im Inline-Editor (aktuell nur Plain-Text via contentEditable).

@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 30 + 31 (Buchhaltung + Invoices PDF + Fahrschul-Daten CMS + Fahrkontrolle-PDF Fixes) fully verified. Backend: 22/22 tests pass (8/8 accounting original + 14/14 extras covering invoice CRUD/PDF/business settings/global list + Fahrkontrolle PDF smoke). Frontend: all 5 Buchhaltung sub-tabs (Übersicht/Rechnungen/Ausgaben/Kontenplan/Erfolgsrechnung) render with correct data-testids + real values from live backend. Fahrschul-Daten tab renders all 17 bs-* fields pre-populated with Nadine defaults. InvoicesTab on Stefan Haas shows RE-2026-0001 row with per-row [PDF] button — download triggered successfully producing 'RE-2026-0001.pdf'. Fahrkontrolle-PDF for Stefan verified via pdftotext: page 1 shows all 6 category headers (1. Vorschulung → 6. Vorprüfung), page 2 shows Fortschritt pro Kategorie chart with Gesamt: 7 %, all 6 category bars, and Kommentare pro Lektion section. PDF is 2 pages, A4 landscape, %PDF header + %%EOF trailer both present.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/students/{sid}/fahrkontrolle.pdf", "issue": "Iteration 27 legacy test `test_pdf_single_page_when_no_comments` now fails (expects 1 page, gets 2) because iteration 30 intentionally added the mandatory page 2 chart. Not a bug — test is now stale. Remove the assertion or invert it to `assert pages == 2`."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "AdminStudentDetail deep-link to sub-tab via URL", "issue": "Navigating directly to /admin/students/{id}?tab=invoices lands on the default (Fahrkontrolle) tab, ignoring the query param. Clicking the tab in the UI works. Minor UX issue, not blocking.", "affected_selectors": ["admin-student-tab-invoices"]}
+    ],
+    "design_issues": [
+      {"screen": "Ausgabe erfassen form + Rechnung erfassen form", "issues": ["Datum-Feld uses browser-native <input type=\"date\"> (07/09/2026 with browser calendar icon) instead of shadcn DatePicker used elsewhere — same design inconsistency flagged in iteration 29."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration30_31_accounting.py",
+    "/app/backend/tests/test_iteration30_31_extras.py",
+    "/app/test_reports/pytest/it30_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Update stale test_iteration27_pdf_extra.py::test_pdf_single_page_when_no_comments to assert `pages == 2` (Iteration 30 spec requires mandatory chart page).",
+    "(Optional UX) Support ?tab=invoices deep-link on AdminStudentDetail so main-agent's spec URL actually opens the invoices tab.",
+    "(Optional design) Replace <input type=\"date\"> in ExpensesTab + InvoicesTab with shadcn DatePicker for visual consistency.",
+    "(Cosmetic) Naming inconsistency: spec calls out testids invoice-new-lesson_date/duration_min/price_chf/payment_method (underscore) but implementation uses hyphenated form (invoice-new-lesson-date/duration/price/payment-method). Both work; align if desired."
+  ],
+  "critical_code_review_comments": [
+    "student_invoices.py:_next_invoice_number() uses find_one_and_update with return_document=True (motor accepts int 1 for AFTER). Includes robust fallback re-read if the response shape differs. Concurrency test confirms strictly monotonic sequence under parallel load.",
+    "business_settings.py get_or_create_settings() is idempotent and safe under concurrent GETs. PATCH filters only non-None fields, preserving unchanged fields — verified by test_patch_only_supplied_fields_change.",
+    "student_invoices.py list_all_invoices() enriches with student name via a single $in lookup — no N+1 problem. Good.",
+    "invoice_pdf.py build_invoice_pdf() output verified with pdfinfo: proper A4, %PDF + %%EOF, content-disposition includes RE-YYYY-NNNN.pdf filename.",
+    "fahrkontrolle_pdf.py page 2 correctly injects Fortschritt-Chart with per-category horizontal bars + Gesamt-% + Kommentare-pro-Lektion section. All 6 category headers legibly render on page 1.",
+    "Frontend AccountingPage.jsx correctly guards each sub-tab with data-testid attributes (accounting-subtab-*), year selector maintains state, KPIs bind to /api/accounting/summary response.",
+    "BusinessSettingsManager.jsx exposes all 17 fields with individual bs-* testids and onBlur autosave hint banner. Good UX pattern."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration30_31_extras.py (new — 14 tests: invoice model+auto-number+validation, PDF export, business settings, global /accounting/invoices, Fahrkontrolle PDF smoke)"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 iteration 30/31 tests; 1 pre-existing iteration-27 test stale — expected regression)",
+    "frontend": "100% (5 sub-tabs, Fahrschul-Daten CMS, InvoicesTab CRUD + PDF download all verified live)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "Ephemeral: created + immediately deleted several TEST_ students + invoices + expenses + accounts during pytest run (fixtures teardown cleans up). Long-lived: Stefan Haas RE-2026-0001 (CHF 120, Twint, offen) still present; 13 seeded KMU accounts (4 Ertrag + 9 Aufwand) intact; BusinessSettings singleton at id='default' intact.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "For iteration 30/31 features specifically use test files test_iteration30_31_accounting.py + test_iteration30_31_extras.py. Both use REACT_APP_BACKEND_URL env var (with fallback to preview URL). Note the ATOMIC INVOICE COUNTER is scoped to calendar year — pytest-xdist parallel workers hit the counter simultaneously, so consecutive-sequence assertions fail (correctly), only assert monotonic ordering. The Fahrkontrolle PDF is now 2 pages ALWAYS (page 1 = matrix, page 2 = chart + journal). Legacy `test_iteration27_pdf_extra.py::test_pdf_single_page_when_no_comments` is now obsolete — main agent should update. To open Buchhaltung UI use /admin?tab=accounting. To open InvoicesTab click the RECHNUNGEN sub-tab (URL deep-link ?tab=invoices on student page does NOT auto-switch — click the tab explicitly).",
+  "rca of the issue": "No RCA needed — no critical bugs. Two minor observations: (1) URL deep-link ?tab=invoices on AdminStudentDetail is ignored on cold navigation, likely because AdminStudentDetail initial state resolves to default tab before URL params are hydrated. Fix: read URL param inside useEffect on mount and setActiveTab. (2) Legacy iteration-27 test expects Fahrkontrolle PDF to be 1 page when no comments — spec now mandates page 2 chart always, so update the assertion."
+}

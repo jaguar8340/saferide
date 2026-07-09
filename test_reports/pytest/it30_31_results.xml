@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="2" failures="0" skipped="0" tests="10" time="4.348" timestamp="2026-07-09T16:40:19.730891+00:00" hostname="agent-env-9b3e8e55-dc59-48e0-8831-90c9e1a1b03e"><testcase classname="" name="tests.test_iteration30_31_extras" time="0.000"><error message="collection failure">tests/test_iteration30_31_extras.py:20: in &lt;module&gt;
+    BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen os&gt;:679: in __getitem__
+    ???
+E   KeyError: 'REACT_APP_BACKEND_URL'</error><error message="collection failure">tests/test_iteration30_31_extras.py:20: in &lt;module&gt;
+    BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen os&gt;:679: in __getitem__
+    ???
+E   KeyError: 'REACT_APP_BACKEND_URL'</error></testcase><testcase classname="tests.test_iteration30_31_accounting" name="test_accounts_auto_seed_and_crud" time="1.224" /><testcase classname="tests.test_iteration30_31_accounting" name="test_accounts_cannot_delete_if_referenced" time="0.604" /><testcase classname="tests.test_iteration30_31_accounting" name="test_accounts_require_auth" time="0.105" /><testcase classname="tests.test_iteration30_31_accounting" name="test_expenses_full_crud" time="0.835" /><testcase classname="tests.test_iteration30_31_accounting" name="test_expense_receipt_upload" time="0.349" /><testcase classname="tests.test_iteration30_31_accounting" name="test_accounting_summary" time="0.101" /><testcase classname="tests.test_iteration30_31_accounting" name="test_income_statement_year" time="0.609" /><testcase classname="tests.test_iteration30_31_accounting" name="test_income_statement_requires_auth" time="0.114" /></testsuite></testsuites>

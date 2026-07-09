@@ -152,7 +152,7 @@ async def export_fahrkontrolle_pdf(
     _draw_header(c, student, left, right, top)
 
     # Reserve top area for header (18mm), then start matrix
-    matrix_top = top - 22 * mm
+    matrix_top = top - 20 * mm
     matrix_bottom = bottom + 6 * mm
     _draw_matrix(
         c,
@@ -165,7 +165,7 @@ async def export_fahrkontrolle_pdf(
         left=left,
         right=right,
         top=matrix_top,
-        bottom=matrix_bottom + (20 * mm if qr_image is not None else 0),
+        bottom=matrix_bottom + (16 * mm if qr_image is not None else 0),
     )
 
     # Footer (with QR bottom-right on page 1 only)
@@ -176,7 +176,9 @@ async def export_fahrkontrolle_pdf(
     )
 
     # --------------------------------------------------------------
-    #  PAGE 2+ – Ausbildungsjournal (chronological comments)
+    #  PAGE 2 – Ausbildungsjournal + Fortschrittsdiagramm
+    #  Always emitted, even if there are zero comments — the diagram
+    #  alone is worth the second page.
     # --------------------------------------------------------------
     journal_entries: list[dict] = []
     for lesson in lessons:
@@ -204,9 +206,17 @@ async def export_fahrkontrolle_pdf(
         if lesson_comments:
             journal_entries.append({"lesson": lesson, "items": lesson_comments})
 
-    if journal_entries:
+    # Compute per-category progress for the chart (always).
+    chart_data = _compute_category_progress(
+        categories, subs_by_cat, lessons, assess_by_key
+    )
+
+    if lessons:  # only show page 2 when there is data to summarize
         c.showPage()
-        _draw_journal(c, student, journal_entries, page_w, page_h, left, right, top, bottom)
+        _draw_journal(
+            c, student, journal_entries, page_w, page_h,
+            left, right, top, bottom, chart_data,
+        )
 
     c.save()
     pdf_bytes = buf.getvalue()
@@ -328,19 +338,29 @@ def _draw_matrix(
     col_w = max(6 * mm, grid_w / n_lessons)
     row_h = 5.6 * mm  # matrix row height
     header_h = 8 * mm
+    # Category header rows are ALWAYS taller than data rows so the white
+    # title text on the dark navy band stays legible even when the matrix
+    # is squeezed to fit lots of lessons.
+    cat_row_h = 5.5 * mm
 
     # Count total rows we need (category header + subitems) + routes
-    total_rows = 0
-    for cat in categories:
-        total_rows += 1  # category divider
-        total_rows += len(subs_by_cat.get(cat["id"], []))
-    total_rows += 1  # routes row
+    n_categories = len(categories)
+    n_subitems = sum(len(subs_by_cat.get(c["id"], [])) for c in categories)
+    routes_row_h = 5.6 * mm
 
-    available_h = top - bottom - header_h - 8 * mm  # leave space for routes summary
-    max_row_h = available_h / max(total_rows, 1)
-    row_h = min(row_h, max_row_h)
-    if row_h < 2.6 * mm:
-        row_h = 2.6 * mm  # hard minimum; better to overflow than illegible
+    available_h = (
+        top - bottom
+        - header_h                   # column header
+        - n_categories * cat_row_h   # dark category bands (fixed)
+        - routes_row_h               # routes summary row
+        - 3 * mm                     # safety margin
+    )
+    max_data_row_h = available_h / max(n_subitems, 1)
+    row_h = min(row_h, max_data_row_h)
+    if row_h < 2.7 * mm:
+        row_h = 2.7 * mm  # hard minimum with 6pt font stays legible
+    # Choose subitem font size based on available row height.
+    sub_font_size = 6.8 if row_h >= 3.4 * mm else 6.0
 
     # ---- Column header ----
     y = top
@@ -371,17 +391,23 @@ def _draw_matrix(
         cat_number += 1
         cat_subs = subs_by_cat.get(cat["id"], [])
 
-        # Category header row (dark)
+        # Category header row — dark navy band with WHITE bold title.
+        # Uses `cat_row_h` (fixed, always ≥ 6.5 mm) so the text is legible
+        # even when the data rows have been squeezed.
         c.setFillColor(colors.HexColor("#0f172a"))
-        c.rect(left, y - row_h, right - left, row_h, fill=1, stroke=0)
+        c.rect(left, y - cat_row_h, right - left, cat_row_h, fill=1, stroke=0)
+        # Slim accent strip on the left in coral
+        c.setFillColor(colors.HexColor("#ff5a36"))
+        c.rect(left, y - cat_row_h, 1.4 * mm, cat_row_h, fill=1, stroke=0)
+        # Category title (bigger + vertically centered)
         c.setFillColor(colors.white)
-        c.setFont("Helvetica-Bold", 7.5)
+        c.setFont("Helvetica-Bold", 10)
         c.drawString(
-            left + 2 * mm,
-            y - row_h + 1.7 * mm,
+            left + 4 * mm,
+            y - cat_row_h + (cat_row_h - 3.4 * mm) / 2 + 0.5 * mm,
             f"{cat_number}. {cat.get('title_de', '')}",
         )
-        y -= row_h
+        y -= cat_row_h
 
         for sub_idx, sub in enumerate(cat_subs, start=1):
             # Alternating row shading
@@ -389,24 +415,28 @@ def _draw_matrix(
                 c.setFillColor(colors.HexColor("#fafaf9"))
                 c.rect(left, y - row_h, right - left, row_h, fill=1, stroke=0)
 
+            # Vertically center the text baseline inside the row.
+            # For 7pt Helvetica the visual centre is ≈ 34 % up from the bottom.
+            baseline_y = y - row_h + row_h * 0.32
+
             # Subitem label (numbered)
             c.setFillColor(colors.HexColor("#94a3b8"))
             c.setFont("Helvetica-Bold", 6)
             c.drawString(
                 left + 2 * mm,
-                y - row_h + 1.5 * mm,
+                baseline_y,
                 f"{cat_number}.{sub_idx}",
             )
             c.setFillColor(colors.HexColor("#0f172a"))
-            c.setFont("Helvetica", 7)
+            c.setFont("Helvetica", sub_font_size)
             title = sub.get("title_de", "")
             # Truncate to fit column width (label_col_w minus number badge ~10mm)
             avail = label_col_w - 12 * mm
-            while c.stringWidth(title, "Helvetica", 7) > avail and len(title) > 1:
+            while c.stringWidth(title, "Helvetica", sub_font_size) > avail and len(title) > 1:
                 title = title[:-1]
             if title != sub.get("title_de", ""):
                 title += "…"
-            c.drawString(left + 12 * mm, y - row_h + 1.5 * mm, title)
+            c.drawString(left + 12 * mm, baseline_y, title)
 
             # Row grid lines
             c.setStrokeColor(colors.HexColor("#f1f5f9"))
@@ -446,8 +476,9 @@ def _draw_matrix(
                     c.circle(cx + col_w - dot_r - 0.6 * mm, y - dot_r - 0.6 * mm, dot_r, stroke=0, fill=1)
 
             y -= row_h
-            if y < bottom + 12 * mm:
-                # Overflow guard – should be rare because row_h auto-shrinks.
+            if y < bottom + 6 * mm:
+                # Hard overflow – only happens when the matrix genuinely
+                # can't fit even at the minimum row height.
                 return
 
     # ---- Routes summary ----
@@ -485,8 +516,8 @@ def _draw_footer(c: canvas.Canvas, student: dict, left: float, right: float,
     c.drawRightString(right, bottom - 4 * mm, f"Seite {page_num}")
 
     if qr is not None:
-        # Bottom-right QR code (18×18 mm) sitting ABOVE the footer text.
-        qr_size = 18 * mm
+        # Bottom-right QR code (14×14 mm) sitting ABOVE the footer text.
+        qr_size = 14 * mm
         qr_x = right - qr_size
         qr_y = bottom - 0.5 * mm
         c.drawImage(qr, qr_x, qr_y, width=qr_size, height=qr_size,
@@ -494,8 +525,124 @@ def _draw_footer(c: canvas.Canvas, student: dict, left: float, right: float,
         # Caption below (small, muted).
         if qr_caption:
             c.setFillColor(colors.HexColor("#94a3b8"))
-            c.setFont("Helvetica", 5.5)
+            c.setFont("Helvetica", 5.2)
             c.drawRightString(right, qr_y - 1.8 * mm, qr_caption)
+
+
+# ====================================================================
+#  Progress chart (page 2)
+# ====================================================================
+#  Same weighting as the frontend `progress.js` helper so PDF stays
+#  consistent with the on-screen numbers.
+_VALUE_WEIGHT = {"1": 25, "2": 50, "3": 75, "4": 100, "X": 0}
+
+
+def _compute_category_progress(
+    categories: list[dict],
+    subs_by_cat: dict[str, list[dict]],
+    lessons: list[dict],
+    assess_by_key: dict[tuple[str, str], dict],
+) -> list[dict]:
+    """Return one row per category:
+        { title, percent (0-100), color (#hex based on % ramp) }
+    """
+    out: list[dict] = []
+    for cat in categories:
+        subs = subs_by_cat.get(cat["id"], [])
+        if not subs:
+            out.append({"title": cat.get("title_de", ""), "percent": 0, "color": "#94a3b8"})
+            continue
+        total = 0
+        for s in subs:
+            best = 0
+            for lesson_row in lessons:
+                cell = assess_by_key.get((s["id"], lesson_row["id"]))
+                if cell and cell.get("value"):
+                    w = _VALUE_WEIGHT.get(cell["value"], 0)
+                    if w > best:
+                        best = w
+            total += best
+        pct = round(total / len(subs))
+        color = (
+            "#16a34a" if pct >= 80
+            else "#ff5a36" if pct >= 60
+            else "#eab308" if pct >= 30
+            else "#dc2626"
+        )
+        out.append({"title": cat.get("title_de", ""), "percent": pct, "color": color})
+    return out
+
+
+def _draw_progress_chart(
+    c: canvas.Canvas,
+    data: list[dict],
+    left: float,
+    right: float,
+    top: float,
+    height: float = 55 * mm,
+) -> float:
+    """Horizontal bar chart of category percents.
+
+    Returns the y coordinate of the bottom of the chart (so caller can
+    continue drawing below it).
+    """
+    if not data:
+        return top
+
+    # Title
+    c.setFillColor(colors.HexColor("#0f172a"))
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(left, top, "Fortschritt pro Kategorie")
+
+    # Overall percent (right aligned)
+    overall = round(sum(d["percent"] for d in data) / max(len(data), 1))
+    overall_color = (
+        colors.HexColor("#16a34a") if overall >= 80
+        else colors.HexColor("#ff5a36") if overall >= 60
+        else colors.HexColor("#eab308") if overall >= 30
+        else colors.HexColor("#dc2626")
+    )
+    c.setFillColor(overall_color)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawRightString(right, top, f"Gesamt: {overall} %")
+
+    chart_top = top - 6 * mm
+    n = len(data)
+    row_gap = 1.8 * mm
+    row_h = (height - row_gap * (n - 1)) / n
+    label_col = 44 * mm
+    bar_x0 = left + label_col
+    bar_max_w = right - bar_x0 - 14 * mm  # reserve space for percent label
+
+    for i, d in enumerate(data):
+        y = chart_top - i * (row_h + row_gap) - row_h
+        # Label
+        c.setFillColor(colors.HexColor("#0f172a"))
+        c.setFont("Helvetica-Bold", 8.5)
+        title = d["title"]
+        while c.stringWidth(f"{i + 1}. {title}", "Helvetica-Bold", 8.5) > label_col - 4 * mm and len(title) > 1:
+            title = title[:-1]
+        suffix = "" if title == d["title"] else "…"
+        c.drawString(left, y + row_h / 2 - 1.2 * mm, f"{i + 1}. {title}{suffix}")
+
+        # Background track
+        c.setFillColor(colors.HexColor("#f1f5f9"))
+        c.roundRect(bar_x0, y, bar_max_w, row_h, row_h / 2, fill=1, stroke=0)
+
+        # Filled portion
+        pct = max(0, min(100, d["percent"]))
+        fill_w = max(row_h, bar_max_w * pct / 100.0) if pct > 0 else 0
+        if fill_w > 0:
+            c.setFillColor(colors.HexColor(d["color"]))
+            c.roundRect(bar_x0, y, fill_w, row_h, row_h / 2, fill=1, stroke=0)
+
+        # Percent label at end
+        c.setFillColor(colors.HexColor("#0f172a"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(bar_x0 + bar_max_w + 3 * mm, y + row_h / 2 - 1.2 * mm, f"{pct} %")
+
+    return chart_top - height
+
 
 
 def _draw_journal(
@@ -508,11 +655,13 @@ def _draw_journal(
     right: float,
     top: float,
     bottom: float,
+    chart_data: list[dict] | None = None,
 ) -> None:
-    """Chronological Ausbildungsjournal — spans multiple pages if needed."""
-    y = top
+    """Ausbildungsjournal page(s): chart on top + chronological comments below.
 
-    def draw_header(page_num: int) -> float:
+    Auto-flows to more pages if the comment list is long.
+    """
+    def draw_header(page_num: int, subtitle: str = "") -> float:
         c.setFillColor(colors.HexColor("#0f172a"))
         c.setFont("Helvetica-Bold", 14)
         c.drawString(left, top, "Ausbildungsjournal · Kommentare chronologisch")
@@ -527,6 +676,19 @@ def _draw_journal(
 
     page_num = 2
     y = draw_header(page_num)
+
+    # ---- Progress chart at the top of page 2 (only) ----
+    if chart_data:
+        y = _draw_progress_chart(c, chart_data, left, right, y - 2 * mm)
+        # Divider under the chart
+        c.setStrokeColor(colors.HexColor("#e2e8f0"))
+        c.setLineWidth(0.4)
+        c.line(left, y - 4 * mm, right, y - 4 * mm)
+        # Section title for the journal list
+        c.setFillColor(colors.HexColor("#0f172a"))
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(left, y - 10 * mm, "Kommentare pro Lektion")
+        y = y - 15 * mm
 
     def ensure_space(needed: float) -> None:
         nonlocal y, page_num
@@ -543,6 +705,11 @@ def _draw_journal(
         leading=11,
         textColor=colors.HexColor("#0f172a"),
     )
+
+    if not entries:
+        c.setFillColor(colors.HexColor("#94a3b8"))
+        c.setFont("Helvetica-Oblique", 10)
+        c.drawString(left, y, "Noch keine Kommentare erfasst.")
 
     for entry in entries:
         lesson = entry["lesson"]

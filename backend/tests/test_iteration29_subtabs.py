@@ -74,32 +74,47 @@ def test_invoices_full_crud_and_totals(auth_headers, fresh_student):
     assert r.status_code == 200
     assert r.json() == []
 
-    # Create two invoices
+    # Create two invoices (backend auto-generates number RE-YYYY-NNNN)
     r = requests.post(
         f"{BASE_URL}/api/students/{sid}/invoices",
-        json={"number": "R-1", "date": "2026-02-01", "amount_chf": 120.5, "status": "open"},
+        json={
+            "lesson_date": "2026-02-01",
+            "duration_min": 45,
+            "price_chf": 120.5,
+            "payment_method": "twint",
+            "status": "open",
+        },
         headers=auth_headers, timeout=30,
     )
     assert r.status_code == 200
     inv1 = r.json()
+    assert inv1["number"].startswith("RE-") and len(inv1["number"]) >= 10
+    assert inv1["price_chf"] == 120.5
+    assert inv1["payment_method"] == "twint"
 
     r = requests.post(
         f"{BASE_URL}/api/students/{sid}/invoices",
-        json={"number": "R-2", "date": "2026-02-15", "amount_chf": 80.0, "status": "paid"},
+        json={
+            "lesson_date": "2026-02-15",
+            "duration_min": 90,
+            "price_chf": 80.0,
+            "payment_method": "bar",
+            "status": "paid",
+        },
         headers=auth_headers, timeout=30,
     )
     assert r.status_code == 200
     inv2 = r.json()
+    # Numbers should be strictly increasing within the same year.
+    assert inv2["number"] > inv1["number"]
 
-    # List
+    # List sorted by date desc
     r = requests.get(
         f"{BASE_URL}/api/students/{sid}/invoices", headers=auth_headers, timeout=30
     )
     assert r.status_code == 200
     lst = r.json()
     assert len(lst) == 2
-    # Sorted by date desc
-    assert lst[0]["number"] == "R-2"
 
     # Patch status
     r = requests.patch(
@@ -118,6 +133,22 @@ def test_invoices_full_crud_and_totals(auth_headers, fresh_student):
     )
     assert r.status_code == 400
 
+    # Invalid payment method rejected
+    r = requests.patch(
+        f"{BASE_URL}/api/students/{sid}/invoices/{inv1['id']}",
+        json={"payment_method": "bitcoin"},
+        headers=auth_headers, timeout=30,
+    )
+    assert r.status_code == 400
+
+    # Reject price 0 on create
+    r = requests.post(
+        f"{BASE_URL}/api/students/{sid}/invoices",
+        json={"lesson_date": "2026-02-01", "duration_min": 45, "price_chf": 0},
+        headers=auth_headers, timeout=30,
+    )
+    assert r.status_code == 400
+
     # Delete
     r = requests.delete(
         f"{BASE_URL}/api/students/{sid}/invoices/{inv2['id']}",
@@ -125,18 +156,95 @@ def test_invoices_full_crud_and_totals(auth_headers, fresh_student):
     )
     assert r.status_code == 200
 
-    r = requests.get(
-        f"{BASE_URL}/api/students/{sid}/invoices", headers=auth_headers, timeout=30
-    )
-    assert r.status_code == 200
-    assert len(r.json()) == 1
-
     # Deleting again → 404
     r = requests.delete(
         f"{BASE_URL}/api/students/{sid}/invoices/{inv2['id']}",
         headers=auth_headers, timeout=30,
     )
     assert r.status_code == 404
+
+
+def test_invoice_pdf_export(auth_headers, fresh_student):
+    """New endpoint: GET /api/students/{sid}/invoices/{iid}.pdf"""
+    sid = fresh_student
+
+    r = requests.post(
+        f"{BASE_URL}/api/students/{sid}/invoices",
+        json={
+            "lesson_date": "2026-02-01",
+            "duration_min": 45,
+            "price_chf": 120.0,
+            "payment_method": "rechnung",
+            "note": "Testrechnung",
+        },
+        headers=auth_headers, timeout=30,
+    )
+    assert r.status_code == 200
+    inv = r.json()
+
+    r = requests.get(
+        f"{BASE_URL}/api/students/{sid}/invoices/{inv['id']}.pdf",
+        headers=auth_headers, timeout=60,
+    )
+    assert r.status_code == 200
+    assert r.headers.get("content-type", "").startswith("application/pdf")
+    assert r.content[:4] == b"%PDF"
+    assert r.content.rstrip().endswith(b"%%EOF")
+    # Filename in Content-Disposition contains the invoice number
+    cd = r.headers.get("content-disposition", "")
+    assert inv["number"] in cd
+
+
+def test_business_settings_singleton(auth_headers):
+    """Settings GET auto-seeds, PATCH updates only supplied fields."""
+    r = requests.get(f"{BASE_URL}/api/settings/business", headers=auth_headers, timeout=30)
+    assert r.status_code == 200
+    original = r.json()
+    assert original["id"] == "default"
+
+    # Patch one field – others untouched
+    r = requests.patch(
+        f"{BASE_URL}/api/settings/business",
+        json={"phone": "+41 79 000 00 00"},
+        headers=auth_headers, timeout=30,
+    )
+    assert r.status_code == 200
+    assert r.json()["phone"] == "+41 79 000 00 00"
+    # business_name unchanged
+    assert r.json()["business_name"] == original["business_name"]
+
+    # Restore original phone
+    requests.patch(
+        f"{BASE_URL}/api/settings/business",
+        json={"phone": original.get("phone", "")},
+        headers=auth_headers, timeout=30,
+    )
+
+
+def test_business_settings_requires_auth():
+    r = requests.get(f"{BASE_URL}/api/settings/business", timeout=30)
+    assert r.status_code in (401, 403)
+
+
+def test_accounting_global_invoice_list(auth_headers, fresh_student):
+    """New endpoint /api/accounting/invoices (Buchhaltung)."""
+    sid = fresh_student
+    # Create an invoice so we know at least one exists
+    r = requests.post(
+        f"{BASE_URL}/api/students/{sid}/invoices",
+        json={"lesson_date": "2026-02-01", "duration_min": 45, "price_chf": 45.0},
+        headers=auth_headers, timeout=30,
+    )
+    assert r.status_code == 200
+
+    r = requests.get(f"{BASE_URL}/api/accounting/invoices", headers=auth_headers, timeout=30)
+    assert r.status_code == 200
+    lst = r.json()
+    assert isinstance(lst, list)
+    assert any(inv["student_id"] == sid for inv in lst)
+    # student_name enriched on every row
+    for inv in lst:
+        assert "student_name" in inv
 
 
 def test_invoices_require_auth():

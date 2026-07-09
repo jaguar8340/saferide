@@ -22,15 +22,18 @@ from starlette.middleware.cors import CORSMiddleware
 from core.db import client
 from seeds.startup import run_startup_seeds
 from routers import (
+    accounting,
     auth,
     blog,
     bookings,
+    business_settings,
     contact,
     content,
     entities,
     fahrkontrolle,
     fahrkontrolle_pdf,
     gallery,
+    invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
     sitemap,
     student_activities,
@@ -61,8 +64,11 @@ api.include_router(sitemap.router)
 api.include_router(vku.router)
 api.include_router(students.router)
 api.include_router(student_invoices.router)
+api.include_router(student_invoices.accounting_router)
+api.include_router(accounting.router)
 api.include_router(student_documents.router)
 api.include_router(student_activities.router)
+api.include_router(business_settings.router)
 api.include_router(fahrkontrolle.router)
 api.include_router(fahrkontrolle_pdf.router)
 

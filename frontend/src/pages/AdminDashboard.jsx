@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users, GraduationCap, UserRound, ClipboardList } from "lucide-react";
+import { LogOut, Home, FileText, MessageSquare, Image as ImageIcon, Inbox, Map, BookOpen, Calendar, Package, Award, Users, GraduationCap, UserRound, ClipboardList, Building2, Wallet } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -11,6 +11,8 @@ import VkuRegistrationsViewer from "@/components/admin/VkuRegistrationsViewer";
 import PagesManager from "@/components/admin/PagesManager";
 import StudentsManager from "@/components/admin/students/StudentsManager";
 import MasterDataTab from "@/components/admin/students/MasterDataTab";
+import BusinessSettingsManager from "@/components/admin/BusinessSettingsManager";
+import AccountingPage from "@/pages/AccountingPage";
 import {
   BlogManager,
   BookingsManager,
@@ -21,7 +23,9 @@ import {
 
 const TABS = [
   { id: "students", icon: UserRound, key: "students", label_de: "Schüler", label_en: "Students" },
+  { id: "accounting", icon: Wallet, key: "accounting", label_de: "Buchhaltung", label_en: "Accounting" },
   { id: "fk_master", icon: ClipboardList, key: "fk_master", label_de: "Fahrkontrolle-Stammdaten", label_en: "Fahrkontrolle Masters" },
+  { id: "business", icon: Building2, key: "business", label_de: "Fahrschul-Daten", label_en: "Business Settings" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
   { id: "pages", icon: Map, key: "pages", label_de: "Seiten & Standorte", label_en: "Pages & Locations" },
   { id: "blog", icon: BookOpen, key: "blog", label_de: "Blog", label_en: "Blog" },
@@ -121,7 +125,9 @@ export default function AdminDashboard() {
 
         <main className="flex-1 p-5 md:p-8 overflow-x-hidden">
           {tab === "students" && <StudentsManager />}
+          {tab === "accounting" && <AccountingPage />}
           {tab === "fk_master" && <MasterDataTab />}
+          {tab === "business" && <BusinessSettingsManager />}
           {tab === "content" && <ContentEditor />}
           {tab === "pages" && <PagesManager />}
           {tab === "blog" && <BlogManager />}

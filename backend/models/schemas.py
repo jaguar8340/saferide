@@ -294,31 +294,45 @@ class Assessment(BaseModel):
 
 
 # ---------- Student invoices ----------
+# Payment methods: bar (cash), rechnung (bank invoice), kreditkarte, twint
+PAYMENT_METHODS = ["bar", "rechnung", "kreditkarte", "twint"]
+INVOICE_STATUSES = ["open", "paid", "cancelled"]
+
+
 class StudentInvoiceCreate(BaseModel):
+    """Payload the admin submits when creating a new invoice.
+
+    The number is NOT accepted here — it is always generated server-side
+    (year-reset 4-digit sequence, e.g. RE-2026-0001).
+    """
     model_config = ConfigDict(extra="ignore")
-    number: str = Field(default="", max_length=40)     # optional invoice reference
-    date: str = Field(default="", max_length=40)       # ISO date the invoice was issued
-    amount_chf: float = Field(default=0.0, ge=0, le=1_000_000)
-    status: str = Field(default="open", max_length=20) # open | paid | cancelled
+    lesson_date: str = Field(default="", max_length=40)     # ISO date the lesson was held
+    duration_min: int = Field(default=45, ge=0, le=600)     # duration in minutes
+    price_chf: float = Field(default=0.0, ge=0, le=1_000_000)
     note: str = Field(default="", max_length=2000)
-    file_url: str = Field(default="", max_length=500)  # optional /api/files/… link
+    payment_method: str = Field(default="bar", max_length=20)
+    status: str = Field(default="open", max_length=20)
 
 
 class StudentInvoice(StudentInvoiceCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     student_id: str
+    number: str = ""                                        # RE-2026-0001 (system-generated)
+    date: str = Field(default_factory=lambda: datetime.now(timezone.utc).date().isoformat())
+    mwst_rate: float = 0.0                                  # snapshot of settings rate at creation
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_by: str = ""
 
 
 class StudentInvoicePatch(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    number: Optional[str] = None
-    date: Optional[str] = None
-    amount_chf: Optional[float] = None
-    status: Optional[str] = None
+    lesson_date: Optional[str] = None
+    duration_min: Optional[int] = None
+    price_chf: Optional[float] = None
     note: Optional[str] = None
-    file_url: Optional[str] = None
+    payment_method: Optional[str] = None
+    status: Optional[str] = None
+    date: Optional[str] = None                              # invoice date (rarely edited)
 
 
 # ---------- Student documents ----------
@@ -335,7 +349,101 @@ class StudentDocument(BaseModel):
     category: str = "misc"                             # misc | permit | id | contract | invoice | other
     note: str = Field(default="", max_length=1000)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ---------- Buchhaltung / Chart of Accounts ----------
+ACCOUNT_TYPES = ["ertrag", "aufwand"]   # revenue / expense
+
+
+class Account(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    number: str = Field(default="", max_length=10)     # e.g. "3200", "4400"
+    name: str = Field(default="", max_length=120)
+    type: str = "aufwand"                              # "ertrag" | "aufwand"
+    active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class AccountPatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    number: Optional[str] = None
+    name: Optional[str] = None
+    type: Optional[str] = None
+    active: Optional[bool] = None
+
+
+class ExpenseCreate(BaseModel):
+    """Payload for a single expense entry (Ausgabe)."""
+    model_config = ConfigDict(extra="ignore")
+    date: str = Field(default="", max_length=40)          # ISO date (YYYY-MM-DD)
+    amount_chf: float = Field(default=0.0, ge=0, le=10_000_000)
+    description: str = Field(default="", max_length=500)
+    account_id: str = Field(default="", max_length=64)    # FK → Account.id (Aufwand)
+    receipt_url: str = Field(default="", max_length=500)  # /api/files/... (JPG/PDF)
+
+
+class Expense(ExpenseCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: str = ""
+
+
+class ExpensePatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    date: Optional[str] = None
+    amount_chf: Optional[float] = None
+    description: Optional[str] = None
+    account_id: Optional[str] = None
+    receipt_url: Optional[str] = None
+
     uploaded_by: str = ""
+
+# ---------- Business / Fahrschul-Settings (Absenderdaten für Rechnungen) ----------
+class BusinessSettings(BaseModel):
+    """Singleton document (id='default') storing the Fahrschul-Absenderdaten
+    used on every generated invoice and the default MWST rate."""
+    model_config = ConfigDict(extra="ignore")
+    id: str = "default"
+    business_name: str = "Fahrschule Safe Ride by Nadine Stäubli"
+    address_line1: str = "Schnabelsberg"
+    address_line2: str = ""
+    zip: str = "8836"
+    city: str = "Benau"
+    country: str = "Schweiz"
+    phone: str = "079 585 00 85"
+    email: str = ""
+    website: str = "www.saferide.ch"
+    iban: str = "folgt"
+    bank: str = "folgt"
+    bic: str = "folgt"
+    account_holder: str = ""
+    mwst_number: str = ""                                   # empty = nicht MWST-pflichtig
+    mwst_rate: float = 0.0                                  # default MWST rate (%)
+    invoice_prefix: str = "RE"                              # RE-2026-0001
+    invoice_footer_note: str = "Vielen Dank für Ihr Vertrauen. Zahlbar innert 30 Tagen."
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_by: str = ""
+
+
+class BusinessSettingsPatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    business_name: Optional[str] = None
+    address_line1: Optional[str] = None
+    address_line2: Optional[str] = None
+    zip: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
+    iban: Optional[str] = None
+    bank: Optional[str] = None
+    bic: Optional[str] = None
+    account_holder: Optional[str] = None
+    mwst_number: Optional[str] = None
+    mwst_rate: Optional[float] = None
+    invoice_prefix: Optional[str] = None
+    invoice_footer_note: Optional[str] = None
+
 
 
 # ---------- Student activity feed ----------
