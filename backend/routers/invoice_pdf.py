@@ -117,13 +117,14 @@ def _draw_qr_bill(
     student: dict,
     settings: dict,
     total: float,
-    y_top: float,
     page_w: float,
+    page_h: float,
 ) -> bool:
-    """Render a Swiss QR-bill at the bottom of the page.
+    """Render a Swiss QR-bill on its own dedicated page.
 
-    Returns True when a QR-bill was drawn, False when the IBAN is missing
-    or invalid — the caller can then fall back to the plain bank footer.
+    Returns True when a QR-bill was drawn on a new page, False when the
+    IBAN is missing/invalid — the caller can then fall back to the plain
+    bank footer on the current page.
     """
     iban = (settings.get("iban") or "").replace(" ", "").upper()
     if not _iban_looks_valid_ch(iban):
@@ -160,31 +161,41 @@ def _draw_qr_bill(
                 f"Fahrstunde {_fmt_dmy(invoice.get('lesson_date'))}"
             )[:140],
             language="de",
-            top_line=False,      # we handle the perforation line ourselves
+            top_line=True,       # printed perforation line on top of slip
         )
-        # Render to SVG in-memory
-        svg_buf = io.StringIO()
-        bill.as_svg(svg_buf)
-        svg_buf.seek(0)
-        drawing = svg2rlg(svg_buf)
+        # Render to SVG in-memory. svg2rlg refuses StringIO with an
+        # <?xml encoding=…?> declaration – so encode to bytes and feed
+        # a BytesIO instead.
+        svg_str = io.StringIO()
+        bill.as_svg(svg_str)
+        svg_bytes = BytesIO(svg_str.getvalue().encode("utf-8"))
+        drawing = svg2rlg(svg_bytes)
+        if drawing is None:
+            raise RuntimeError("svg2rlg returned None (unable to parse QR-Bill SVG)")
 
-        # QR-bill payment slip is 210 × 105 mm (A6 landscape). Scale so
-        # width matches the page width (with 2 mm bleed on each side).
+        # New page dedicated to the QR-Bill payment slip.
+        c.showPage()
+
+        # Small header explaining what this page is (before the payment slip).
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(20 * mm, page_h - 20 * mm, "Zahlteil (Swiss QR-Rechnung)")
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawString(
+            20 * mm,
+            page_h - 25 * mm,
+            "Diese Seite kann für die Zahlung per Bank-App oder Einzahlung am Postschalter gescannt werden.",
+        )
+
+        # QR-bill payment slip is 210 × 105 mm (A4 landscape half). Scale so
+        # width matches the page width.
         target_w = page_w
         scale = target_w / drawing.width
         drawing.scale(scale, scale)
-        # Draw at the very bottom of the page
+        # Draw the slip at the very bottom of the page (canonical position).
         renderPDF.draw(drawing, c, 0, 0)
 
-        # Draw the perforation line 105 mm above the bottom
-        c.setStrokeColor(FAINT)
-        c.setDash(2, 3)
-        c.setLineWidth(0.4)
-        c.line(0, 105 * mm, page_w, 105 * mm)
-        c.setDash()
-        c.setFillColor(MUTED)
-        c.setFont("Helvetica-Oblique", 7)
-        c.drawCentredString(page_w / 2, 105 * mm + 1 * mm, "Vor der Einzahlung abzutrennen")
         return True
     except Exception as e:
         # QR-Bill generation failed (invalid data, missing fields, etc.).
@@ -416,37 +427,38 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     c.drawString(left, close_y - 19 * mm, settings.get("business_name") or "")
 
     # ------------------------------------------------------------------
-    #  Bottom: Swiss QR-Bill (auto) OR plain bank details footer
+    #  Bottom of page 1: plain bank details footer (always shown).
+    #  If a valid CH-IBAN is configured, a Swiss QR-Bill is then appended
+    #  on a dedicated second page below.
     # ------------------------------------------------------------------
-    qr_drawn = _draw_qr_bill(
+    c.setStrokeColor(LIGHT)
+    c.setLineWidth(0.4)
+    c.line(left, bottom + 20 * mm, right, bottom + 20 * mm)
+
+    footer_rows = [
+        [("Bank", settings.get("bank")),
+         ("Kontoinhaber", settings.get("account_holder") or settings.get("business_name")),
+         ("BIC", settings.get("bic"))],
+        [("IBAN", settings.get("iban")),
+         ("MWST-Nr.", settings.get("mwst_number") or "—"),
+         ("Website", settings.get("website"))],
+    ]
+    for i, row in enumerate(footer_rows):
+        y = bottom + 15 * mm - i * 6 * mm
+        for j, (label, value) in enumerate(row):
+            x = left + j * ((right - left) / 3)
+            c.setFillColor(FAINT)
+            c.setFont("Helvetica-Bold", 6.5)
+            c.drawString(x, y, label.upper())
+            c.setFillColor(INK)
+            c.setFont("Helvetica", 8.5)
+            c.drawString(x, y - 3.5 * mm, value or "—")
+
+    # Swiss QR-Bill – appended on a separate page 2 (only when IBAN valid).
+    _draw_qr_bill(
         c, invoice, student, settings, total=total_incl,
-        y_top=105 * mm, page_w=page_w,
+        page_w=page_w, page_h=page_h,
     )
-
-    if not qr_drawn:
-        # Plain footer line + bank details grid.
-        c.setStrokeColor(LIGHT)
-        c.setLineWidth(0.4)
-        c.line(left, bottom + 20 * mm, right, bottom + 20 * mm)
-
-        footer_rows = [
-            [("Bank", settings.get("bank")),
-             ("Kontoinhaber", settings.get("account_holder") or settings.get("business_name")),
-             ("BIC", settings.get("bic"))],
-            [("IBAN", settings.get("iban")),
-             ("MWST-Nr.", settings.get("mwst_number") or "—"),
-             ("Website", settings.get("website"))],
-        ]
-        for i, row in enumerate(footer_rows):
-            y = bottom + 15 * mm - i * 6 * mm
-            for j, (label, value) in enumerate(row):
-                x = left + j * ((right - left) / 3)
-                c.setFillColor(FAINT)
-                c.setFont("Helvetica-Bold", 6.5)
-                c.drawString(x, y, label.upper())
-                c.setFillColor(INK)
-                c.setFont("Helvetica", 8.5)
-                c.drawString(x, y - 3.5 * mm, value or "—")
 
     c.showPage()
     c.save()

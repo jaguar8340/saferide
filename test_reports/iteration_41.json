@@ -1,0 +1,55 @@
+{
+  "summary": "Iteration 41 – Swiss QR-Bill on dedicated page-2 + About dog-photo 2-col grid + WhySafeRide white typography. Backend: 3/3 pytest PASS (test_iteration41_qrbill.py). Verified end-to-end via API: invoice PDF is 2 pages (page 1 = invoice, page 2 = Zahlteil/Empfangsschein with QR code); page-2 text extraction confirms IBAN 'CH45 0021 4214 1301 7040 Q', creditor 'Fahrschule Safe Ride by Nadine Stäubli' and debtor 'Stefan Haas / Glärnischstrasse / CH-8608 Bubikon'. GET /api/settings/business (admin) returns iban='CH45 0021 4214 1301 7040 Q', bic='UBSWCHZH80A', bank='UBS AG, 8098 Zürich'. PATCH /api/settings/business with phone flip resets archive_url to '' on the previously-archived invoice — verified via test_settings_patch_invalidates_archives. Frontend: /#about renders about-dog-block (grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch, 2 direct children) with EditableImage on the left and about-dog-caption card on the right containing coral badge + big display caption 'Immer mit dabei: Pixie meine vierbeinige Beifahrererin.' + editable subtext slot. WhySafeRide section (bg-coral-strong) overline color rgba(255,255,255,0.8), h2 rgb(255,255,255), intro rgba(255,255,255,0.9), closing rgb(255,255,255). All 6 pillar cards keep bg=rgb(251,249,246) and color=rgb(15,23,42). Admin login regression: admin@saferide.ch / SafeRide2026! → /admin?tab=students, sidebar renders 17 tabs.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration41_qrbill.py",
+    "/app/test_reports/pytest/it41_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "invoice_pdf.py::build_invoice_pdf() – the tail `_draw_qr_bill(...); c.showPage(); c.save()` calls showPage() unconditionally after the QR-Bill was drawn. QR-Bill helper already invokes c.showPage() before drawing → PDF ends up with a 3rd blank trailing page in some qrbill lib versions. Currently only 2 pages result (verified via pypdf) so the extra showPage() is closing the second page; this is fine but the code intent is unclear. Consider commenting or removing the outer showPage() if _draw_qr_bill returned True.",
+    "invoice_pdf.py::_draw_qr_bill – except Exception as e prints to stdout via print(); should use logger.warning() so the failure is captured in supervisor logs (same pattern flagged in iter40 for archive failures).",
+    "business_settings.py::update_settings – invoice_fields set is hardcoded and duplicated with an implicit list of columns; if a new BusinessSettings field is added later, invalidation will silently skip it. Consider computing this from the Pydantic model (e.g. exclude a small STATUS_ONLY set).",
+    "WhySafeRide.jsx – ACCENTS entries no longer define a.bg / a.fg, so `const dark = !!a.bg` is always false and the `${a.bg} ${a.fg}` branch plus the dark-mode trash icon styling is dead code. Cleanup opportunity carried from iter40 review.",
+    "About.jsx still contains two dog photo slots (dog_image_url in the 2-col grid + dog_photo_url path used to still exist earlier). Verified only ONE dog photo now renders on the live page (grid child #1 = EditableImage), so this iteration effectively consolidated to one dog block. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (3/3)",
+    "frontend": "100% (About grid + WhySafeRide white text + admin login regression)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None new. Existing seeded demo student Stefan Haas (invoice RE-2026-0001) used for PDF verification. Business settings already seeded with UBS defaults by startup migration.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 41 is fully green. QR-Bill is now on a dedicated page 2 (page 1 keeps plain footer + bank details). Any PATCH to /api/settings/business with an invoice-relevant field (business_name/address_line1/2/zip/city/country/phone/email/website/iban/bank/bic/account_holder/mwst_number/mwst_rate/invoice_prefix/invoice_footer_note/logo_url) will wipe archive_url/archive_path/archived_at across all student_invoices — regression to keep in mind. About.jsx testids: about-dog-block (grid wrapper) and about-dog-caption (card). WhySafeRide overline uses text-white/80, intro text-white/90, pillar body uses text-white/85 when dark (currently no dark pillar). Backend pytest env requires `export REACT_APP_BACKEND_URL=<public url>` to avoid module-level skip.",
+  "detailed_verification": {
+    "backend": {
+      "test_invoice_pdf_has_qr_bill_on_second_page": "PASS – reader.pages==2, page 2 contains 'Zahlteil' and 'QR'",
+      "test_business_settings_have_valid_ubs_iban": "PASS – CH-IBAN 21 chars, bic + bank populated",
+      "test_settings_patch_invalidates_archives": "PASS – phone PATCH → archive_url reset to ''",
+      "Manual PDF dump": "50303 bytes / 2 pages / page 2 text contains 'CH45 0021 4214 1301 7040 Q', 'Fahrschule Safe Ride by Nadine Stäubli', 'Stefan Haas', 'Glärnischstrasse', 'CH-8608 Bubikon', 'Empfangsschein', 'Zahlteil', 'Rechnung RE-2026-0001'",
+      "GET /api/settings/business": "IBAN=CH45 0021 4214 1301 7040 Q, BIC=UBSWCHZH80A, Bank=UBS AG, 8098 Zürich"
+    },
+    "frontend": {
+      "about-dog-block": "present, class='mt-10 grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch', 2 children",
+      "about-dog-caption": "present, contains badge dot + big display caption + subtext slot",
+      "why-safe-ride-section": "class 'section-pad bg-coral-strong border-t border-[#e2e8f0]'",
+      "why h2 color": "rgb(255,255,255) (white)",
+      "why overline color": "rgba(255,255,255,0.8)",
+      "why intro color": "rgba(255,255,255,0.9)",
+      "why closing color": "rgb(255,255,255)",
+      "6 pillar cards": "all bg=rgb(251,249,246) color=rgb(15,23,42)",
+      "Admin login regression": "PASS – reaches /admin?tab=students, sidebar has Schüler/Kalender/Buchhaltung/Fahrkontrolle-Stammdaten/Fahrschul-Daten/E-Mail-Versand/Datensicherung/Benutzer/Inhalte/Seiten & Standorte/Blog/VKU-Anmeldungen/Pakete/Diplome/Partner/Bewertungen/Galerie"
+    }
+  },
+  "rca of the issue": "N/A – no bugs discovered. All three iteration-41 spec items (QR-Bill on page 2, About 2-col dog block, WhySafeRide white text) match expected behaviour."
+}

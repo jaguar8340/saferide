@@ -75,6 +75,22 @@ async def update_settings(
     await db.business_settings.update_one(
         {"id": "default"}, {"$set": updates}, upsert=True
     )
+
+    # Invalidate archived invoice PDFs whenever fields that appear on the
+    # invoice (sender/bank/tax/logo) change — the next download will
+    # regenerate the PDF with the fresh data.
+    invoice_fields = {
+        "business_name", "address_line1", "address_line2", "zip", "city",
+        "country", "phone", "email", "website", "iban", "bank", "bic",
+        "account_holder", "mwst_number", "mwst_rate", "invoice_prefix",
+        "invoice_footer_note", "logo_url",
+    }
+    if invoice_fields.intersection(updates.keys()):
+        await db.student_invoices.update_many(
+            {"archive_url": {"$ne": ""}},
+            {"$set": {"archive_url": "", "archive_path": "", "archived_at": ""}},
+        )
+
     return await db.business_settings.find_one({"id": "default"}, {"_id": 0})
 
 

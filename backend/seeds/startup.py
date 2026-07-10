@@ -67,6 +67,10 @@ async def run_startup_seeds() -> None:
     # edited by the admin (differs from the previous default) is left alone.
     await _migrate_why_pillar_bodies_short()
 
+    # One-time migration: seed real UBS bank details for the QR-Bill.
+    # Only fills in fields still on their placeholder value ("folgt" / "").
+    await _migrate_business_bank_defaults()
+
     # ----- Fahrkontrolle master data (Kategorien, Unterpunkte, Strecken) -----
     from seeds.fahrkontrolle_seeds import seed_fahrkontrolle_defaults
     await db.students.create_index("last_name")
@@ -355,3 +359,46 @@ async def _migrate_why_pillar_bodies_short() -> None:
             {"id": "main"}, {"$set": {"why_safe_ride.pillars": pillars}}
         )
         log.info("Shortened why_safe_ride pillars to compact defaults")
+
+
+# ---------------------------------------------------------------------------
+# One-time migration: seed real UBS bank details for the Swiss QR-Bill.
+# The admin can override each field via the "Fahrschul-Daten"-Tab; we only
+# populate fields that are still on a placeholder value.
+# ---------------------------------------------------------------------------
+_BANK_DEFAULTS = {
+    "iban": "CH45 0021 4214 1301 7040 Q",
+    "bic": "UBSWCHZH80A",
+    "bank": "UBS AG, 8098 Zürich",
+    "account_holder": "Nadine Stäubli",
+}
+_BANK_PLACEHOLDERS = {"", "folgt"}
+
+
+async def _migrate_business_bank_defaults() -> None:
+    doc = await db.business_settings.find_one({"id": "default"}, {"_id": 0})
+    if not doc:
+        return
+    updates = {}
+    for k, new_val in _BANK_DEFAULTS.items():
+        current = (doc.get(k) or "").strip()
+        if current in _BANK_PLACEHOLDERS:
+            updates[k] = new_val
+    if updates:
+        await db.business_settings.update_one(
+            {"id": "default"}, {"$set": updates}
+        )
+        log.info("Seeded UBS bank details for QR-Bill: %s", list(updates.keys()))
+
+    # Invalidate archived invoice PDFs so the next download regenerates
+    # them with the freshly-configured QR-Bill on page 2.
+    if updates:
+        result = await db.student_invoices.update_many(
+            {"archive_url": {"$ne": ""}},
+            {"$set": {"archive_url": "", "archive_path": "", "archived_at": ""}},
+        )
+        if result.modified_count:
+            log.info(
+                "Invalidated %s archived invoice PDFs (bank details changed)",
+                result.modified_count,
+            )

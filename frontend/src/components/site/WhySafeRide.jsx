@@ -76,11 +76,11 @@ export default function WhySafeRide({ data }) {
               <Editable
                 path={`why_safe_ride.overline_${lang}`}
                 value={pick(data.overline_de, data.overline_en)}
-                className="text-xs font-semibold tracking-[0.18em] uppercase text-[#475569]"
+                className="text-xs font-semibold tracking-[0.18em] uppercase text-white/80"
               />
             </div>
             <h2
-              className="font-display leading-[0.95] tracking-tight text-[#0f172a]"
+              className="font-display leading-[0.95] tracking-tight text-white"
               style={{ fontSize: "clamp(2.2rem, 5vw, 4.6rem)" }}
             >
               <Editable
@@ -103,7 +103,7 @@ export default function WhySafeRide({ data }) {
               value={pick(data.intro_de, data.intro_en)}
               as="p"
               multiline
-              className="text-base md:text-lg text-[#475569] leading-relaxed font-medium block"
+              className="text-base md:text-lg text-white/90 leading-relaxed font-medium block"
             />
           </motion.div>
         </div>
@@ -203,7 +203,7 @@ export default function WhySafeRide({ data }) {
             value={pick(data.closing_de, data.closing_en)}
             as="p"
             multiline
-            className="lg:col-span-8 text-xl md:text-2xl font-display leading-snug tracking-tight text-[#0f172a] block"
+            className="lg:col-span-8 text-xl md:text-2xl font-display leading-snug tracking-tight text-white block"
           />
           <div className="lg:col-span-4 flex lg:justify-end">
             <a

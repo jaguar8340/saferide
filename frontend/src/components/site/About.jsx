@@ -62,14 +62,41 @@ export default function About({ data }) {
               />
             </div>
 
-            <div className="mt-10">
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch" data-testid="about-dog-block">
               <EditableImage
                 path="about.dog_photo_url"
                 src={data.dog_photo_url || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&q=80"}
-                alt="Nadines Hund"
-                className="block rounded-2xl overflow-hidden border border-[#e2e8f0]"
-                imgClassName="w-full h-[180px] md:h-[220px] object-cover"
+                alt="Pixie, Nadines tierische Begleiterin"
+                className="block rounded-3xl overflow-hidden border border-[#e2e8f0] bg-white"
+                imgClassName="w-full aspect-square object-cover"
               />
+              <div
+                data-testid="about-dog-caption"
+                className="relative rounded-3xl bg-white border border-[#e2e8f0] p-6 md:p-7 flex flex-col justify-center shadow-[0_10px_28px_-16px_rgba(15,23,42,0.18)]"
+              >
+                <span className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.24em] uppercase text-[#ff5a36] mb-3">
+                  <span className="dot-accent" />
+                  <Editable
+                    path={`about.dog_badge_${lang}`}
+                    value={pick(data.dog_badge_de, data.dog_badge_en)}
+                    className="inline"
+                  />
+                </span>
+                <Editable
+                  path={`about.dog_caption_${lang}`}
+                  value={pick(data.dog_caption_de, data.dog_caption_en)}
+                  as="p"
+                  multiline
+                  className="font-display text-2xl md:text-3xl leading-tight tracking-tight text-[#0f172a] block"
+                />
+                <Editable
+                  path={`about.dog_sub_${lang}`}
+                  value={pick(data.dog_sub_de, data.dog_sub_en)}
+                  as="p"
+                  multiline
+                  className="mt-3 text-sm md:text-base text-[#475569] leading-relaxed font-medium block"
+                />
+              </div>
             </div>
 
             <CertificatesDialog />
