@@ -215,8 +215,13 @@ async def export_invoice_pdf(
                 headers={"Content-Disposition": f'attachment; filename="{filename}"'},
             )
         except Exception:
-            # If archive is missing / storage error, fall through and rebuild
-            pass
+            # Archive is missing or storage error – clear the stale reference
+            # so we don't keep hitting the missing key on every request, and
+            # fall through to regeneration below.
+            await db.student_invoices.update_one(
+                {"id": invoice_id, "student_id": student_id},
+                {"$set": {"archive_path": "", "archive_url": ""}},
+            )
 
     settings = await get_or_create_settings()
     pdf_bytes = build_invoice_pdf(invoice, student, settings)

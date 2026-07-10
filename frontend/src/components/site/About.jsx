@@ -64,8 +64,8 @@ export default function About({ data }) {
 
             <div className="mt-10">
               <EditableImage
-                path="about.dog_image_url"
-                src={data.dog_image_url || "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1000&q=80"}
+                path="about.dog_photo_url"
+                src={data.dog_photo_url || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&q=80"}
                 alt="Nadines Hund"
                 className="block rounded-2xl overflow-hidden border border-[#e2e8f0]"
                 imgClassName="w-full h-[180px] md:h-[220px] object-cover"
@@ -105,39 +105,6 @@ export default function About({ data }) {
                 />
               </div>
             </div>
-
-            {/* Dog photo slot – editable via inline CMS. Only shown when a
-                photo has been uploaded or when in edit mode (so admin can
-                upload one). */}
-            {showDogSlot && (
-              <div
-                className="mt-10 md:mt-12 relative"
-                data-testid="about-dog-slot"
-              >
-                <div className="relative">
-                  <EditableImage
-                    path="about.dog_photo_url"
-                    src={
-                      dogPhoto ||
-                      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&q=80"
-                    }
-                    alt="Vierbeiniger Beifahrer"
-                    className="block rounded-3xl overflow-hidden"
-                    imgClassName="w-full h-[220px] md:h-[300px] object-cover"
-                  />
-                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm border border-[#e2e8f0] rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-[#0f172a]">
-                    <Camera size={11} strokeWidth={2.5} className="text-[#ff5a36]" />
-                    {lang === "en" ? "On board" : "An Bord"}
-                  </div>
-                </div>
-                <Editable
-                  path={`about.dog_caption_${lang}`}
-                  value={dogCaption}
-                  as="p"
-                  className="mt-4 text-sm md:text-base text-[#475569] leading-snug font-medium italic text-center block"
-                />
-              </div>
-            )}
           </motion.div>
         </div>
       </div>
