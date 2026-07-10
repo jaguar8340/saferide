@@ -330,6 +330,16 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **Buchhaltung KPI-Karten Mobile-Schrift**: `text-3xl → text-xl md:text-3xl` (Betrag) + `text-5xl → text-3xl md:text-5xl` (Gewinn/Verlust) + `p-5 → p-4 md:p-5`. Verifiziert: alle Beträge passen sauber in die 173px breite Karten-Zelle auf 390px-Viewport.
   - **Ausgaben-Zeile Mobile-Layout**: `grid-cols-1 md:grid-cols-[110px_130px_1fr_180px_80px_44px]` → `p-3 md:grid md:grid-cols-[...]` + Mobile-Stack: Datum + Betrag in einer Zeile (justify-between), Bezeichnung eigene Zeile, Konto-Select eigene Zeile, Beleg + Trash in einer Zeile. Kein Feld sprengt mehr die Card-Breite.
 
+- ✅ **Iteration 38 (10.02.2026) — Fahrkontrolle: Kamera-Aufnahme im Rating-Popup (DONE, 8/8 Backend + Frontend 100 % via testing_agent_v3_fork, textarea Y-Position identisch mit/ohne Fotos):**
+  - **Backend**: `Assessment.photo_urls: List[str]` neu im Model. Neue Endpoints in `fahrkontrolle.py`:
+    - `POST /api/fahrkontrolle/students/{sid}/assessments/photo?subitem_id=X&lesson_id=Y` – multipart upload (PNG/JPG/WebP/GIF, max 10 MB), append zum photo_urls-Array. 413 bei zu grossem File, 400 bei Nicht-Bild-Content-Type. Erstellt leere Assessment-Row falls noch keine da.
+    - `DELETE /api/fahrkontrolle/students/{sid}/assessments/photo?subitem_id=X&lesson_id=Y&url=Z` – entfernt URL aus photo_urls. Löscht die Row komplett wenn value + comment + photo_urls alle leer sind.
+  - **Backend Upsert-Fix**: `PUT /assessments` lädt existing ZUERST und preserviert photo_urls beim Setzen von value+comment. Delete-Check berücksichtigt jetzt photo_urls – Row wird NICHT gelöscht wenn nur value/comment leer aber Fotos vorhanden sind.
+  - **Frontend RatingPopup**: Neue Props `photoUrls`, `onPhotoUpload`, `onPhotoDelete`. Kamera-Icon (Lucide `Camera`, 14 px) sitzt inline im `flex justify-between` der Label-Zeile → **kein zusätzlicher vertikaler Space** wenn keine Fotos. `<input type="file" accept="image/*" capture="environment" />` versteckt → auf iOS öffnet direkt die Kamera-App.
+  - **Frontend Thumbnails**: `grid-cols-4 aspect-square` NUR conditional gerendert wenn `photoUrls.length > 0`. Klick auf `<X>`-Overlay auf Thumbnail triggert `window.confirm` + DELETE-Request.
+  - **Frontend FahrkontrolleTab**: `uploadPhoto(file)` → multipart POST, `deletePhoto(url)` → DELETE mit URL-Param. Beide setzen `setAssessments` mit dem returned Assessment. Delete räumt lokalen State auf wenn Zelle komplett leer.
+  - **Layout-Garantie verifiziert**: Testing Agent bestätigt `textarea.bounding_box().y = 592.5 px` sowohl vor Upload als auch nach Delete – die Optik verschiebt sich NICHT wenn keine Fotos da sind (User-Anforderung erfüllt).
+
 ## Offene Punkte / Backlog
 - 🇨🇭 **Swiss QR-Bill (Rechnungs-QR-Slip)** — blockiert, wartet auf User-Input (IBAN).
 - 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
