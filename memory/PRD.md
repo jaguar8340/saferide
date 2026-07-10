@@ -358,10 +358,16 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **About-Section – Tachos durch Hunde-Foto ersetzt**: 3 Speedo-Tachos (`about-speedo-0/1/2`) komplett aus dem DOM entfernt. Stattdessen wird das existierende `about.dog_photo_url` als kompaktes 180–220 px-Bild direkt unter dem Nadine-Foto gezeigt. Sektion ist deutlich kompakter. Der duplizierte untere Hunde-Slot entfernt.
 
 ## Offene Punkte / Backlog
-- 🇨🇭 **Swiss QR-Bill (Rechnungs-QR-Slip)** — blockiert, wartet auf User-Input (IBAN).
 - 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
+
+- ✅ **Iteration 41 (10.02.2026) — Swiss QR-Bill auf Rechnungs-PDF + About Hunde-Foto-Layout + WhySafeRide weisse Typografie (DONE, 3/3 Backend Pytest + Frontend 100 % via testing_agent_v3_fork):**
+  - **Swiss QR-Bill (Rechnungs-QR-Slip)** unblocked und live: neuer Migrations-Hook `_migrate_business_bank_defaults` seedet die UBS-Bankdaten (IBAN `CH45 0021 4214 1301 7040 Q`, BIC `UBSWCHZH80A`, Bank `UBS AG, 8098 Zürich`, Kontoinhaber `Nadine Stäubli`) in `business_settings` sobald die Placeholder-Werte (`""`/`"folgt"`) noch aktiv sind. `_draw_qr_bill` in `routers/invoice_pdf.py` neu gebaut: rendert die QR-Bill jetzt auf einer **dedizierten Seite 2** via `c.showPage()`, mit deutscher Überschrift „Zahlteil (Swiss QR-Rechnung)" oben. Seite 1 behält den unveränderten Rechnungsinhalt + Plain-Bank-Footer. SVG→ReportLab via `svg2rlg(BytesIO(...))` (Fix für `<?xml encoding=?>`-Bug in svglib).
+  - **PATCH-Invalidierung**: `POST /api/settings/business` löscht jetzt `archive_url`/`archive_path`/`archived_at` auf allen archivierten Rechnungen, sobald sich Absender-/Bank-/MWST-/Logo-Felder ändern. Nächster PDF-Download regeneriert und archiviert das Dokument mit den aktuellen Daten.
+  - **About.jsx**: Hunde-Foto neu als 2-Spalten-Grid – links quadratisches Bild (aspect-square), rechts weisse Karten-Box mit Coral-Badge, editablem Display-Caption „Immer mit dabei: Pixie meine vierbeinige Beifahrererin." und Sub-Text-Feld. Neue Content-Keys `about.dog_badge_de/en`, `about.dog_caption_de/en`, `about.dog_sub_de/en`. testids: `about-dog-block`, `about-dog-caption`.
+  - **WhySafeRide.jsx**: Overline, H2-Titel, Intro-Absatz und Closing-Absatz auf Weiss (`text-white/80`, `text-white`, `text-white/90`, `text-white`) für den Coral-Gradient-Hintergrund. Die 6 Pillar-Karten mit ihren hellen Cream-Hintergründen bleiben unangetastet — Kontrast bleibt lesbar.
+  - **Tests**: `/app/backend/tests/test_iteration41_qrbill.py` (3 Tests, alle grün): PDF hat 2 Seiten mit Zahlteil, business_settings enthält 21-stellige CH-IBAN + BIC + Bank, PATCH → archive_url reset. Testing Agent iteration_41 bestätigt: Backend 100 %, Frontend 100 %.
 
 - ✅ **Iteration 36 (09.02.2026) — Kalender-Layout-Fix + Drag & Drop (DONE, 19/19 Backend + Frontend 100 % via testing_agent_v3_fork):**
   - **Layout-Bug behoben**: `CalendarGrid` nutzt jetzt Flexbox statt CSS-Grid. Zeit-Achse links (64 px absolute Labels), rechts `flex-1 flex` mit N gleichbreiten `flex-1` Tages-Spalten (border-r zwischen ihnen). Jede Spalte ist ein eigener positioning-Kontext — Event-Pills mit `absolute left-1 right-1` können nicht mehr überschiessen. Verifiziert: pill.width (167) < column.width (176), pill.x fällt in column.x-Range.

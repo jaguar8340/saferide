@@ -455,12 +455,15 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
             c.drawString(x, y - 3.5 * mm, value or "—")
 
     # Swiss QR-Bill – appended on a separate page 2 (only when IBAN valid).
+    # _draw_qr_bill() itself calls c.showPage() before drawing the slip, so
+    # the QR-Bill lives on its own page while the plain footer above stays
+    # on page 1. We do NOT call c.showPage() again here to avoid an empty
+    # trailing page.
     _draw_qr_bill(
         c, invoice, student, settings, total=total_incl,
         page_w=page_w, page_h=page_h,
     )
 
-    c.showPage()
     c.save()
     data = buf.getvalue()
     buf.close()
