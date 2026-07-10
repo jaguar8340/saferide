@@ -115,10 +115,24 @@ async def run_startup_seeds() -> None:
     # all Kanton-SG data on other pages remains untouched.
     await db.locations.delete_one({"slug": "st-gallen"})
 
+    # Seed-once semantics: once the admin has customised the landing
+    # pages (deleted / edited any of them), further deploys must NOT
+    # re-insert the missing defaults. Existing docs still receive
+    # schema migrations below.
+    loc_already_seeded = await _has_been_seeded("locations")
+    if not loc_already_seeded and await db.locations.count_documents({}) > 0:
+        await _mark_seeded(
+            "locations", [l["slug"] for l in DEFAULT_LOCATIONS]
+        )
+        loc_already_seeded = True
+
     for default_loc in DEFAULT_LOCATIONS:
         slug = default_loc["slug"]
         existing = await db.locations.find_one({"slug": slug})
         if not existing:
+            if loc_already_seeded:
+                # Admin deliberately deleted this location — respect that.
+                continue
             doc = dict(default_loc)
             doc["id"] = str(uuid.uuid4())
             await db.locations.insert_one(doc)
@@ -175,17 +189,42 @@ async def run_startup_seeds() -> None:
             if title_update:
                 await db.locations.update_one({"slug": slug}, {"$set": title_update})
 
+    if not loc_already_seeded:
+        await _mark_seeded(
+            "locations", [l["slug"] for l in DEFAULT_LOCATIONS]
+        )
+
     # ----- Blog posts -----
     await db.blog_posts.create_index("slug", unique=True)
     await db.blog_posts.create_index("published_at")
+
+    # Seed-once semantics: once the admin has customised the blog (deleted
+    # or edited posts), further deploys must NOT re-insert the defaults.
+    blog_already_seeded = await _has_been_seeded("blog_posts")
+    if not blog_already_seeded and await db.blog_posts.count_documents({}) > 0:
+        # Backfill: existing production DB → mark as already seeded so
+        # any admin deletions stay respected from now on.
+        await _mark_seeded(
+            "blog_posts", [p["slug"] for p in DEFAULT_BLOG_POSTS]
+        )
+        blog_already_seeded = True
+
     for default_post in DEFAULT_BLOG_POSTS:
         slug = default_post["slug"]
         if not await db.blog_posts.find_one({"slug": slug}):
+            if blog_already_seeded:
+                # Admin deliberately deleted this post — do not re-insert.
+                continue
             doc = dict(default_post)
             doc["id"] = str(uuid.uuid4())
             doc["created_at"] = datetime.now(timezone.utc).isoformat()
             doc["updated_at"] = doc["created_at"]
             await db.blog_posts.insert_one(doc)
+
+    if not blog_already_seeded:
+        await _mark_seeded(
+            "blog_posts", [p["slug"] for p in DEFAULT_BLOG_POSTS]
+        )
 
     # ----- Booking packages -----
     await db.booking_packages.create_index("slug", unique=True)

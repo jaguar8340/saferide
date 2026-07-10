@@ -362,6 +362,11 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 42.1 (10.02.2026) — Seed-Idempotenz auf Blog + Locations ausgeweitet (DONE, 4/4 Tests grün):**
+  - Gleiches Pattern wie in Iter42 auf `blog_posts` und `locations` angewandt: Marker in `_seed_state`, Backfill für Prod-DBs, gelöschte Items kommen NICHT mehr zurück beim Redeploy.
+  - Für Locations bleibt die Schema-Migration existierender Docs (FAQs auf 15 Einträge, exam_routes Rename, here_we_drive Felder etc.) unverändert erhalten.
+  - Tests: `test_iteration42_seed_idempotency.py` auf 4 Tests erweitert – Delete+Restart-Zyklus wird für Packages, Blog UND Locations verifiziert; alle grün.
+
 - ✅ **Iteration 42 (10.02.2026) — CTA-Cleanup + Seed-Idempotenz für Pakete + QR-Bill-Robustheit (DONE, 2/2 neue Tests + 3/3 Iter41-Tests grün):**
   - **"Probelektion sichern"-CTA** aus `WhySafeRide.jsx` entfernt (Button + `ArrowUpRight`-Import); Closing-Text füllt jetzt die volle Breite. Change reflektiert im Preview.
   - **Seed-Idempotenz für booking_packages**: Neue Helper `_has_been_seeded`/`_mark_seeded` in `seeds/startup.py` schreiben nach dem ersten erfolgreichen Package-Seed einen Marker in die Collection `_seed_state`. Bei allen weiteren Startups (= Redeploys) wird die Default-Liste NUR noch für Schema-Migration (fehlende Felder ergänzen) genutzt – **gelöschte Pakete kommen nicht wieder zurück**. Backfill-Logik erkennt bestehende Prod-DBs (ohne Marker aber mit Paketen) und markiert sie als bereits geseedet. Verifiziert via `test_iteration42_seed_idempotency.py`.
