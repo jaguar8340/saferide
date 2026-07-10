@@ -324,6 +324,12 @@ admin@saferide.ch / SafeRide2026!
 ## Test Credentials (aktuell)
 admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 
+- ✅ **Iteration 37 (10.02.2026) — Mobile-Fixes iOS-Zoom + Buchhaltung-Kacheln + Ausgaben-Zeile (DONE, 7/7 Frontend via testing_agent_v3_fork, 100%):**
+  - **iOS-Zoom-Prevention (global)**: `index.css` neue @media-Regel `@media (max-width: 640px) input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: 16px !important; }` – Safari auf iPhone zoomt beim Fokus nicht mehr automatisch rein. Betrifft alle Formulare (Login, Fahrkontrolle-Popup, Buchhaltung, Kalender).
+  - **Rating-Popup Layout**: Umbau zu `flex flex-col` + `max-h-[92dvh]/85vh`, Header + Footer `shrink-0`, Content `flex-1 overflow-y-auto`. „Fertig"-Button (data-testid=rating-popup-done) bleibt bei geöffneter iOS-Tastatur sichtbar. `env(safe-area-inset-bottom)` als Padding für iPhone-Home-Indikator. Textarea reduziert auf rows=3.
+  - **Buchhaltung KPI-Karten Mobile-Schrift**: `text-3xl → text-xl md:text-3xl` (Betrag) + `text-5xl → text-3xl md:text-5xl` (Gewinn/Verlust) + `p-5 → p-4 md:p-5`. Verifiziert: alle Beträge passen sauber in die 173px breite Karten-Zelle auf 390px-Viewport.
+  - **Ausgaben-Zeile Mobile-Layout**: `grid-cols-1 md:grid-cols-[110px_130px_1fr_180px_80px_44px]` → `p-3 md:grid md:grid-cols-[...]` + Mobile-Stack: Datum + Betrag in einer Zeile (justify-between), Bezeichnung eigene Zeile, Konto-Select eigene Zeile, Beleg + Trash in einer Zeile. Kein Feld sprengt mehr die Card-Breite.
+
 ## Offene Punkte / Backlog
 - 🇨🇭 **Swiss QR-Bill (Rechnungs-QR-Slip)** — blockiert, wartet auf User-Input (IBAN).
 - 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
