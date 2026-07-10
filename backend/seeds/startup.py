@@ -17,6 +17,28 @@ from seeds.defaults import DEFAULT_CONTENT, DEFAULT_GALLERY, DEFAULT_TESTIMONIAL
 log = logging.getLogger("saferide.seeds")
 
 
+async def _has_been_seeded(collection_name: str) -> bool:
+    """Return True when the initial seed for ``collection_name`` has already
+    completed on this database. Used to prevent re-inserting default rows
+    that the admin has deliberately deleted."""
+    doc = await db["_seed_state"].find_one({"collection": collection_name})
+    return doc is not None
+
+
+async def _mark_seeded(collection_name: str, slugs: list[str]) -> None:
+    """Persist a marker in ``_seed_state`` so future deploys know the
+    initial seed of ``collection_name`` was completed."""
+    await db["_seed_state"].update_one(
+        {"collection": collection_name},
+        {"$set": {
+            "collection": collection_name,
+            "seeded_at": datetime.now(timezone.utc).isoformat(),
+            "seed_slugs": slugs,
+        }},
+        upsert=True,
+    )
+
+
 async def run_startup_seeds() -> None:
     """Bring an empty/older database up to the current default state."""
     init_storage()
@@ -177,17 +199,44 @@ async def run_startup_seeds() -> None:
     ):
         await db.booking_packages.delete_many({})
         log.info("Migrated booking_packages to canonical (v2) set")
+
+    # Seed-once semantics: once the admin has customised the packages
+    # (edited/deleted any of them) further deploys must NOT re-insert the
+    # defaults. We use a marker in _seed_state to remember whether this
+    # DB has ever completed the initial package seed.
+    already_seeded = await _has_been_seeded("booking_packages")
+    # Backfill for DBs that were seeded before this marker existed: if the
+    # collection already contains packages, treat it as already seeded so
+    # the admin's deletions in production stay respected.
+    if not already_seeded and await db.booking_packages.count_documents({}) > 0:
+        await _mark_seeded(
+            "booking_packages",
+            [p["slug"] for p in DEFAULT_BOOKING_PACKAGES],
+        )
+        already_seeded = True
+
     for default_pkg in DEFAULT_BOOKING_PACKAGES:
         slug = default_pkg["slug"]
         existing = await db.booking_packages.find_one({"slug": slug})
         if not existing:
+            if already_seeded:
+                # Admin deliberately deleted this package — do not re-insert.
+                continue
             doc = dict(default_pkg)
             doc["id"] = str(uuid.uuid4())
             await db.booking_packages.insert_one(doc)
         else:
+            # Schema-evolution only: add fields that got introduced later,
+            # but never overwrite anything the admin edited.
             missing = {k: v for k, v in default_pkg.items() if k not in existing}
             if missing:
                 await db.booking_packages.update_one({"slug": slug}, {"$set": missing})
+
+    if not already_seeded:
+        await _mark_seeded(
+            "booking_packages",
+            [p["slug"] for p in DEFAULT_BOOKING_PACKAGES],
+        )
 
     # ----- Bookings (collection index only) -----
     await db.bookings.create_index("created_at")

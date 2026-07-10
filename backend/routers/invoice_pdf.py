@@ -142,12 +142,19 @@ def _draw_qr_bill(
             "country": "CH",
         }
         debtor = None
-        if student.get("first_name") or student.get("last_name"):
+        # Only include a debtor block when the student has a *complete*
+        # address (name + city + zip). Swiss QR-Bill spec rejects partial
+        # debtors, so an incomplete address would abort the whole slip.
+        _first = (student.get("first_name") or "").strip()
+        _last = (student.get("last_name") or "").strip()
+        _zip = (student.get("zip") or "").strip()
+        _city = (student.get("city") or "").strip()
+        if (_first or _last) and _zip and _city:
             debtor = {
-                "name": f"{student.get('first_name','')} {student.get('last_name','')}".strip(),
-                "street": student.get("street") or "",
-                "pcode": student.get("zip") or "",
-                "city": student.get("city") or "",
+                "name": f"{_first} {_last}".strip() or "Kunde",
+                "street": (student.get("street") or "").strip() or None,
+                "pcode": _zip,
+                "city": _city,
                 "country": "CH",
             }
 
