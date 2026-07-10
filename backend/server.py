@@ -34,11 +34,14 @@ from routers import (
     content,
     entities,
     fahrkontrolle,
+    fahrkontrolle_ai,
     fahrkontrolle_pdf,
     gallery,
     invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
+    portal_auth,
+    portal_data,
     rating_scale,
     sitemap,
     student_activities,
@@ -48,6 +51,7 @@ from routers import (
     testimonials,
     uploads,
     users,
+    vouchers,
     vku,
 )
 
@@ -80,7 +84,13 @@ api.include_router(rating_scale.router)
 api.include_router(backup.router)
 api.include_router(backup_scripts.router)
 api.include_router(fahrkontrolle.router)
+api.include_router(fahrkontrolle_ai.router)
 api.include_router(fahrkontrolle_pdf.router)
+api.include_router(vouchers.router)
+api.include_router(vouchers.portal_router)
+api.include_router(portal_auth.router)
+api.include_router(portal_auth.admin_router)
+api.include_router(portal_data.router)
 api.include_router(users.router)
 api.include_router(invoice_email.invoice_router)
 api.include_router(invoice_email.settings_router)

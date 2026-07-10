@@ -20,6 +20,9 @@ import {
   FolderOpen,
   ClipboardList,
   LayoutDashboard,
+  Send,
+  Copy,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -135,6 +138,7 @@ export default function AdminStudentDetail() {
               <Save size={11} className="inline mr-1" /> Speichere …
             </span>
           )}
+          <InviteStudentButton student={student} />
           <Link
             to="/admin?tab=students"
             className="text-xs font-semibold tracking-widest uppercase text-[#475569] px-3 py-2 hover:text-[#0f172a]"
@@ -309,6 +313,97 @@ function EditField({ label, value, onSave, type = "text" }) {
         data-testid={`overview-field-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
         className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
       />
+    </div>
+  );
+}
+
+
+
+
+/* ---------------------------------------------------------------------- */
+/*  Invite student to the portal — one click generates a magic-link,      */
+/*  triggers an SMTP invitation e-mail (if SMTP is configured) and lets   */
+/*  the admin copy the link as fallback.                                  */
+/* ---------------------------------------------------------------------- */
+function InviteStudentButton({ student }) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const invite = async () => {
+    if (!student?.email) {
+      toast.error("Schüler hat keine E-Mail-Adresse");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api.post(`/portal/students/${student.id}/invite`);
+      setResult(r.data);
+      if (r.data.sent) {
+        toast.success("Einladung per E-Mail versendet");
+      } else {
+        toast.message("Setup-Link erstellt", {
+          description: r.data.detail || "SMTP nicht konfiguriert — Link unten kopieren.",
+        });
+      }
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!result?.setup_url) return;
+    try {
+      await navigator.clipboard.writeText(result.setup_url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Zwischenablage nicht verfügbar");
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={invite}
+        disabled={busy || !student?.email}
+        data-testid="student-invite-portal"
+        title={student?.email ? "Portal-Zugang einladen" : "Kein E-Mail hinterlegt"}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-[#475569] px-3 py-2 rounded-lg hover:bg-[#fafaf9] hover:text-[#ff5a36] disabled:opacity-40 border border-[#e7e5e4]"
+      >
+        {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+        Portal-Zugang
+      </button>
+      {result && (
+        <div className="absolute right-0 mt-2 w-80 bg-white border border-[#e7e5e4] rounded-2xl p-4 shadow-lg z-50" data-testid="invite-result">
+          <div className="text-xs font-semibold text-[#0f172a] mb-1.5">
+            {result.sent ? "E-Mail wurde gesendet an" : "Setup-Link (bitte manuell teilen)"}
+          </div>
+          <div className="text-xs text-[#475569] mb-2 truncate">{result.email}</div>
+          <div className="flex items-center gap-1.5 bg-[#fafaf9] rounded-lg p-2 text-[10px] font-mono break-all mb-2">
+            {result.setup_url}
+          </div>
+          <button
+            type="button"
+            onClick={copyLink}
+            data-testid="invite-copy-link"
+            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase text-[#ff5a36] hover:underline"
+          >
+            {copied ? <Check size={11} /> : <Copy size={11} />}
+            {copied ? "Kopiert" : "Link kopieren"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setResult(null)}
+            className="float-right text-[10px] tracking-widest uppercase text-[#78716c] hover:text-[#0f172a]"
+          >
+            Schliessen
+          </button>
+        </div>
+      )}
     </div>
   );
 }

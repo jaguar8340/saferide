@@ -34,6 +34,7 @@ import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
 import useRatingScale from "@/hooks/useRatingScale";
+import FahrkontrolleAiPanel from "@/components/admin/students/FahrkontrolleAiPanel";
 import {
   categoryPercent,
   categoryWarning,
@@ -724,6 +725,11 @@ export default function FahrkontrolleTab({ student }) {
         onPhotoUpload={uploadPhoto}
         onPhotoDelete={deletePhoto}
         onClose={() => setPopupCell(null)}
+      />
+
+      <FahrkontrolleAiPanel
+        studentId={student.id}
+        studentName={`${student.first_name || ""} ${student.last_name || ""}`.trim()}
       />
     </div>
   );

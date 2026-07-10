@@ -68,6 +68,10 @@ async def run_startup_seeds() -> None:
         )
         log.info("Updated admin password for %s", admin_email)
 
+    # Indices for voucher codes + student setup tokens (portal).
+    await db.vouchers.create_index("code", unique=True)
+    await db.students.create_index("setup_token", sparse=True)
+
     # ----- Site content (idempotent deep merge, level 1) -----
     content_doc = await db.site_content.find_one({"id": "main"})
     if not content_doc:
