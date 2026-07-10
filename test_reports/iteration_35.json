@@ -1,0 +1,96 @@
+{
+  "summary": "Iteration 37 (mobile 390×844) frontend-only verification: iOS zoom-prevention + rating popup restructure + accounting KPI/expense-row mobile layout. ALL 7 review items PASS on 390×844 viewport.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/mobile_overview.png",
+    "/app/test_reports/mobile_expenses.png",
+    "/app/test_reports/mobile_rating_popup.png",
+    "/app/test_reports/mobile_calendar.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "React hydration warning in console: 'In HTML, <span> cannot be a child of <option>'. Some <select><option>{...}</option></select> block is wrapping a <span> inside <option>, which is invalid HTML. Not blocking any current flow but worth cleaning up. Grep for `<option` and check for nested spans in AccountingPage / another select. Non-critical.",
+    "AccountingPage.jsx is 1278 lines and hosts 6 subtabs + 3 sub-components. Recommend splitting each subtab (Overview/Monthly/Invoices/Expenses/Accounts/Income) into its own file for maintainability. Not blocking.",
+    "RatingPopup.jsx forces `style={{ fontSize: '16px' }}` on the textarea AND has a global CSS `input:not(...)` rule that already sets 16px on ≤640px. The double-fix is defensive/good, but note the inline style now applies on DESKTOP too — desktop keeps 16px on this textarea whereas other CSS-rule inputs get their native (smaller) desktop size. Non-blocking cosmetic."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "not tested (frontend-only request)",
+    "frontend": "100% (7/7 review items pass)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created 1 test expense (TEST_ITER37 Beleg, CHF 89.50) since the Ausgaben list was empty, in order to inspect a real expense-row mobile layout. Attempted immediate cleanup via delete button + confirm dialog handler after inspection.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 37 = pure CSS/layout change. Baseline (Iter 34/36) still holds; backend not re-tested this iteration. Rating-cell selector in the app is `fk-cell-{sub_id}-{lesson_id}` (NOT `rating-cell-...` as the review request claimed). Student list items use `admin-student-open-{id}` and `admin-student-row-{id}`. The global CSS rule `@media (max-width: 640px) input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: 16px !important; }` correctly hits ALL relevant inputs on 390px viewport including native date pickers, number inputs, selects. If future auth-related inputs (e.g., login) need testing on mobile, they already inherit the 16px rule.",
+  "detailed_verification": {
+    "iOS_zoom_prevention_font_sizes_at_390px": {
+      "login_email": "16px",
+      "login_password": "16px",
+      "rating_popup_textarea": "16px (rows=3)",
+      "expense_new_date": "16px",
+      "expense_new_amount": "16px",
+      "expense_new_description": "16px",
+      "expense_new_account_select": "16px",
+      "expense_row_all_inputs": "16px (date, number, text, select)",
+      "verdict": "All ≥16px → iOS Safari will NOT auto-zoom on focus. PASS"
+    },
+    "rating_popup_mobile_layout": {
+      "bottom_sheet_radius_top_left": "24px (rounded-t-3xl)",
+      "display_flex_dir": "flex column",
+      "max_height": "776.48px (≈ 92dvh of 844px)",
+      "popup_bounds": "y=436, height=408, bottom=844 (== viewport)",
+      "content_overflow_y": "auto",
+      "done_button_bounds_before_focus": "y=796, bottom=832 (< viewport 844) VISIBLE",
+      "done_button_bounds_after_textarea_focus_and_type": "y=796, bottom=832 VISIBLE",
+      "clear_button_visible_after_focus": true,
+      "safe_area_inset_bottom_padding": "applied via env() in inline style on footer",
+      "verdict": "Fertig button remains visible even when textarea is focused (Playwright cannot simulate iOS keyboard opening but layout does not shift, footer is shrink-0 outside overflow-y-auto content area). PASS"
+    },
+    "buchhaltung_kpi_mobile": {
+      "kpi_revenue_total_font_size": "20px",
+      "kpi_revenue_paid_font_size": "20px",
+      "kpi_revenue_open_font_size": "20px",
+      "kpi_expenses_total_font_size": "20px",
+      "kpi_card_padding_top": "16px (p-4)",
+      "kpi_card_width_390_viewport": "173px",
+      "value_overflow_beyond_card": false,
+      "verdict": "text-xl (20px) applied on ≤md, no overflow. PASS"
+    },
+    "profit_card_mobile": {
+      "font_size_at_390": "30px (text-3xl)",
+      "text_content": "CHF 89.50",
+      "element_width": 324,
+      "card_width": 358,
+      "overflow": false,
+      "verdict": "30px on mobile fits within 358px card. PASS"
+    },
+    "expense_row_mobile_layout": {
+      "row_display": "block (grid disabled on <md)",
+      "row_grid_template_columns": "none",
+      "row_width": 356,
+      "card_width": 358,
+      "row_overflow": false,
+      "input_overflow": "all inputs (date, amount, description, account) fit within row bounds; no field bleeds past card edge",
+      "date_position": "same flex line as amount (justify-between), left-aligned",
+      "verdict": "Mobile stacks correctly, no field freistehend zentriert / ragt über. PASS"
+    },
+    "iter36_calendar_mobile_regression": {
+      "screenshot": "mobile_calendar.png shows week grid Mo/Di/Mi/Do/Fr/Sa/So + time axis (06:00, 07:00, ...) + Neuer-Termin button rendered correctly on 390px viewport. NowLine visible. No horizontal overshoot.",
+      "note": "0 event pills detected because no appointment data exists in the current week for this preview DB — layout itself is intact."
+    },
+    "iter35_tabs_regression": {
+      "email_tab": "loads, no errors",
+      "backup_tab": "loads, no errors",
+      "users_tab": "loads, no errors"
+    }
+  }
+}

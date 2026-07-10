@@ -97,10 +97,10 @@ export default function RatingPopup({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden"
+        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh]"
         data-testid="rating-popup"
       >
-        <div className="px-5 py-4 border-b border-[#e7e5e4] flex items-start justify-between gap-3">
+        <div className="px-5 py-3 sm:py-4 border-b border-[#e7e5e4] flex items-start justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-semibold tracking-[0.24em] uppercase text-[#a8a29e] flex items-center gap-2">
               <span>Bewertung</span>
@@ -114,7 +114,7 @@ export default function RatingPopup({
                 Gespeichert
               </span>
             </div>
-            <div className="font-display text-lg leading-tight mt-1 truncate">
+            <div className="font-display text-base sm:text-lg leading-tight mt-1 truncate">
               {contextLabel || "Feld"}
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function RatingPopup({
           </button>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
           {/* 5 big rating buttons — click = autosave */}
           <div className="grid grid-cols-5 gap-2">
             {ORDER.map((v) => {
@@ -139,7 +139,7 @@ export default function RatingPopup({
                   key={v}
                   onClick={() => handleRatingClick(v)}
                   data-testid={`rating-btn-${v}`}
-                  className={`h-16 rounded-2xl font-display text-2xl transition-all ${
+                  className={`h-14 sm:h-16 rounded-2xl font-display text-2xl transition-all ${
                     active
                       ? "ring-4 ring-offset-2 ring-[#0f172a] scale-105"
                       : "opacity-70 hover:opacity-100 active:scale-95"
@@ -180,13 +180,14 @@ export default function RatingPopup({
               onBlur={handleCommentBlur}
               data-testid="rating-popup-comment"
               placeholder="z. B. Spiegelkontrolle noch üben, Blicktechnik gut"
-              rows={4}
-              className="w-full text-sm bg-[#fafaf9] border border-[#e7e5e4] focus:border-[#ff5a36] focus:outline-none rounded-2xl p-3 leading-relaxed resize-none"
+              rows={3}
+              style={{ fontSize: "16px" }}
+              className="w-full bg-[#fafaf9] border border-[#e7e5e4] focus:border-[#ff5a36] focus:outline-none rounded-2xl p-3 leading-relaxed resize-none"
             />
           </div>
         </div>
 
-        <div className="px-5 py-4 border-t border-[#e7e5e4] bg-[#fafaf9] flex items-center gap-2">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-[#e7e5e4] bg-[#fafaf9] flex items-center gap-2 shrink-0" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
           <button
             onClick={onClear}
             data-testid="rating-popup-delete"

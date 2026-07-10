@@ -418,4 +418,17 @@ input:focus, textarea:focus, select:focus {
   body {
     @apply bg-background text-foreground;
   }
+
+  /**
+   * iOS Safari zooms into any input whose computed font-size is below 16 px.
+   * That breaks our modals (comment textarea) and forms (accounting rows).
+   * Force at least 16 px on mobile only — desktop keeps the small denser size.
+   */
+  @media (max-width: 640px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }

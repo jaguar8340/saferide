@@ -144,13 +144,13 @@ function KpiCard({ label, value, tint = "navy", testid }) {
   }[tint];
   return (
     <div
-      className="bg-white border border-[#e7e5e4] rounded-2xl p-5"
+      className="bg-white border border-[#e7e5e4] rounded-2xl p-4 md:p-5"
       data-testid={testid}
     >
       <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569]">
         {label}
       </div>
-      <div className={`font-display text-3xl leading-none mt-2 tabular-nums ${tintClass}`}>
+      <div className={`font-display text-xl md:text-3xl leading-none mt-2 tabular-nums ${tintClass}`}>
         {value}
       </div>
     </div>
@@ -219,12 +219,12 @@ function OverviewSubtab({ year, onGoto }) {
         />
       </div>
 
-      <div className="bg-white border border-[#e7e5e4] rounded-2xl p-5">
+      <div className="bg-white border border-[#e7e5e4] rounded-2xl p-4 md:p-5">
         <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-2">
           Gewinn / Verlust {year}
         </div>
         <div
-          className={`font-display text-5xl leading-none tabular-nums ${
+          className={`font-display text-3xl md:text-5xl leading-none tabular-nums ${
             summary.profit >= 0 ? "text-[#166534]" : "text-[#dc2626]"
           }`}
           data-testid="kpi-profit"
@@ -669,31 +669,40 @@ function ExpensesSubtab({ year }) {
                   <div
                     key={e.id}
                     data-testid={`expense-row-${e.id}`}
-                    className="p-3 grid grid-cols-1 md:grid-cols-[110px_130px_1fr_180px_80px_44px] gap-3 items-center"
+                    className="p-3 md:grid md:grid-cols-[110px_130px_1fr_180px_80px_44px] gap-3 md:items-center"
                   >
-                    <input
-                      type="date"
-                      defaultValue={e.date}
-                      onBlur={(ev) => ev.target.value !== e.date && patchExpense(e.id, "date", ev.target.value)}
-                      className="text-sm bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
-                    />
-                    <input
-                      type="number"
-                      step="0.05"
-                      defaultValue={e.amount_chf}
-                      onBlur={(ev) => Number(ev.target.value) !== Number(e.amount_chf) && patchExpense(e.id, "amount_chf", ev.target.value)}
-                      className="text-sm font-semibold text-[#0f172a] bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
-                    />
+                    {/* Mobile: header row = date + amount + delete */}
+                    <div className="flex items-center justify-between gap-3 md:contents mb-2 md:mb-0">
+                      <input
+                        type="date"
+                        defaultValue={e.date}
+                        onBlur={(ev) => ev.target.value !== e.date && patchExpense(e.id, "date", ev.target.value)}
+                        style={{ fontSize: "16px" }}
+                        className="bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] text-[#475569] md:text-sm"
+                      />
+                      <input
+                        type="number"
+                        step="0.05"
+                        defaultValue={e.amount_chf}
+                        onBlur={(ev) => Number(ev.target.value) !== Number(e.amount_chf) && patchExpense(e.id, "amount_chf", ev.target.value)}
+                        style={{ fontSize: "16px" }}
+                        placeholder="CHF"
+                        className="w-24 md:w-auto text-right md:text-left font-semibold text-[#dc2626] md:text-[#0f172a] bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] md:text-sm"
+                      />
+                    </div>
                     <input
                       type="text"
                       defaultValue={e.description}
                       onBlur={(ev) => ev.target.value !== e.description && patchExpense(e.id, "description", ev.target.value)}
-                      className="text-sm text-[#334155] bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
+                      style={{ fontSize: "16px" }}
+                      placeholder="Bezeichnung"
+                      className="w-full text-[#334155] bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] md:text-sm mb-2 md:mb-0"
                     />
                     <select
                       defaultValue={e.account_id || ""}
                       onChange={(ev) => patchExpense(e.id, "account_id", ev.target.value)}
-                      className="text-sm bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
+                      style={{ fontSize: "16px" }}
+                      className="w-full bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] md:text-sm mb-2 md:mb-0 text-[#334155]"
                     >
                       <option value="">— unzugeordnet —</option>
                       {accounts.map((a) => (
@@ -702,27 +711,29 @@ function ExpensesSubtab({ year }) {
                         </option>
                       ))}
                     </select>
-                    <div>
-                      {e.receipt_url ? (
-                        <a
-                          href={e.receipt_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[#0f172a] hover:text-[#ff5a36]"
-                        >
-                          <Paperclip size={10} /> Beleg
-                        </a>
-                      ) : (
-                        <span className="text-[10px] text-[#a8a29e]">—</span>
-                      )}
+                    <div className="flex items-center justify-between md:contents">
+                      <div>
+                        {e.receipt_url ? (
+                          <a
+                            href={e.receipt_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[#0f172a] hover:text-[#ff5a36]"
+                          >
+                            <Paperclip size={10} /> Beleg
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-[#a8a29e]">Kein Beleg</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeExpense(e.id)}
+                        data-testid={`expense-delete-${e.id}`}
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeExpense(e.id)}
-                      data-testid={`expense-delete-${e.id}`}
-                      className="w-8 h-8 flex items-center justify-center rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
-                    >
-                      <Trash2 size={13} />
-                    </button>
                   </div>
                 ))}
               </div>
