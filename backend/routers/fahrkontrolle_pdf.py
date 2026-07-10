@@ -36,8 +36,36 @@ from reportlab.platypus import Paragraph
 
 from core.db import db
 from core.security import get_current_admin
+from core.storage import get_object as _storage_get_object
 
 router = APIRouter(prefix="/students", tags=["fahrkontrolle-pdf"])
+
+
+# --------------------------------------------------------------------
+#  Photo loading (for Ausbildungsjournal thumbnails) — cached per request
+# --------------------------------------------------------------------
+_PHOTO_CACHE: dict[str, ImageReader | None] = {}
+
+
+def _load_photo(url: str) -> ImageReader | None:
+    """Fetch an image from Hetzner/legacy storage and return an ImageReader.
+    Returns None on failure so PDF generation never crashes over a broken URL.
+    """
+    if not url:
+        return None
+    if url in _PHOTO_CACHE:
+        return _PHOTO_CACHE[url]
+    reader: ImageReader | None = None
+    try:
+        # Extract the storage path from "/api/files/xxx"
+        prefix = "/api/files/"
+        if url.startswith(prefix):
+            data, _ = _storage_get_object(url[len(prefix):])
+            reader = ImageReader(BytesIO(data))
+    except Exception:                       # noqa: BLE001
+        reader = None
+    _PHOTO_CACHE[url] = reader
+    return reader
 
 
 # --------------------------------------------------------------------
@@ -186,7 +214,8 @@ async def export_fahrkontrolle_pdf(
         for a in assessments:
             if a.get("lesson_id") != lesson["id"]:
                 continue
-            if not a.get("comment"):
+            photo_urls = a.get("photo_urls") or []
+            if not a.get("comment") and not photo_urls:
                 continue
             sub = subs_by_id.get(a["subitem_id"])
             if not sub:
@@ -200,6 +229,7 @@ async def export_fahrkontrolle_pdf(
                     "sub_order": sub.get("order", 999),
                     "value": a.get("value", ""),
                     "comment": a.get("comment", ""),
+                    "photo_urls": photo_urls,
                 }
             )
         lesson_comments.sort(key=lambda e: (e["cat_order"], e["sub_order"]))
@@ -759,7 +789,63 @@ def _draw_journal(
             _, para_h = para.wrap(avail_w, 60 * mm)
             para.drawOn(c, text_x, y - 4 * mm - para_h)
             block_h = max(badge_h, para_h + 5 * mm) + 3 * mm
-            y -= block_h
+
+            # Photo thumbnails (max 4 per cell, 25×25 mm each, side by side)
+            photos_h = 0.0
+            photo_urls = (it.get("photo_urls") or [])[:4]
+            if photo_urls:
+                thumb_w = 25 * mm
+                thumb_h = 25 * mm
+                gap = 2 * mm
+                # Ensure this row can fit — bail to next page early if not
+                needed_here = block_h + thumb_h + 6 * mm
+                if y - needed_here < bottom + 8 * mm:
+                    _draw_footer(c, student, left, right, bottom, page_num)
+                    c.showPage()
+                    page_num += 1
+                    y = draw_header(page_num)
+                    # Re-render badge + title + comment on the new page top
+                    c.setFillColor(style["bg"])
+                    c.roundRect(left, y - badge_h + 0.6 * mm, badge_w, badge_h, 0.8 * mm, fill=1, stroke=0)
+                    c.setFillColor(style["fg"])
+                    c.setFont("Helvetica-Bold", 8)
+                    c.drawCentredString(left + badge_w / 2, y - 3 * mm, it["value"] or "?")
+                    c.setFillColor(colors.HexColor("#0f172a"))
+                    c.setFont("Helvetica-Bold", 8.5)
+                    c.drawString(text_x, y - 2 * mm, title[:140])
+                    para.drawOn(c, text_x, y - 4 * mm - para_h)
+
+                photo_top = y - block_h + 2 * mm
+                photo_bottom = photo_top - thumb_h
+                photo_x = text_x
+                for url in photo_urls:
+                    reader = _load_photo(url)
+                    if reader is None:
+                        continue
+                    try:
+                        c.setFillColor(colors.HexColor("#fafaf9"))
+                        c.rect(photo_x, photo_bottom, thumb_w, thumb_h, fill=1, stroke=0)
+                        c.drawImage(
+                            reader,
+                            photo_x,
+                            photo_bottom,
+                            width=thumb_w,
+                            height=thumb_h,
+                            preserveAspectRatio=True,
+                            anchor="c",
+                            mask="auto",
+                        )
+                        c.setStrokeColor(colors.HexColor("#e2e8f0"))
+                        c.setLineWidth(0.4)
+                        c.rect(photo_x, photo_bottom, thumb_w, thumb_h, fill=0, stroke=1)
+                    except Exception:                       # noqa: BLE001
+                        pass
+                    photo_x += thumb_w + gap
+                    if photo_x + thumb_w > right:
+                        break
+                photos_h = thumb_h + 3 * mm
+
+            y -= (block_h + photos_h)
             ensure_space(15 * mm)
 
         y -= 3 * mm
