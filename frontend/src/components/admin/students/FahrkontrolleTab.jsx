@@ -33,6 +33,7 @@ import { api, formatApiError } from "@/lib/api";
 import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
+import useRatingScale from "@/hooks/useRatingScale";
 import {
   categoryPercent,
   categoryWarning,
@@ -64,6 +65,10 @@ export default function FahrkontrolleTab({ student }) {
   const [openRoutesForLesson, setOpenRoutesForLesson] = useState(null);
   const [notes, setNotes] = useState("");
   const [exportingPdf, setExportingPdf] = useState(false);
+
+  // Dynamic rating scale (labels + colours). Falls back to RATING_META
+  // while the hook fetches on first mount.
+  const { meta: dynMeta = RATING_META, valueWeight, topValue } = useRatingScale();
 
   const exportPdf = async () => {
     if (lessons.length === 0) return;
@@ -521,7 +526,7 @@ export default function FahrkontrolleTab({ student }) {
                             const cell = assessments[key];
                             const value = cell?.value || "";
                             const hasComment = !!(cell?.comment);
-                            const meta = value ? RATING_META[value] : null;
+                            const meta = value ? (dynMeta[value] || RATING_META[value] || null) : null;
                             return (
                               <td
                                 key={l.id}

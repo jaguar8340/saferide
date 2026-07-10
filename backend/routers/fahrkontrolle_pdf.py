@@ -141,6 +141,13 @@ async def export_fahrkontrolle_pdf(
         {"student_id": student_id}, {"_id": 0}
     ).to_list(50000)
 
+    # Load the rating scale (labels + colours) so both the matrix cells
+    # AND the footer legend stay in sync with the admin's configuration.
+    from routers.rating_scale import ensure_rating_scale
+    rating_scale = await ensure_rating_scale()
+    rating_meta = _build_rating_meta(rating_scale)
+    value_weight = _build_value_weights(rating_scale)
+
     # Build lookup maps
     subs_by_cat: dict[str, list[dict]] = {}
     for s in subitems:
@@ -195,6 +202,7 @@ async def export_fahrkontrolle_pdf(
         right=right,
         top=matrix_top,
         bottom=matrix_bottom + (16 * mm if qr_image is not None else 0),
+        rating_meta=rating_meta,
     )
 
     # Footer (with QR bottom-right on page 1 only)
@@ -202,6 +210,7 @@ async def export_fahrkontrolle_pdf(
         c, student, left, right, bottom, page_num=1,
         qr=qr_image,
         qr_caption="Scannen für digitalen Datensatz" if qr_image else None,
+        rating_meta=rating_meta,
     )
 
     # --------------------------------------------------------------
@@ -239,7 +248,7 @@ async def export_fahrkontrolle_pdf(
 
     # Compute per-category progress for the chart (always).
     chart_data = _compute_category_progress(
-        categories, subs_by_cat, lessons, assess_by_key
+        categories, subs_by_cat, lessons, assess_by_key, value_weight
     )
 
     if lessons:  # only show page 2 when there is data to summarize
@@ -248,6 +257,7 @@ async def export_fahrkontrolle_pdf(
         _draw_journal(
             c, student, journal_entries, page_w, page_h,
             left, right, top, bottom, chart_data, photo_cache,
+            rating_meta=rating_meta,
         )
 
     c.save()
@@ -346,6 +356,7 @@ def _draw_matrix(
     right: float,
     top: float,
     bottom: float,
+    rating_meta: dict[str, dict] | None = None,
 ) -> None:
     """Render the full matrix on ONE page.
 
@@ -488,7 +499,17 @@ def _draw_matrix(
                 c.line(cx, y, cx, y - row_h)
 
                 if cell and cell.get("value"):
-                    style = RATING_STYLES.get(cell["value"])
+                    # Prefer the admin-configured rating_meta (dynamic
+                    # colours/labels) and fall back to the static defaults.
+                    dyn = (rating_meta or {}).get(cell["value"]) if rating_meta else None
+                    style = None
+                    if dyn:
+                        style = {
+                            "bg": colors.HexColor(dyn.get("bg", "#94a3b8")),
+                            "fg": colors.HexColor(dyn.get("fg", "#0f172a")),
+                        }
+                    else:
+                        style = RATING_STYLES.get(cell["value"])
                     if style:
                         # Filled rounded rectangle
                         pad = 0.6 * mm
@@ -540,12 +561,57 @@ def _draw_matrix(
 
 def _draw_footer(c: canvas.Canvas, student: dict, left: float, right: float,
                  bottom: float, page_num: int, qr: ImageReader | None = None,
-                 qr_caption: str | None = None) -> None:
+                 qr_caption: str | None = None,
+                 rating_meta: dict[str, dict] | None = None) -> None:
     c.setFillColor(colors.HexColor("#94a3b8"))
     c.setFont("Helvetica", 6.5)
     name = f"{student.get('first_name', '')} {student.get('last_name', '')}".strip()
     c.drawString(left, bottom - 4 * mm, f"Fahrschule Safe Ride · {name}")
     c.drawRightString(right, bottom - 4 * mm, f"Seite {page_num}")
+
+    # Rating-scale legend – a small centred strip above the page-info
+    # line so instructors / students always see what the numbers mean.
+    if rating_meta:
+        y_leg = bottom - 4 * mm
+        # Build ordered list of (value, desc, bg, fg). Keep original
+        # dict order so admins control the sequence.
+        entries = [
+            (v, meta) for v, meta in rating_meta.items() if meta.get("desc_de")
+        ]
+        if entries:
+            # Measure so we can centre the block.
+            font_size = 6
+            c.setFont("Helvetica-Bold", font_size)
+            gap = 3.5 * mm
+            chip_w = 3.2 * mm
+            chip_h = 3.2 * mm
+            total_w = 0.0
+            widths: list[float] = []
+            for v, meta in entries:
+                text = f"{v} = {meta['desc_de']}"
+                text_w = c.stringWidth(text, "Helvetica-Bold", font_size)
+                w = chip_w + 1.5 * mm + text_w
+                widths.append(w)
+                total_w += w
+            total_w += gap * (len(entries) - 1)
+            x = (left + right) / 2 - total_w / 2
+            for (v, meta), w in zip(entries, widths):
+                # Chip
+                c.setFillColor(colors.HexColor(meta.get("bg", "#94a3b8")))
+                c.roundRect(x, y_leg - 0.6 * mm, chip_w, chip_h, 0.7 * mm,
+                            stroke=0, fill=1)
+                c.setFillColor(colors.HexColor(meta.get("fg", "#0f172a")))
+                c.setFont("Helvetica-Bold", font_size - 0.5)
+                c.drawCentredString(x + chip_w / 2, y_leg + 0.4 * mm, str(v))
+                # Label right of chip
+                c.setFillColor(colors.HexColor("#475569"))
+                c.setFont("Helvetica", font_size)
+                c.drawString(x + chip_w + 1.5 * mm, y_leg + 0.4 * mm,
+                             meta["desc_de"])
+                x += w + gap
+            # Reset for anything drawn after.
+            c.setFillColor(colors.HexColor("#94a3b8"))
+            c.setFont("Helvetica", 6.5)
 
     if qr is not None:
         # Bottom-right QR code (14×14 mm) sitting ABOVE the footer text.
@@ -565,7 +631,41 @@ def _draw_footer(c: canvas.Canvas, student: dict, left: float, right: float,
 #  Progress chart (page 2)
 # ====================================================================
 #  Same weighting as the frontend `progress.js` helper so PDF stays
-#  consistent with the on-screen numbers.
+#  consistent with the on-screen numbers. Derived at runtime from the
+#  admin-configured rating scale (positive levels are equally spaced
+#  from 100/N up to 100; the retry level is always 0 %).
+def _build_value_weights(rating_scale: dict) -> dict[str, int]:
+    levels = rating_scale.get("levels") or []
+    retry = (rating_scale.get("retry") or {}).get("value", "X")
+    n = len(levels) or 1
+    weights: dict[str, int] = {}
+    for i, lv in enumerate(levels):
+        weights[str(lv["value"])] = round((i + 1) / n * 100)
+    weights[str(retry)] = 0
+    return weights
+
+
+def _build_rating_meta(rating_scale: dict) -> dict[str, dict]:
+    """Map value → {desc_de, bg, fg} for matrix-cell rendering."""
+    meta: dict[str, dict] = {}
+    for lv in rating_scale.get("levels", []):
+        meta[str(lv["value"])] = {
+            "desc_de": lv.get("desc_de", ""),
+            "bg": lv.get("bg", "#94a3b8"),
+            "fg": lv.get("fg", "#0f172a"),
+        }
+    retry = rating_scale.get("retry") or {}
+    if retry.get("value"):
+        meta[str(retry["value"])] = {
+            "desc_de": retry.get("desc_de", ""),
+            "bg": retry.get("bg", "#94a3b8"),
+            "fg": retry.get("fg", "#0f172a"),
+        }
+    return meta
+
+
+# Fallback used only by helpers that are called before the dynamic scale
+# is loaded (e.g. unit tests). Kept in sync with the seeded default.
 _VALUE_WEIGHT = {"1": 25, "2": 50, "3": 75, "4": 100, "X": 0}
 
 
@@ -574,10 +674,12 @@ def _compute_category_progress(
     subs_by_cat: dict[str, list[dict]],
     lessons: list[dict],
     assess_by_key: dict[tuple[str, str], dict],
+    value_weight: dict[str, int] | None = None,
 ) -> list[dict]:
     """Return one row per category:
         { title, percent (0-100), color (#hex based on % ramp) }
     """
+    weights = value_weight if value_weight is not None else _VALUE_WEIGHT
     out: list[dict] = []
     for cat in categories:
         subs = subs_by_cat.get(cat["id"], [])
@@ -590,7 +692,7 @@ def _compute_category_progress(
             for lesson_row in lessons:
                 cell = assess_by_key.get((s["id"], lesson_row["id"]))
                 if cell and cell.get("value"):
-                    w = _VALUE_WEIGHT.get(cell["value"], 0)
+                    w = weights.get(cell["value"], 0)
                     if w > best:
                         best = w
             total += best
@@ -689,6 +791,7 @@ def _draw_journal(
     bottom: float,
     chart_data: list[dict] | None = None,
     photo_cache: dict[str, ImageReader | None] | None = None,
+    rating_meta: dict[str, dict] | None = None,
 ) -> None:
     """Ausbildungsjournal page(s): chart on top + chronological comments below.
 
@@ -728,7 +831,7 @@ def _draw_journal(
     def ensure_space(needed: float) -> None:
         nonlocal y, page_num
         if y - needed < bottom + 8 * mm:
-            _draw_footer(c, student, left, right, bottom, page_num)
+            _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)
             c.showPage()
             page_num += 1
             y = draw_header(page_num)
@@ -805,7 +908,7 @@ def _draw_journal(
                 # Ensure this row can fit — bail to next page early if not
                 needed_here = block_h + thumb_h + 6 * mm
                 if y - needed_here < bottom + 8 * mm:
-                    _draw_footer(c, student, left, right, bottom, page_num)
+                    _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)
                     c.showPage()
                     page_num += 1
                     y = draw_header(page_num)
@@ -855,4 +958,4 @@ def _draw_journal(
 
         y -= 3 * mm
 
-    _draw_footer(c, student, left, right, bottom, page_num)
+    _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)

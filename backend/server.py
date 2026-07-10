@@ -39,6 +39,7 @@ from routers import (
     invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
+    rating_scale,
     sitemap,
     student_activities,
     student_documents,
@@ -75,6 +76,7 @@ api.include_router(student_documents.router)
 api.include_router(student_activities.router)
 api.include_router(business_settings.router)
 api.include_router(business_settings.assets_router)
+api.include_router(rating_scale.router)
 api.include_router(backup.router)
 api.include_router(backup_scripts.router)
 api.include_router(fahrkontrolle.router)

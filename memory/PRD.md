@@ -362,6 +362,13 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 43 (10.02.2026) — Konfigurierbare Bewertungsskala + PDF-Legende (DONE, 6/6 Backend-Tests grün):**
+  - **Neue Collection `rating_scale`** mit Single-Doc `{levels:[...], retry:{...}}`. Backend-Endpunkte `GET /api/settings/rating-scale` (public) und `PATCH /api/settings/rating-scale` (admin) mit Duplicate/Empty-Validierung.
+  - **`useRatingScale` Hook** (in-module Cache + SUBSCRIBERS-Pattern) versorgt `RatingPopup`, `FahrkontrolleTab` mit dynamischen Bezeichnungen/Farben. Fallback auf statische Defaults während des ersten Fetches.
+  - **`RatingScaleEditor`** unter "Fahrkontrolle-Stammdaten": pro Level Row mit Chip-Preview, Value/Label-Inputs, Colour-Swatches für BG/FG, Up/Down/Delete + "Level hinzufügen". X-Level ist fest (nicht löschbar), aber Label/Farbe editierbar. Autosave on blur mit "Speichert…"-Indikator.
+  - **PDF-Fusszeile**: `_draw_footer` in `fahrkontrolle_pdf.py` erweitert um zentrierte kleine Legende (farbige Chips + Labels) auf JEDER Seite. Matrix-Zellen (`_draw_matrix`) nutzen die dynamische `rating_meta`; Progress-Chart-Weights sind dynamisch aus Anzahl Levels berechnet (`_build_value_weights`).
+  - **Tests**: `test_iteration43_rating_scale.py` (6 Tests): GET, PATCH mit 5. Level, Empty/Duplicate-Guards, Retry-Label-Edit, PDF enthält Legenden-Labels. Alle grün.
+
 - ✅ **Iteration 42.2 (10.02.2026) — Blog-Bild-Upload-Bug + Diplome-Button-Position (DONE, End-to-End verifiziert):**
   - **Blog-Hero-Image-Upload Bug**: `EditableImage.jsx` rief `updateFn(path, url)` mit BEIDEN Argumenten auf, egal ob der Konsument einen `onUpdate(url)`-Callback oder den Context-`updateField(path, value)` verwendet. Für Blog-Posts landete daher der Pfad-String `"blog.hero_image"` in der DB statt der URL, das Bild war kaputt. Fix: sauberes if/else `onUpdate ? onUpdate(url) : ctx.updateField(path, url)`. Regressions in Location-Hero/Meet-Photos (die vorher `onUpdate={updateField}` nutzten) durch Wrapper-Callbacks `(url) => updateField("hero_image_url", url)` in `LocHero.jsx` + `LocMeetMap.jsx` gefixt.
   - **About: Diplome-Button neu positioniert**: `CertificatesDialog` akzeptiert jetzt einen `triggerClassName`-Prop. In `About.jsx` verschoben aus der linken (Text-)Column unter das Hunde-Foto in die **rechte Column unter das Nadine-Portrait**, mit grösseren Proportionen (`text-base`, Icon-Kreis `w-9 h-9`, mehr Padding, Schatten).

@@ -17,7 +17,12 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { X, Trash2, Check, Camera, Loader2 } from "lucide-react";
+import useRatingScale from "@/hooks/useRatingScale";
 
+// Kept as fallback for callers that still `import { RATING_META }` from
+// this module (FahrkontrolleTab reads it to render tiny matrix cells
+// before the async hook has populated). At runtime the popup itself
+// uses the dynamic scale from the API.
 export const RATING_META = {
   "1": { label: "1", desc_de: "erklärt",       bg: "#dc2626", fg: "#ffffff" },
   "2": { label: "2", desc_de: "geübt",         bg: "#f97316", fg: "#ffffff" },
@@ -48,6 +53,10 @@ export default function RatingPopup({
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const flashTimer = useRef(null);
+
+  // Dynamic rating scale from /api/settings/rating-scale (falls back to
+  // the static RATING_META constant while the hook is loading).
+  const { meta: dynMeta = RATING_META, order: dynOrder = ORDER } = useRatingScale();
 
   useEffect(() => {
     if (open) {
@@ -165,10 +174,15 @@ export default function RatingPopup({
         </div>
 
         <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
-          {/* 5 big rating buttons — click = autosave */}
-          <div className="grid grid-cols-5 gap-2">
-            {ORDER.map((v) => {
-              const meta = RATING_META[v];
+          {/* Rating buttons — click = autosave. Number driven by the
+              admin-configurable rating scale (1..N positive levels + X).
+              Falls back to the static RATING_META until the API resolves. */}
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${dynOrder.length}, minmax(0, 1fr))` }}
+          >
+            {dynOrder.map((v) => {
+              const meta = dynMeta[v] || RATING_META[v] || {};
               const active = value === v;
               return (
                 <button
@@ -185,18 +199,21 @@ export default function RatingPopup({
                     color: meta.fg,
                   }}
                 >
-                  {meta.label}
+                  {v}
                 </button>
               );
             })}
           </div>
-          <div className="grid grid-cols-5 gap-2 -mt-3">
-            {ORDER.map((v) => (
+          <div
+            className="grid gap-2 -mt-3"
+            style={{ gridTemplateColumns: `repeat(${dynOrder.length}, minmax(0, 1fr))` }}
+          >
+            {dynOrder.map((v) => (
               <div
                 key={v}
                 className="text-[10px] font-semibold tracking-[0.05em] text-center text-[#78716c] leading-tight"
               >
-                {RATING_META[v].desc_de}
+                {(dynMeta[v] || RATING_META[v] || {}).desc_de}
               </div>
             ))}
           </div>

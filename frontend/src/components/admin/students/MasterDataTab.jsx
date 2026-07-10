@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
+import RatingScaleEditor from "@/components/admin/students/RatingScaleEditor";
 
 export default function MasterDataTab() {
   const [categories, setCategories] = useState([]);
@@ -385,6 +386,10 @@ export default function MasterDataTab() {
             testid="master-route-add"
           />
         </MasterCard>
+      </div>
+
+      <div className="mt-6">
+        <RatingScaleEditor />
       </div>
     </div>
   );
