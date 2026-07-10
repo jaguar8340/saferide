@@ -340,6 +340,14 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **Frontend FahrkontrolleTab**: `uploadPhoto(file)` → multipart POST, `deletePhoto(url)` → DELETE mit URL-Param. Beide setzen `setAssessments` mit dem returned Assessment. Delete räumt lokalen State auf wenn Zelle komplett leer.
   - **Layout-Garantie verifiziert**: Testing Agent bestätigt `textarea.bounding_box().y = 592.5 px` sowohl vor Upload als auch nach Delete – die Optik verschiebt sich NICHT wenn keine Fotos da sind (User-Anforderung erfüllt).
 
+- ✅ **Iteration 39 (10.02.2026) — Hetzner S3 Storage-Migration + Fahrkontrolle-PDF mit Fotos (DONE, 20/20 Backend via testing_agent_v3_fork, 100 %):**
+  - **Hetzner S3 als primärer Speicher**: `/app/backend/core/storage.py` KOMPLETT neu geschrieben. Nutzt `boto3` mit `endpoint_url=https://fsn1.your-objectstorage.com`, `signature_version="s3v4"`, `addressing_style="path"`. Bucket `saferide` in Falkenstein (Deutschland). Alle `put_object()`-Calls landen jetzt in Hetzner mit `CacheControl="public, max-age=31536000, immutable"` für optimale Delivery.
+  - **Legacy-Fallback**: `get_object()` versucht ZUERST Hetzner. Bei `NoSuchKey` → transparenter Fallback auf alten Emergent-Objstore (bestehende Dateien in `db.files` bleiben abrufbar). Andere `ClientError` → 502.
+  - **Betroffene Endpoints** (alle unverändert im Code, nur Storage-Backend anders): `/api/upload`, `/api/settings/business/logo`, `/api/vku/permit-upload`, `/api/accounting/expenses/upload-receipt`, `/api/students/{id}/documents`, `/api/fahrkontrolle/students/{sid}/assessments/photo`. Alle verifiziert: md5-identischer Roundtrip.
+  - **Env-Vars**: `S3_ENDPOINT_URL`, `S3_REGION=eu-central`, `S3_BUCKET=saferide`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` in `/app/backend/.env`.
+  - **Fahrkontrolle-PDF mit Foto-Thumbnails**: `routers/fahrkontrolle_pdf.py` – Journal-Filter erweitert (Zellen mit `photo_urls != []` erscheinen auch ohne Kommentar). Neue Helper `_load_photo(url, cache)` mit **request-lokalem Cache** (kein Memory-Leak). Bis zu 4 Thumbnails à 25×25 mm werden pro Rating-Zelle unter dem Kommentar mit `c.drawImage()` gerendert. Bei Seitenumbruch wird Badge + Titel + Kommentar auf der neuen Seite re-rendered.
+  - **Delete-Konsistenz**: `DELETE /api/fahrkontrolle/.../assessments/photo` entfernt URL aus DB, aber löscht das Bucket-Objekt bewusst NICHT (Safety – falls andere Referenzen existieren). Orphan-Cleanup als späterer Backlog.
+
 ## Offene Punkte / Backlog
 - 🇨🇭 **Swiss QR-Bill (Rechnungs-QR-Slip)** — blockiert, wartet auf User-Input (IBAN).
 - 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).

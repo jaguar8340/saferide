@@ -42,19 +42,20 @@ router = APIRouter(prefix="/students", tags=["fahrkontrolle-pdf"])
 
 
 # --------------------------------------------------------------------
-#  Photo loading (for Ausbildungsjournal thumbnails) — cached per request
+#  Photo loading (for Ausbildungsjournal thumbnails)
 # --------------------------------------------------------------------
-_PHOTO_CACHE: dict[str, ImageReader | None] = {}
-
-
-def _load_photo(url: str) -> ImageReader | None:
+def _load_photo(url: str, cache: dict[str, ImageReader | None]) -> ImageReader | None:
     """Fetch an image from Hetzner/legacy storage and return an ImageReader.
     Returns None on failure so PDF generation never crashes over a broken URL.
+
+    `cache` is a per-request dict — created by the export endpoint so the
+    same photo is not fetched twice inside one PDF, and no memory leaks
+    between requests.
     """
     if not url:
         return None
-    if url in _PHOTO_CACHE:
-        return _PHOTO_CACHE[url]
+    if url in cache:
+        return cache[url]
     reader: ImageReader | None = None
     try:
         # Extract the storage path from "/api/files/xxx"
@@ -64,7 +65,7 @@ def _load_photo(url: str) -> ImageReader | None:
             reader = ImageReader(BytesIO(data))
     except Exception:                       # noqa: BLE001
         reader = None
-    _PHOTO_CACHE[url] = reader
+    cache[url] = reader
     return reader
 
 
@@ -243,9 +244,10 @@ async def export_fahrkontrolle_pdf(
 
     if lessons:  # only show page 2 when there is data to summarize
         c.showPage()
+        photo_cache: dict[str, ImageReader | None] = {}
         _draw_journal(
             c, student, journal_entries, page_w, page_h,
-            left, right, top, bottom, chart_data,
+            left, right, top, bottom, chart_data, photo_cache,
         )
 
     c.save()
@@ -686,11 +688,14 @@ def _draw_journal(
     top: float,
     bottom: float,
     chart_data: list[dict] | None = None,
+    photo_cache: dict[str, ImageReader | None] | None = None,
 ) -> None:
     """Ausbildungsjournal page(s): chart on top + chronological comments below.
 
     Auto-flows to more pages if the comment list is long.
     """
+    if photo_cache is None:
+        photo_cache = {}
     def draw_header(page_num: int, subtitle: str = "") -> float:
         c.setFillColor(colors.HexColor("#0f172a"))
         c.setFont("Helvetica-Bold", 14)
@@ -819,7 +824,7 @@ def _draw_journal(
                 photo_bottom = photo_top - thumb_h
                 photo_x = text_x
                 for url in photo_urls:
-                    reader = _load_photo(url)
+                    reader = _load_photo(url, photo_cache)
                     if reader is None:
                         continue
                     try:
