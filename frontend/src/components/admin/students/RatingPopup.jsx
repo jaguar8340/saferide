@@ -16,7 +16,7 @@
  * mobile / iPad for easy thumb reach. Touch targets are ≥ 56 px tall.
  */
 import { useEffect, useRef, useState } from "react";
-import { X, Trash2, Check } from "lucide-react";
+import { X, Trash2, Check, Camera, Loader2 } from "lucide-react";
 
 export const RATING_META = {
   "1": { label: "1", desc_de: "erklärt",       bg: "#dc2626", fg: "#ffffff" },
@@ -33,15 +33,20 @@ export default function RatingPopup({
   initialValue = "",
   initialComment = "",
   contextLabel = "",
-  onSave,        // async (value, comment) => Promise – parent persists to API
-  onClear,       // () => – deletes the cell entirely
+  photoUrls = [],
+  onSave,          // async (value, comment) => Promise – parent persists to API
+  onClear,         // () => – deletes the cell entirely
+  onPhotoUpload,   // async (File) => Promise
+  onPhotoDelete,   // async (url) => Promise
   onClose,
 }) {
   const [value, setValue] = useState(initialValue);
   const [comment, setComment] = useState(initialComment);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const lastPersistedComment = useRef(initialComment);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
   const flashTimer = useRef(null);
 
   useEffect(() => {
@@ -85,6 +90,37 @@ export default function RatingPopup({
   const handleCommentBlur = async () => {
     if (comment === lastPersistedComment.current) return;
     await persist(value, comment);
+  };
+
+  const handlePhotoPick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !onPhotoUpload) {
+      e.target.value = "";
+      return;
+    }
+    setUploading(true);
+    try {
+      await onPhotoUpload(file);
+      showSavedFlash();
+    } finally {
+      setUploading(false);
+      e.target.value = "";     // allow picking the same file again
+    }
+  };
+
+  const handlePhotoDelete = async (url) => {
+    if (!onPhotoDelete) return;
+    if (!window.confirm("Foto wirklich löschen?")) return;
+    try {
+      await onPhotoDelete(url);
+      showSavedFlash();
+    } catch {
+      /* parent surfaces the error toast */
+    }
   };
 
   if (!open) return null;
@@ -167,12 +203,40 @@ export default function RatingPopup({
 
           {/* Comment textarea — autosave on blur */}
           <div>
-            <label className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#475569] block mb-2">
-              Bemerkung zu diesem Feld
-              <span className="ml-2 normal-case tracking-normal text-[10px] text-[#a8a29e] font-normal">
-                (autospeichert beim Verlassen)
-              </span>
-            </label>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#475569] min-w-0 truncate">
+                Bemerkung zu diesem Feld
+                <span className="ml-2 normal-case tracking-normal text-[10px] text-[#a8a29e] font-normal">
+                  (autospeichert)
+                </span>
+              </label>
+              {onPhotoUpload && (
+                <button
+                  type="button"
+                  onClick={handlePhotoPick}
+                  disabled={uploading}
+                  data-testid="rating-popup-camera"
+                  aria-label="Foto aufnehmen"
+                  title="Foto aufnehmen"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-[#e7e5e4] bg-white text-[#0f172a] hover:border-[#ff5a36] hover:text-[#ff5a36] active:scale-95 transition-all disabled:opacity-50 shrink-0"
+                >
+                  {uploading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Camera size={14} />
+                  )}
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoChange}
+                className="hidden"
+                data-testid="rating-popup-camera-input"
+              />
+            </div>
             <textarea
               ref={textareaRef}
               value={comment}
@@ -184,6 +248,38 @@ export default function RatingPopup({
               style={{ fontSize: "16px" }}
               className="w-full bg-[#fafaf9] border border-[#e7e5e4] focus:border-[#ff5a36] focus:outline-none rounded-2xl p-3 leading-relaxed resize-none"
             />
+
+            {photoUrls.length > 0 && (
+              <div
+                className="mt-3 grid grid-cols-4 gap-2"
+                data-testid="rating-popup-photos"
+              >
+                {photoUrls.map((url) => (
+                  <div
+                    key={url}
+                    className="relative aspect-square rounded-xl overflow-hidden border border-[#e7e5e4] bg-[#fafaf9] group"
+                  >
+                    <a href={url} target="_blank" rel="noreferrer">
+                      <img
+                        src={url}
+                        alt="Foto"
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handlePhotoDelete(url)}
+                      data-testid="rating-popup-photo-delete"
+                      aria-label="Foto entfernen"
+                      className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[#dc2626] transition-opacity"
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

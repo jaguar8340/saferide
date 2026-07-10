@@ -212,6 +212,61 @@ export default function FahrkontrolleTab({ student }) {
     }
   };
 
+  const uploadPhoto = async (file) => {
+    if (!popupCell) return;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await api.post(
+        `/fahrkontrolle/students/${student.id}/assessments/photo`,
+        fd,
+        {
+          params: {
+            subitem_id: popupCell.subitem.id,
+            lesson_id: popupCell.lesson.id,
+          },
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+      const key = `${popupCell.subitem.id}:${popupCell.lesson.id}`;
+      setAssessments((cur) => ({ ...cur, [key]: r.data }));
+    } catch (e) {
+      toast.error(formatApiError(e));
+      throw e;
+    }
+  };
+
+  const deletePhoto = async (url) => {
+    if (!popupCell) return;
+    try {
+      const r = await api.delete(
+        `/fahrkontrolle/students/${student.id}/assessments/photo`,
+        {
+          params: {
+            subitem_id: popupCell.subitem.id,
+            lesson_id: popupCell.lesson.id,
+            url,
+          },
+        },
+      );
+      const key = `${popupCell.subitem.id}:${popupCell.lesson.id}`;
+      if (
+        !r.data.value &&
+        !r.data.comment &&
+        (!r.data.photo_urls || r.data.photo_urls.length === 0)
+      ) {
+        const next = { ...assessments };
+        delete next[key];
+        setAssessments(next);
+      } else {
+        setAssessments((cur) => ({ ...cur, [key]: r.data }));
+      }
+    } catch (e) {
+      toast.error(formatApiError(e));
+      throw e;
+    }
+  };
+
   const toggleRouteForLesson = async (lesson, routeId) => {
     const nextRoutes = lesson.routes?.includes(routeId)
       ? lesson.routes.filter((r) => r !== routeId)
@@ -648,6 +703,12 @@ export default function FahrkontrolleTab({ student }) {
                 ?.comment || ""
             : ""
         }
+        photoUrls={
+          popupCell
+            ? assessments[`${popupCell.subitem.id}:${popupCell.lesson.id}`]
+                ?.photo_urls || []
+            : []
+        }
         contextLabel={
           popupCell
             ? `${catNumberFor(popupCell.category)}.${subNumberFor(popupCell.category, popupCell.subitem)} ${popupCell.subitem.title_de} · Lektion ${popupCell.lesson.lesson_number}`
@@ -655,6 +716,8 @@ export default function FahrkontrolleTab({ student }) {
         }
         onSave={saveRating}
         onClear={clearRating}
+        onPhotoUpload={uploadPhoto}
+        onPhotoDelete={deletePhoto}
         onClose={() => setPopupCell(null)}
       />
     </div>

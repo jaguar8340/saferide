@@ -5,14 +5,21 @@ All endpoints require admin auth. Data is fully database-driven so the
 category/subitem/route lists can be edited via the admin UI without any
 code changes.
 """
+import uuid
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from core.activity import log_activity
 from core.db import db
 from core.security import get_current_admin
+from core.storage import (
+    ALLOWED_IMAGE_TYPES,
+    APP_NAME,
+    MAX_UPLOAD_BYTES,
+    put_object,
+)
 from models.schemas import (
     Assessment,
     AssessmentUpsert,
@@ -295,7 +302,7 @@ async def upsert_assessment(
     admin=Depends(get_current_admin),
 ):
     """Upsert a single rating cell. Same (student_id, subitem_id, lesson_id)
-    combination is unique. Empty value ("") deletes the row."""
+    combination is unique. Empty value + comment + no photos deletes the row."""
     # Look up lesson number & subitem title once so the activity log is
     # human-readable ("Lektion 3 · 1.1 Rundumkontrolle → 4").
     lesson = await db.student_lessons.find_one(
@@ -305,15 +312,17 @@ async def upsert_assessment(
     ctx_lesson = f"L{(lesson or {}).get('lesson_number', '?')}"
     ctx_sub = (subitem or {}).get("title_de", "Punkt")
 
-    if payload.value == "" and payload.comment == "":
-        # Both cleared: delete the cell entirely.
-        await db.student_assessments.delete_one(
-            {
-                "student_id": student_id,
-                "subitem_id": payload.subitem_id,
-                "lesson_id": payload.lesson_id,
-            }
-        )
+    filter_ = {
+        "student_id": student_id,
+        "subitem_id": payload.subitem_id,
+        "lesson_id": payload.lesson_id,
+    }
+    existing = await db.student_assessments.find_one(filter_, {"_id": 0})
+    photo_urls = (existing or {}).get("photo_urls", []) or []
+
+    if payload.value == "" and payload.comment == "" and not photo_urls:
+        # All three empty: delete the cell entirely.
+        await db.student_assessments.delete_one(filter_)
         await log_activity(
             student_id,
             "assessment.upsert",
@@ -331,15 +340,10 @@ async def upsert_assessment(
             lesson_id=payload.lesson_id,
             value="",
             comment="",
+            photo_urls=[],
             updated_by=admin.get("email", ""),
         )
     now = datetime.now(timezone.utc).isoformat()
-    filter_ = {
-        "student_id": student_id,
-        "subitem_id": payload.subitem_id,
-        "lesson_id": payload.lesson_id,
-    }
-    existing = await db.student_assessments.find_one(filter_, {"_id": 0})
     if existing:
         await db.student_assessments.update_one(
             filter_,
@@ -373,6 +377,7 @@ async def upsert_assessment(
         lesson_id=payload.lesson_id,
         value=payload.value,
         comment=payload.comment,
+        photo_urls=[],
         updated_at=now,
         updated_by=admin.get("email", ""),
     )
@@ -391,3 +396,134 @@ async def upsert_assessment(
         },
     )
     return assessment
+
+
+# ============================================================
+#  Assessment photos (Kamera-Aufnahme aus dem Rating-Popup)
+# ============================================================
+async def _ensure_assessment(student_id: str, subitem_id: str, lesson_id: str) -> dict:
+    """Fetch or create an empty assessment row so photos can be attached even
+    before any rating/comment was set."""
+    filter_ = {
+        "student_id": student_id,
+        "subitem_id": subitem_id,
+        "lesson_id": lesson_id,
+    }
+    doc = await db.student_assessments.find_one(filter_, {"_id": 0})
+    if doc:
+        return doc
+    doc = Assessment(
+        student_id=student_id,
+        subitem_id=subitem_id,
+        lesson_id=lesson_id,
+    ).model_dump()
+    await db.student_assessments.insert_one(doc)
+    return doc
+
+
+@router.post(
+    "/students/{student_id}/assessments/photo",
+    response_model=Assessment,
+)
+async def upload_assessment_photo(
+    student_id: str,
+    subitem_id: str = Query(...),
+    lesson_id: str = Query(...),
+    file: UploadFile = File(...),
+    admin=Depends(get_current_admin),
+):
+    """Attach a JPEG/PNG snapshot to a rating cell. Multiple photos per cell OK."""
+    content_type = file.content_type or "application/octet-stream"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Nur Bilddateien (PNG / JPG / WebP / GIF) erlaubt",
+        )
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Datei zu gross (max. {MAX_UPLOAD_BYTES // (1024 * 1024)} MB)",
+        )
+    ext = ALLOWED_IMAGE_TYPES[content_type]
+    path = f"{APP_NAME}/fahrkontrolle/{uuid.uuid4()}.{ext}"
+    result = put_object(path, data, content_type)
+    stored = result.get("path", path)
+    photo_url = f"/api/files/{stored}"
+
+    await _ensure_assessment(student_id, subitem_id, lesson_id)
+    filter_ = {
+        "student_id": student_id,
+        "subitem_id": subitem_id,
+        "lesson_id": lesson_id,
+    }
+    now = datetime.now(timezone.utc).isoformat()
+    await db.student_assessments.update_one(
+        filter_,
+        {
+            "$push": {"photo_urls": photo_url},
+            "$set": {"updated_at": now, "updated_by": admin.get("email", "")},
+        },
+    )
+    doc = await db.student_assessments.find_one(filter_, {"_id": 0})
+
+    lesson = await db.student_lessons.find_one(
+        {"id": lesson_id, "student_id": student_id}, {"_id": 0}
+    )
+    subitem = await db.fk_subitems.find_one({"id": subitem_id}, {"_id": 0})
+    await log_activity(
+        student_id,
+        "assessment.photo.add",
+        f"L{(lesson or {}).get('lesson_number', '?')} · {(subitem or {}).get('title_de', 'Punkt')} → Foto hinzugefügt",
+        actor=admin.get("email"),
+        meta={"lesson_id": lesson_id, "subitem_id": subitem_id, "photo_url": photo_url},
+    )
+    return doc
+
+
+@router.delete(
+    "/students/{student_id}/assessments/photo",
+    response_model=Assessment,
+)
+async def delete_assessment_photo(
+    student_id: str,
+    subitem_id: str = Query(...),
+    lesson_id: str = Query(...),
+    url: str = Query(..., description="Full /api/files/... URL to remove"),
+    admin=Depends(get_current_admin),
+):
+    filter_ = {
+        "student_id": student_id,
+        "subitem_id": subitem_id,
+        "lesson_id": lesson_id,
+    }
+    existing = await db.student_assessments.find_one(filter_, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Zelle nicht gefunden")
+
+    photos = [u for u in (existing.get("photo_urls") or []) if u != url]
+    updates = {
+        "photo_urls": photos,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": admin.get("email", ""),
+    }
+
+    # If the cell is now empty (no rating, no comment, no photos), delete it.
+    if (
+        not photos
+        and not (existing.get("value") or "")
+        and not (existing.get("comment") or "")
+    ):
+        await db.student_assessments.delete_one(filter_)
+        return Assessment(
+            student_id=student_id,
+            subitem_id=subitem_id,
+            lesson_id=lesson_id,
+            value="",
+            comment="",
+            photo_urls=[],
+            updated_by=admin.get("email", ""),
+        )
+
+    await db.student_assessments.update_one(filter_, {"$set": updates})
+    return await db.student_assessments.find_one(filter_, {"_id": 0})

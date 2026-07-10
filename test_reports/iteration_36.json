@@ -1,0 +1,68 @@
+{
+  "summary": "Iteration 38 – Fahrkontrolle assessment photo upload/delete: Backend (8/8 pytest) + Frontend (RatingPopup camera flow + no-layout-shift + mobile regression) all PASS on preview URL.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration38_photos.py",
+    "/app/test_reports/pytest/it38_results.xml",
+    "/app/test_reports/it38_desktop.png",
+    "/app/test_reports/it38_mobile.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend POST /photo uses `_ensure_assessment()` then $push into photo_urls – clean pattern; existing rating/comment untouched. GOOD.",
+    "Backend DELETE /photo returns an empty Assessment stub when the row was auto-deleted (all fields empty). The frontend correctly detects this and removes the assessment from local state (FahrkontrolleTab.jsx:253-260). GOOD.",
+    "Backend PUT /assessments now loads `existing` FIRST and honors `photo_urls` when deciding whether to delete the empty row. This is the correct fix for the iter38 requirement. GOOD.",
+    "RatingPopup.jsx – camera icon sits INSIDE the flex justify-between of the label row (same visual band). Photos grid is conditionally rendered ONLY when photoUrls.length > 0 → 0 vertical space when empty. Verified: textarea Y=592.5px identical before-upload and after-delete-photo (both zero-photo states).",
+    "Missing pytest ordering safety net: cross-class dependency `_uploaded_url` did fail on xdist. Fixed by consolidating into a single TestFahrkontrollePhotos class so loadscope pins to one worker. (Non-blocking after fix.)",
+    "core/storage.put_object() is a *sync* requests call inside an async endpoint – blocks the event loop briefly per upload. Not a bug but worth noting for future scale (consider run_in_executor or httpx.AsyncClient)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration38_photos.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8)",
+    "frontend": "100% (all iter38 review points verified)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Backend pytest fixture creates & tears down its own student (TEST_it38 Photo) + category + subitem + lesson. Frontend playwright uploaded ONE photo into an empty existing cell and deleted it (self-cleanup).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter38 fully green. Endpoint contract for future work: POST /api/fahrkontrolle/students/{sid}/assessments/photo?subitem_id=X&lesson_id=Y (multipart 'file') → 200 Assessment with photo_urls appended; 400 for non-image; 413 for >10MB. DELETE same path + &url=… → 200 Assessment (empty stub if row was auto-deleted); 404 if no cell. Upsert PUT preserves existing photo_urls unless caller passes photos explicitly (which the schema doesn't allow anyway). Note: mobile screenshot shows one leftover thumbnail on cell L1/1.1 – irrelevant leftover from either main agent's manual test or the desktop-test-cycle's target (a *different* cell than the mobile target). Not a bug.",
+  "detailed_verification": {
+    "backend_endpoints": {
+      "POST_photo_success_returns_photo_urls": "PASS",
+      "POST_photo_400_on_text_content_type": "PASS",
+      "POST_photo_413_on_11MB": "PASS",
+      "PUT_upsert_preserves_photo_urls_when_setting_rating": "PASS",
+      "PUT_upsert_with_empty_value_and_comment_and_photos_KEEPS_row": "PASS",
+      "DELETE_photo_removes_last_photo_and_deletes_empty_row": "PASS",
+      "DELETE_photo_404_when_no_cell": "PASS",
+      "GET_assessments_includes_photo_urls_field": "PASS"
+    },
+    "frontend_popup": {
+      "camera_icon_present_and_36x36": "PASS (w-9 h-9)",
+      "hidden_file_input_type=file_accept=image/*_capture=environment": "PASS",
+      "camera_HORIZONTAL_to_label_right_side_same_row": "PASS (label center y=566.5, camera center y=566.5)",
+      "photos_grid_NOT_RENDERED_when_photoUrls_empty": "PASS (count = 0)",
+      "textarea_Y_UNCHANGED_between_initial_zero_photos_and_post_delete_zero_photos": "PASS (592.5px both)",
+      "upload_via_set_input_files_triggers_grid_rendering_grid-cols-4": "PASS",
+      "thumbnail_wrapped_in_aspect-square_container": "PASS",
+      "saved_flash_element_present": "PASS",
+      "delete_button_triggers_window.confirm_and_removes_thumbnail": "PASS"
+    },
+    "mobile_regression_390x844": {
+      "popup_bottom_at_viewport_edge": "844.0 == vp 844 (bottom sheet)",
+      "fertig_button_bottom_832_visible": "PASS",
+      "textarea_font_size": "16px (iOS zoom prevention preserved)",
+      "camera_visible_on_mobile": "PASS"
+    }
+  }
+}

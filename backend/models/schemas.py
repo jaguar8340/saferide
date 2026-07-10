@@ -1,7 +1,7 @@
 """All Pydantic request/response models used across the API."""
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -317,6 +317,7 @@ class Assessment(BaseModel):
     lesson_id: str
     value: str = ""
     comment: str = ""
+    photo_urls: List[str] = Field(default_factory=list)   # /api/files/... URLs
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
 
