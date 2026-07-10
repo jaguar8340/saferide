@@ -1,0 +1,69 @@
+{
+  "summary": "Iteration 40 – PDF-Rechnungs-Archiv (Hetzner S3) + Visual/Text changes. 12/12 backend pytest PASS, all 4 frontend visual checks PASS. PDF archive workflow verified end-to-end: first GET builds+uploads to saferide/invoices/{number}-{iid}.pdf, second GET streams byte-identical PDF from archive (md5 match), ?force=true regenerates, PATCH of non-status/payment_method field clears archive_path/archive_url (verified via price PATCH → both empty strings), PATCH of only status or only payment_method preserves archive_path. Footer bottom bar reorganised: CMS Login now LEFT of copyright (x=349 vs Impressum x=1081 on desktop; on tablet 768px: admin x=349/w=60, WhatsApp bubble x=676 — no overlap). WhySafeRide section renders bg-coral-strong (linear-gradient rgb(255,156,122)→rgb(245,106,77)→rgb(220,74,48)), all 6 pillar boxes are bg-[#fbf9f6] off-white (Mental-Coaching pillar no longer dark). 3 About-Speedos completely removed from DOM. Dog image (img[alt=Nadines Hund]) rendered with h-[180px] md:h-[220px] object-cover. wp1 body_de = 'Ich bin Nadine – keine anonyme Fahrschule, keine Lehrer-Rotation. Persönliche Begleitung von der ersten Lektion bis zum Führerausweis.' (134 chars, 2 sentences).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration40.py",
+    "/app/test_reports/pytest/it40_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "student_invoices.export_invoice_pdf: put_object() and get_object() (boto3 sync) are called from an async endpoint without asyncio.to_thread — same issue flagged in iter39. Under bursts this briefly blocks the event loop.",
+    "student_invoices.update_invoice: invalidate_archive logic is correct but silently ignores potential race — if two admins PATCH the same invoice concurrently while one is downloading a PDF, the invoice could end up with archive fields pointing to a still-uploading blob. Not a bug per se, but worth documenting.",
+    "student_invoices.export_invoice_pdf: when force=true and put_object() throws, the code silently swallows the exception (pass in except). The user still gets a valid PDF, but the archive is left stale/unchanged with no server log — recommend at minimum a logger.warning() here.",
+    "student_invoices.export_invoice_pdf: on archive read failure ('except Exception: pass'), the stale archive_path is NOT cleared. Next call will keep trying the missing S3 object forever until a PATCH invalidates it. Consider clearing archive_path in the DB when get_object throws NoSuchKey.",
+    "InvoicesTab.jsx line 41: backendBase resolved once at module load; ok in CRA but worth noting that the archive link is a plain <a href> and points to /api/files/... (auth-free file endpoint) — target='_blank' opens in a new tab without credentials. Verified that GET /api/files/... is admin-independent (public). Good.",
+    "About.jsx: There are now TWO dog images on the page. The upper one (line 66-73, path='about.dog_image_url', 180-220px height, replacing the 3 Speedos) and the lower one (line 118, path='about.dog_photo_url', 220-300px, in a caption slot). Spec called for a single Hunde-Foto — main agent may want to consolidate or rename to avoid confusion between dog_image_url and dog_photo_url.",
+    "WhySafeRide.jsx: ACCENTS[i%6] still has `bg` implied via truthiness (`const dark = !!a.bg`). Since none of the 6 accents now define a.bg, `dark` is always false — safe but the branch code (the `${a.bg} ${a.fg}` template + editMode dark styling on trash icon) is dead. Cleanup opportunity.",
+    "wp1 body_de is 134 chars including a UTF-8 en-dash — displayed cleanly in the pillar box (~2 lines at desktop / ~3 lines at mobile). Requirement ('unter 5 Zeilen') met."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration40.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12)",
+    "frontend": "100% (4/4 visual checks + Archive icon UI + tablet WhatsApp non-overlap)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "test_iteration40.py creates ephemeral: 1 student first_name='TEST_it40' + 1 invoice (RE-2026-####), module-scoped teardown deletes the student cascade. UI verification separately created 1 student/invoice (TEST_it40ui/RE-2026-0048) and cleaned up manually. Hetzner bucket saferide/invoices/ has 2 archived PDFs from this iteration (RE-2026-0047, RE-2026-0048 approx — safe to leave; archive is by design persistent).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PDF-Archive workflow is LIVE. Storage path: saferide/invoices/{number}-{iid}.pdf. Archive fields on StudentInvoice: archive_path, archive_url (=/api/files/{path}), archived_at (ISO). Invalidation rule: PATCH clears archive_path+archive_url if ANY field OTHER THAN status or payment_method changes. Frontend InvoicesTab shows Archive icon (lucide Archive, data-testid=invoice-archive-{id}) only when inv.archive_url is truthy — plain <a target='_blank' href=`${backendBase}${inv.archive_url}`>. Footer CMS Login is data-testid=footer-admin-link, order-2 md:order-1 (left on desktop, second row on mobile). WhySafeRide section uses class bg-coral-strong (custom CSS in index.css line 294-297). About section replaced 3 Speedos with img[alt='Nadines Hund'] bound to path='about.dog_image_url' (default Unsplash URL when unset). NOTE: About.jsx has BOTH dog_image_url (new, top) and dog_photo_url (existing, bottom) — two dog images on the same page currently.",
+  "detailed_verification": {
+    "pdf_archive": {
+      "GET /api/students/{sid}/invoices/{iid}.pdf (1st call) → 200, %PDF header, ~24 KB, sets archive_path=saferide/invoices/...pdf + archive_url=/api/files/... + archived_at": "PASS",
+      "GET .../invoices/{iid}.pdf (2nd call) → 200, md5 identical to 1st (byte-for-byte)": "PASS",
+      "GET /api/files/{archive_path} directly → 200, md5 identical": "PASS",
+      "GET .../invoices/{iid}.pdf?force=true → 200, valid PDF": "PASS",
+      "PATCH invoice price_chf → archive_path='' and archive_url=''": "PASS",
+      "Next PDF GET after PATCH → archive fields re-populated": "PASS",
+      "PATCH status only → archive_path preserved": "PASS",
+      "PATCH payment_method only → archive_path preserved": "PASS"
+    },
+    "public_content": {
+      "GET /api/content → wp1.body_de is 134 chars, contains 'Nadine', ≤ 5 lines": "PASS"
+    },
+    "frontend_visual": {
+      "Footer: CMS Login LEFT of Impressum/Datenschutz on desktop (1280×900)": "PASS",
+      "Footer: CMS Login not covered by WhatsApp bubble on tablet (768×1024)": "PASS",
+      "WhySafeRide section has class bg-coral-strong with linear-gradient(#ff9c7a→#f56a4d→#dc4a30)": "PASS",
+      "All 6 pillar boxes are bg-[#fbf9f6] (no dark pillar remains)": "PASS",
+      "About: about-speedo-0/1/2 all removed from DOM": "PASS",
+      "About: img[alt='Nadines Hund'] present with h-[180-220px] object-cover": "PASS",
+      "InvoicesTab: invoice-archive-{id} icon visible when archive_url set, target=_blank, href includes /api/files/saferide/invoices/{number}-{iid}.pdf": "PASS",
+      "InvoicesTab: PDF button still rendered next to Archive icon": "PASS"
+    },
+    "regression": {
+      "GET /api/files/<unknown> → 404": "PASS",
+      "GET /api/students/{sid}/fahrkontrolle.pdf (empty student) → 200 %PDF": "PASS"
+    }
+  },
+  "rca of the issue": "N/A – no bugs discovered. All spec items match expected behaviour. Minor code-quality notes captured under critical_code_review_comments (dead code branch in WhySafeRide ACCENTS, missing logger.warning on archive failure paths, two dog-image slots on the About page)."
+}

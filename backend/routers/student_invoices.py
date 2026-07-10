@@ -134,6 +134,13 @@ async def update_invoice(
     if "payment_method" in updates and updates["payment_method"] not in PAYMENT_METHODS:
         raise HTTPException(status_code=400, detail="Ungültige Zahlungsweise")
 
+    # Invalidate the PDF archive whenever any invoice field changes –
+    # simplest correctness win. Next PDF download regenerates + re-archives.
+    invalidate_archive = any(k not in ("status", "payment_method") for k in updates.keys())
+    if invalidate_archive:
+        updates["archive_path"] = ""
+        updates["archive_url"] = ""
+
     res = await db.student_invoices.update_one(
         {"id": invoice_id, "student_id": student_id}, {"$set": updates}
     )
@@ -179,18 +186,61 @@ from routers.invoice_pdf import build_invoice_pdf  # noqa: E402 – circular-saf
 
 @router.get("/{student_id}/invoices/{invoice_id}.pdf")
 async def export_invoice_pdf(
-    student_id: str, invoice_id: str, admin=Depends(get_current_admin)
+    student_id: str,
+    invoice_id: str,
+    force: bool = False,
+    admin=Depends(get_current_admin),
 ):
+    """Return the PDF for this invoice. First call generates, uploads to
+    Hetzner and stores the archive path. Subsequent calls stream the archived
+    PDF straight from storage. Use `?force=true` to force a regeneration."""
+    from core.storage import get_object, put_object
     student = await _ensure_student(student_id)
     invoice = await db.student_invoices.find_one(
         {"id": invoice_id, "student_id": student_id}, {"_id": 0}
     )
     if not invoice:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
-    settings = await get_or_create_settings()
 
-    pdf_bytes = build_invoice_pdf(invoice, student, settings)
     filename = f"{invoice.get('number', 'Rechnung')}.pdf"
+    archive_path = invoice.get("archive_path")
+
+    # Fast path — pull from archive if available and not forcing regen
+    if archive_path and not force:
+        try:
+            pdf_bytes, _ = get_object(archive_path)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+        except Exception:
+            # If archive is missing / storage error, fall through and rebuild
+            pass
+
+    settings = await get_or_create_settings()
+    pdf_bytes = build_invoice_pdf(invoice, student, settings)
+
+    # Persist to Hetzner + remember the path on the invoice row
+    number = (invoice.get("number") or "invoice").replace("/", "-")
+    stored_path = f"saferide/invoices/{number}-{invoice_id}.pdf"
+    try:
+        put_object(stored_path, pdf_bytes, "application/pdf")
+        now_iso = datetime.now(timezone.utc).isoformat()
+        await db.student_invoices.update_one(
+            {"id": invoice_id, "student_id": student_id},
+            {
+                "$set": {
+                    "archive_path": stored_path,
+                    "archive_url": f"/api/files/{stored_path}",
+                    "archived_at": now_iso,
+                }
+            },
+        )
+    except Exception:
+        # If storage is down we still deliver the PDF – archive is a nice-to-have
+        pass
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

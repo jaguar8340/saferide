@@ -291,6 +291,10 @@ select {
 .bg-sunset-soft {
   background: linear-gradient(180deg, #fff6ef 0%, #ffe9d8 55%, var(--sr-blush) 100%);
 }
+.bg-coral-strong {
+  /* Warmer, richer coral for section highlights ("Warum Safe Ride") */
+  background: linear-gradient(180deg, #ff9c7a 0%, #f56a4d 55%, #dc4a30 100%);
+}
 .ring-accent-soft {
   box-shadow: 0 0 0 1px var(--sr-border), 0 20px 40px -20px rgba(255, 90, 54, 0.28);
 }

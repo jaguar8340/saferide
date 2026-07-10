@@ -349,6 +349,9 @@ class StudentInvoice(StudentInvoiceCreate):
     number: str = ""                                        # RE-2026-0001 (system-generated)
     date: str = Field(default_factory=lambda: datetime.now(timezone.utc).date().isoformat())
     mwst_rate: float = 0.0                                  # snapshot of settings rate at creation
+    archive_path: str = ""                                  # Hetzner S3 path of the archived PDF
+    archive_url: str = ""                                   # /api/files/{archive_path}
+    archived_at: str = ""                                   # ISO timestamp of last archive write
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_by: str = ""
 

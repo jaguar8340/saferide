@@ -62,73 +62,14 @@ export default function About({ data }) {
               />
             </div>
 
-            <div className="mt-10 grid grid-cols-3 gap-3 md:gap-4">
-              {[
-                {
-                  key: "stat1",
-                  vPath: "about.stat1_value",
-                  v: data.stat1_value,
-                  lPath: `about.stat1_label_${lang}`,
-                  l: pick(data.stat1_label_de, data.stat1_label_en),
-                  progress: 0.86,
-                  color: "#ff5a36",
-                  textColor: "#0f172a",
-                  wrapper:
-                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#ff5a36]/40 transition-colors",
-                },
-                {
-                  key: "stat2",
-                  vPath: "about.stat2_value",
-                  v: data.stat2_value,
-                  lPath: `about.stat2_label_${lang}`,
-                  l: pick(data.stat2_label_de, data.stat2_label_en),
-                  progress: 0.62,
-                  color: "#1e6fff",
-                  textColor: "#0f172a",
-                  wrapper:
-                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#1e6fff]/40 transition-colors",
-                },
-                {
-                  key: "stat3",
-                  vPath: "about.stat3_value",
-                  v: data.stat3_value,
-                  lPath: `about.stat3_label_${lang}`,
-                  l: pick(data.stat3_label_de, data.stat3_label_en),
-                  progress: 0.74,
-                  color: "#ff8c42",
-                  textColor: "#0f172a",
-                  wrapper:
-                    "rounded-2xl bg-white border border-[#e2e8f0] p-4 md:p-5 hover:border-[#ff8c42]/40 transition-colors",
-                },
-              ].map((s, i) => (
-                <div
-                  key={s.key}
-                  data-testid={`about-stat-${i}`}
-                  className={s.wrapper}
-                >
-                  <Speedo
-                    testid={`about-speedo-${i}`}
-                    progress={s.progress}
-                    color={s.color}
-                    textColor={s.textColor}
-                  >
-                    <Editable
-                      path={s.vPath}
-                      value={s.v}
-                      as="div"
-                      className="mt-[-14px] font-display leading-none tabular-nums block text-center"
-                      style={{ color: s.textColor, fontSize: "clamp(1.9rem, 3.5vw, 2.8rem)" }}
-                    />
-                    <Editable
-                      path={s.lPath}
-                      value={s.l}
-                      as="div"
-                      className="mt-2 text-[10px] tracking-[0.2em] uppercase font-semibold block text-center"
-                      style={{ color: s.textColor, opacity: 0.72 }}
-                    />
-                  </Speedo>
-                </div>
-              ))}
+            <div className="mt-10">
+              <EditableImage
+                path="about.dog_image_url"
+                src={data.dog_image_url || "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1000&q=80"}
+                alt="Nadines Hund"
+                className="block rounded-2xl overflow-hidden border border-[#e2e8f0]"
+                imgClassName="w-full h-[180px] md:h-[220px] object-cover"
+              />
             </div>
 
             <CertificatesDialog />

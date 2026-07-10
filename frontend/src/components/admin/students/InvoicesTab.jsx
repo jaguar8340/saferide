@@ -8,7 +8,7 @@
  * on top. A "PDF" button per row streams a formatted invoice PDF.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail } from "lucide-react";
+import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 
@@ -37,6 +37,8 @@ const money = (n) =>
     currency: "CHF",
     minimumFractionDigits: 2,
   }).format(Number(n) || 0);
+
+const backendBase = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 
 export default function InvoicesTab({ student }) {
   const [invoices, setInvoices] = useState([]);
@@ -426,6 +428,18 @@ export default function InvoicesTab({ student }) {
                     )}
                     PDF
                   </button>
+                  {inv.archive_url && (
+                    <a
+                      href={`${backendBase}${inv.archive_url}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid={`invoice-archive-${inv.id}`}
+                      title={`Aus Archiv laden – ${inv.archived_at?.slice(0, 10) || ""}`}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase text-[#475569] bg-white border border-[#e2e8f0] px-2.5 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a]"
+                    >
+                      <Archive size={11} />
+                    </a>
+                  )}
                   <button
                     onClick={() => sendEmail(inv)}
                     disabled={sending === inv.id}

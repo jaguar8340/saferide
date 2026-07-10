@@ -20,7 +20,7 @@ const CANTON_CODES = ["ZH", "SZ", "SG", "GR"];
 
 const ACCENTS = [
   { iconBg: "bg-gradient-to-br from-[#ff5a36] to-[#ff8c42]", iconFg: "text-white" },
-  { iconBg: "bg-white", iconFg: "text-[#ff5a36]", bg: "bg-[#0f172a]", fg: "text-white" },
+  { iconBg: "bg-gradient-to-br from-[#0f172a] to-[#334155]", iconFg: "text-white" },
   { iconBg: "bg-[#ffe4d6]", iconFg: "text-[#e74123]" },
   { iconBg: "bg-gradient-to-br from-[#1e6fff] to-[#0b4fd8]", iconFg: "text-white" },
   { iconBg: "bg-[#dbe9ff]", iconFg: "text-[#1e6fff]" },
@@ -59,7 +59,7 @@ export default function WhySafeRide({ data }) {
     <section
       id="why-safe-ride"
       data-testid="why-safe-ride-section"
-      className="section-pad bg-sunset-soft border-t border-[#e2e8f0]"
+      className="section-pad bg-coral-strong border-t border-[#e2e8f0]"
     >
       <div className="container-x">
         {/* Header */}

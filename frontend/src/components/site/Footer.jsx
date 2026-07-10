@@ -145,10 +145,17 @@ export default function Footer({ data }) {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-white/15 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/45">
-          <div>
-            © {year} Fahrschule Safe Ride · {t.footer.rights}
+          <div className="flex items-center gap-4 order-2 md:order-1">
+            <span>© {year} Fahrschule Safe Ride · {t.footer.rights}</span>
+            <Link
+              to="/admin/login"
+              className="hover:text-[#ff5a36] transition-colors"
+              data-testid="footer-admin-link"
+            >
+              {t.admin.title}
+            </Link>
           </div>
-          <nav className="flex items-center gap-5">
+          <nav className="flex items-center gap-5 order-1 md:order-2">
             <Link
               to="/impressum"
               className="hover:text-[#ff5a36] transition-colors"
@@ -162,13 +169,6 @@ export default function Footer({ data }) {
               data-testid="footer-datenschutz-link"
             >
               {lang === "de" ? "Datenschutz" : "Privacy"}
-            </Link>
-            <Link
-              to="/admin/login"
-              className="hover:text-[#ff5a36] transition-colors"
-              data-testid="footer-admin-link"
-            >
-              {t.admin.title}
             </Link>
           </nav>
         </div>
