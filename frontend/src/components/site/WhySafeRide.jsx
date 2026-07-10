@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Plus,
   Trash2,
-  ArrowUpRight,
 } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
@@ -190,38 +189,21 @@ export default function WhySafeRide({ data }) {
           </div>
         )}
 
-        {/* Closing + CTA */}
+        {/* Closing */}
         <motion.div
           initial={{ opacity: 0, y: 22 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="mt-12 md:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8 items-end"
+          className="mt-12 md:mt-16"
         >
           <Editable
             path={`why_safe_ride.closing_${lang}`}
             value={pick(data.closing_de, data.closing_en)}
             as="p"
             multiline
-            className="lg:col-span-8 text-xl md:text-2xl font-display leading-snug tracking-tight text-white block"
+            className="max-w-4xl text-xl md:text-2xl font-display leading-snug tracking-tight text-white block"
           />
-          <div className="lg:col-span-4 flex lg:justify-end">
-            <a
-              href="/#contact"
-              data-testid="why-safe-ride-cta"
-              className="btn-accent group whitespace-nowrap"
-            >
-              <Editable
-                path={`why_safe_ride.cta_${lang}`}
-                value={pick(data.cta_de, data.cta_en)}
-                className="inline"
-              />
-              <ArrowUpRight
-                size={16}
-                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </a>
-          </div>
         </motion.div>
       </div>
     </section>
