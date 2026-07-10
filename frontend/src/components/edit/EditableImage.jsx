@@ -23,7 +23,6 @@ export default function EditableImage({
 }) {
   const ctx = useEdit();
   const editMode = forceEditMode !== undefined ? forceEditMode : ctx.editMode;
-  const updateFn = onUpdate || ctx.updateField;
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
@@ -42,7 +41,14 @@ export default function EditableImage({
       const r = await api.post("/upload", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      updateFn(path, r.data.url);
+      // When a custom onUpdate is provided the caller expects just the URL
+      // (e.g. blog post uses `(url) => patch({ hero_image_url: url })`).
+      // The default context updater expects `(path, url)` for content docs.
+      if (onUpdate) {
+        onUpdate(r.data.url);
+      } else {
+        ctx.updateField(path, r.data.url);
+      }
       toast.success("Bild ersetzt");
     } catch (err) {
       toast.error(formatApiError(err, "Upload fehlgeschlagen"));

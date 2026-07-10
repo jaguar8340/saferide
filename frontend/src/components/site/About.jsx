@@ -98,8 +98,6 @@ export default function About({ data }) {
                 />
               </div>
             </div>
-
-            <CertificatesDialog />
           </motion.div>
 
           <motion.div
@@ -131,6 +129,10 @@ export default function About({ data }) {
                   className="text-xs text-[#475569] mt-1 font-medium block"
                 />
               </div>
+            </div>
+
+            <div className="mt-10 md:mt-12 flex justify-end lg:justify-start">
+              <CertificatesDialog triggerClassName="!mt-0 pl-4 pr-6 py-3 text-base [&>span:first-child]:w-9 [&>span:first-child]:h-9 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.25)]" />
             </div>
           </motion.div>
         </div>

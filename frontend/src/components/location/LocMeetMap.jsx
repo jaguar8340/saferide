@@ -98,7 +98,7 @@ export default function LocMeetMap({ loc, updateField }) {
                   path="meet_image_url"
                   src={loc.meet_image_url}
                   alt={`Treffpunkt ${loc.name}`}
-                  onUpdate={updateField}
+                  onUpdate={(url) => updateField("meet_image_url", url)}
                   className="block w-full h-full"
                   imgClassName="w-full h-full object-cover"
                 />

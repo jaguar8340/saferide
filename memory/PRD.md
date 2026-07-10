@@ -362,6 +362,11 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 42.2 (10.02.2026) — Blog-Bild-Upload-Bug + Diplome-Button-Position (DONE, End-to-End verifiziert):**
+  - **Blog-Hero-Image-Upload Bug**: `EditableImage.jsx` rief `updateFn(path, url)` mit BEIDEN Argumenten auf, egal ob der Konsument einen `onUpdate(url)`-Callback oder den Context-`updateField(path, value)` verwendet. Für Blog-Posts landete daher der Pfad-String `"blog.hero_image"` in der DB statt der URL, das Bild war kaputt. Fix: sauberes if/else `onUpdate ? onUpdate(url) : ctx.updateField(path, url)`. Regressions in Location-Hero/Meet-Photos (die vorher `onUpdate={updateField}` nutzten) durch Wrapper-Callbacks `(url) => updateField("hero_image_url", url)` in `LocHero.jsx` + `LocMeetMap.jsx` gefixt.
+  - **About: Diplome-Button neu positioniert**: `CertificatesDialog` akzeptiert jetzt einen `triggerClassName`-Prop. In `About.jsx` verschoben aus der linken (Text-)Column unter das Hunde-Foto in die **rechte Column unter das Nadine-Portrait**, mit grösseren Proportionen (`text-base`, Icon-Kreis `w-9 h-9`, mehr Padding, Schatten).
+  - Backend-Upload-Endpoint (`POST /api/upload` → Hetzner S3) getestet: Upload einer Test-PNG + PATCH auf `hero_image_url` liefert korrekten `/api/files/saferide/uploads/...`-Pfad zurück. Location-Hero-Rendering weiter intakt.
+
 - ✅ **Iteration 42.1 (10.02.2026) — Seed-Idempotenz auf Blog + Locations ausgeweitet (DONE, 4/4 Tests grün):**
   - Gleiches Pattern wie in Iter42 auf `blog_posts` und `locations` angewandt: Marker in `_seed_state`, Backfill für Prod-DBs, gelöschte Items kommen NICHT mehr zurück beim Redeploy.
   - Für Locations bleibt die Schema-Migration existierender Docs (FAQs auf 15 Einträge, exam_routes Rename, here_we_drive Felder etc.) unverändert erhalten.

@@ -20,7 +20,7 @@ import Editable from "@/components/edit/Editable";
  * modal grid. Admins can upload, retitle and delete certificates directly
  * from the modal.
  */
-export default function CertificatesDialog() {
+export default function CertificatesDialog({ triggerClassName = "" }) {
   const { lang, pick } = useLang();
   const { editMode } = useEdit();
   const [open, setOpen] = useState(false);
@@ -117,7 +117,7 @@ export default function CertificatesDialog() {
         <button
           type="button"
           data-testid="certificates-open"
-          className="mt-7 inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full pl-3 pr-5 py-2 text-sm font-semibold text-[#0f172a] hover:border-[#ff5a36] hover:text-[#ff5a36] transition-colors group"
+          className={`mt-7 inline-flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-full pl-3 pr-5 py-2 text-sm font-semibold text-[#0f172a] hover:border-[#ff5a36] hover:text-[#ff5a36] transition-colors group ${triggerClassName}`}
         >
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#ff5a36]/10 text-[#ff5a36] group-hover:bg-[#ff5a36] group-hover:text-white transition-colors">
             <Award size={14} />
