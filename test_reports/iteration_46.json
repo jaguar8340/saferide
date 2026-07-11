@@ -1,0 +1,27 @@
+{
+  "summary": "Verified InvoicesTab layout fix (iteration 46) on /admin/students/443c0166-8f6e-4274-8c6a-9dfd6cc27e27?tab=invoices at 1024x900, 768x900 and 1440x900. All prior overflow issues are gone: (1) 'Neue Rechnung' 4-field grid + 2nd row (Bemerkungen + Status + Anlegen) are fully visible at all 3 viewports — Anlegen button right edge is inside the container (975 at 1024, 719 at 768, 1311 at 1440); (2) existing invoice rows (RE-2026-0001 + RE-2026-0044) render as 5-field grid + action row (Status + Note + PDF + E-Mail + Delete) with every button/testid inside the viewport at all widths; (3) document.documentElement.scrollWidth == clientWidth at every viewport => no horizontal scroll. Functional smoke test: created invoice via POST 200 (auto-num RE-2026-0068 matches ^RE-\\d{4}-\\d{4}$), payment_method PATCH on existing row twint→bar returned 200 (restored to twint), DELETE of the test invoice returned 200. Seed data is unchanged (2 invoices, CHF 240 total, CHF 120 offen, CHF 120 bezahlt).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "InvoicesTab existing-row Dauer column @1440", "issues": ["Between the 'Dauer min' input (right≈670) and the 'Preis CHF' input (x≈845) there is a ~175 px gap because Dauer's inner input is width w-16 (64 px) while the grid cell reserves a full 1fr slot. Cosmetic only — everything remains clickable and readable. Consider `sm:grid-cols-[1fr_1fr_120px_1fr_1fr]` or wrap Dauer with `justify-self:start` for tighter layout on wide screens."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoicesTab.jsx L233 grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` and L277 `sm:grid-cols-[1fr_180px_auto]` correctly fix the previous overflow. Good responsive breakpoints.",
+    "L329 row grid `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` combined with `flex-wrap` on the action row at L401 successfully prevents horizontal overflow even at 768 px.",
+    "Minor: cycleStatus() (L127) is defined but its test-id `invoice-status-{id}` is only a status pill button, not tested here; it works — clicking cycles Offen→Bezahlt→Storniert but users may not discover this. Consider a tiny tooltip.",
+    "Minor: sendEmail() at L167 uses window.prompt() which is blocking and hard to test/style. Consider a shadcn Dialog. Not part of this iteration."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "Temporarily created invoice RE-2026-0068 (100 CHF / 45 min / bar / offen) for the create+delete round-trip and DELETED it right after. Also toggled payment_method of RE-2026-0001 twint→bar→twint. Seed data is fully restored (2 invoices, RE-2026-0001 open/twint, RE-2026-0044 paid/kreditkarte).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "InvoicesTab layout is now fully responsive at 768/1024/1440. All original data-testids preserved. Public URL: REACT_APP_BACKEND_URL. Admin JWT localStorage key = 'saferide_admin_token'. Student ID 443c0166-8f6e-4274-8c6a-9dfd6cc27e27 (Stefan Haas) has RE-2026-0001 (open/twint) and RE-2026-0044 (paid/kreditkarte). New invoice numbers currently at RE-2026-0068+ (counter is monotonic).",
+  "rca of the issue": "Original problem: previous CSS used `grid-cols-1 md:grid-cols-6` (6 side-by-side fields) and a fixed 8-column pixel grid `md:grid-cols-[120px_130px_100px_120px_140px_120px_1fr_auto]` totalling >730 px minimum + gaps, which overflowed the ~660 px inner container at iPad-portrait (768 px) and even truncated Anlegen/Status at 1024 px. Fix: split into two responsive rows — form uses `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` + `sm:grid-cols-[1fr_180px_auto]`; invoice rows use `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` for data + `flex flex-wrap` for actions. Verified viewport widths 768/1024/1440 all have scrollWidth == clientWidth (no horizontal scroll) and all testids fully within the viewport."
+}

@@ -230,7 +230,7 @@ export default function InvoicesTab({ student }) {
         <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-3">
           Neue Rechnung — Nr. wird automatisch generiert
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <FieldGroup label="Datum der Lektion">
             <input
               type="date"
@@ -273,6 +273,18 @@ export default function InvoicesTab({ student }) {
               ))}
             </select>
           </FieldGroup>
+        </div>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-3 items-end">
+          <FieldGroup label="Bemerkungen (optional)">
+            <textarea
+              rows={2}
+              value={draft.note}
+              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+              placeholder="z. B. Zusatzkilometer, Autobahnaufschlag"
+              data-testid="invoice-new-note"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-none"
+            />
+          </FieldGroup>
           <FieldGroup label="Status">
             <select
               value={draft.status}
@@ -285,30 +297,16 @@ export default function InvoicesTab({ student }) {
               <option value="cancelled">Storniert</option>
             </select>
           </FieldGroup>
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={createInvoice}
-              disabled={creating}
-              data-testid="invoice-create-button"
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50"
-            >
-              {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-              Anlegen
-            </button>
-          </div>
-        </div>
-        <div className="mt-3">
-          <FieldGroup label="Bemerkungen (optional)">
-            <textarea
-              rows={2}
-              value={draft.note}
-              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-              placeholder="z. B. Zusatzkilometer, Autobahnaufschlag"
-              data-testid="invoice-new-note"
-              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-none"
-            />
-          </FieldGroup>
+          <button
+            type="button"
+            onClick={createInvoice}
+            disabled={creating}
+            data-testid="invoice-create-button"
+            className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-5 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+          >
+            {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+            Anlegen
+          </button>
         </div>
       </div>
 
@@ -328,7 +326,7 @@ export default function InvoicesTab({ student }) {
               data-testid={`invoice-row-${inv.id}`}
               className="bg-white border border-[#e7e5e4] rounded-2xl p-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-[120px_130px_100px_120px_140px_120px_1fr_auto] items-center gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
                 <div>
                   <label className="text-[9px] tracking-widest uppercase text-[#94a3b8] block">
                     Rechnungsnr.
@@ -349,7 +347,7 @@ export default function InvoicesTab({ student }) {
                     defaultValue={inv.lesson_date}
                     onBlur={(e) => e.target.value !== inv.lesson_date && patch(inv.id, "lesson_date", e.target.value)}
                     data-testid={`invoice-lesson-date-${inv.id}`}
-                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
+                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-full min-w-0"
                   />
                   <div className="text-[10px] text-[#a8a29e]">{formatDMY(inv.lesson_date)}</div>
                 </div>
@@ -357,15 +355,17 @@ export default function InvoicesTab({ student }) {
                   <label className="text-[9px] tracking-widest uppercase text-[#94a3b8] block">
                     Dauer
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    defaultValue={inv.duration_min}
-                    onBlur={(e) => Number(e.target.value) !== Number(inv.duration_min) && patch(inv.id, "duration_min", e.target.value)}
-                    data-testid={`invoice-duration-${inv.id}`}
-                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-16"
-                  />
-                  <span className="text-[10px] text-[#a8a29e] ml-1">min</span>
+                  <div className="flex items-baseline">
+                    <input
+                      type="number"
+                      min={0}
+                      defaultValue={inv.duration_min}
+                      onBlur={(e) => Number(e.target.value) !== Number(inv.duration_min) && patch(inv.id, "duration_min", e.target.value)}
+                      data-testid={`invoice-duration-${inv.id}`}
+                      className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-16"
+                    />
+                    <span className="text-[10px] text-[#a8a29e] ml-1">min</span>
+                  </div>
                 </div>
                 <div>
                   <label className="text-[9px] tracking-widest uppercase text-[#94a3b8] block">
@@ -377,7 +377,7 @@ export default function InvoicesTab({ student }) {
                     defaultValue={inv.price_chf}
                     onBlur={(e) => Number(e.target.value) !== Number(inv.price_chf) && patch(inv.id, "price_chf", e.target.value)}
                     data-testid={`invoice-price-${inv.id}`}
-                    className="text-sm font-semibold text-[#0f172a] border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-24"
+                    className="text-sm font-semibold text-[#0f172a] border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-full min-w-0"
                   />
                 </div>
                 <div>
@@ -388,17 +388,21 @@ export default function InvoicesTab({ student }) {
                     defaultValue={inv.payment_method}
                     onChange={(e) => e.target.value !== inv.payment_method && patch(inv.id, "payment_method", e.target.value)}
                     data-testid={`invoice-payment-method-${inv.id}`}
-                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
+                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-full min-w-0"
                   >
                     {Object.entries(PAYMENT_META).map(([k, v]) => (
                       <option key={k} value={k}>{v.label}</option>
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Row 2: status · note · actions */}
+              <div className="mt-3 pt-3 border-t border-[#f3f0eb] flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => cycleStatus(inv)}
                   data-testid={`invoice-status-${inv.id}`}
-                  className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full transition-colors self-start"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full transition-colors shrink-0"
                   style={{ background: st.bg, color: st.text }}
                 >
                   {inv.status === "paid" && <Check size={11} strokeWidth={3} />}
@@ -411,10 +415,10 @@ export default function InvoicesTab({ student }) {
                   defaultValue={inv.note}
                   onBlur={(e) => e.target.value !== inv.note && patch(inv.id, "note", e.target.value)}
                   data-testid={`invoice-note-${inv.id}`}
-                  placeholder="Bemerkungen"
-                  className="text-sm text-[#334155] border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] min-w-0"
+                  placeholder="Bemerkungen (optional)"
+                  className="flex-1 min-w-[120px] text-sm text-[#334155] border-0 bg-[#fafaf9] rounded-lg px-3 py-1.5 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#ff5a36]"
                 />
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button
                     onClick={() => downloadPdf(inv)}
                     disabled={downloading === inv.id}
