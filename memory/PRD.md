@@ -362,6 +362,9 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 47 (11.02.2026) — Rechnungs-Status als Dropdown (DONE, Frontend 100 % via testing_agent_v3_fork):**
+  - Statuspill (Offen/Bezahlt/Storniert) auf bestehenden Rechnungen ist jetzt ein **shadcn `DropdownMenu`** statt zyklischer Klick-Button. Chevron-Icon signalisiert Klickbarkeit, aktueller Status ist mit grünem Häkchen markiert. `setStatus` ist idempotent (kein PATCH bei gleichem Status). Testing-Agent bestätigt PATCH+Inline-Update funktioniert, Layout weiter clean an 1440 + 768.
+
 - ✅ **Iteration 46 (11.02.2026) — Rechnungs-Tab Layout-Fix (DONE, Frontend 100 % via testing_agent_v3_fork):**
   - **Problem**: "Neue Rechnung"-Form nutzte `md:grid-cols-6` (6 nebeneinander) und die Rechnungs-Zeile ein fixes 8-Spalten-Pixelraster `[120px_130px_100px_120px_140px_120px_1fr_auto]` (>730px + Gaps). Auf iPad-Portrait (~768px) und sogar bei 1024px liefen "Anlegen"-Button, Status-Select und PDF/E-Mail-Buttons aus dem Container.
   - **Fix** (`InvoicesTab.jsx`): Neue Form auf 2 Reihen aufgeteilt — Row 1 `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` (Datum/Dauer/Preis/Zahlungsweise), Row 2 `grid-cols-1 sm:grid-cols-[1fr_180px_auto]` (Bemerkungen/Status/Anlegen). Bestehende Rechnungs-Zeile analog: Row 1 `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5` (5 Datenfelder), Row 2 `flex flex-wrap` (Status/Note/PDF/E-Mail/Delete). Alle Original-testids erhalten. Testing Agent bestätigt scrollWidth == clientWidth an allen 3 Viewports.
