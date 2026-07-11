@@ -362,6 +362,9 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
 
+- ✅ **Iteration 48 (11.02.2026) — Zahlungsweise als Dropdown (DONE, Frontend 100 % via testing_agent_v3_fork):**
+  - Native `<select>` für Zahlungsweise in Neuer Rechnung + jeder Rechnungs-Zeile durch shadcn `DropdownMenu` ersetzt. Trigger zeigt farbigen Punkt + Label + Chevron; Optionen zeigen Farbpunkte + grünes Häkchen für aktuelle Auswahl. `PAYMENT_META` erweitert mit `dot`-Farbe pro Zahlungsmethode. Idempotent (kein PATCH bei Klick auf gleiche Methode), Inline-Update ohne Reload. Konsistent mit Status-Dropdown aus Iteration 47.
+
 - ✅ **Iteration 47 (11.02.2026) — Rechnungs-Status als Dropdown (DONE, Frontend 100 % via testing_agent_v3_fork):**
   - Statuspill (Offen/Bezahlt/Storniert) auf bestehenden Rechnungen ist jetzt ein **shadcn `DropdownMenu`** statt zyklischer Klick-Button. Chevron-Icon signalisiert Klickbarkeit, aktueller Status ist mit grünem Häkchen markiert. `setStatus` ist idempotent (kein PATCH bei gleichem Status). Testing-Agent bestätigt PATCH+Inline-Update funktioniert, Layout weiter clean an 1440 + 768.
 
