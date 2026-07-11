@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend-only regression test of the invoice status dropdown on /admin/students/{id}?tab=invoices. Verified pill shows ChevronDown, dropdown lists exactly 3 options (Offen/Bezahlt/Storniert) with correct data-testids, current status shows check mark, same-status click is a no-op (no PATCH), different-status click fires PATCH 200 and updates pill inline without page reload, and layout has no horizontal scroll at 1440x900 nor 768x900 with all row action buttons visible. Seed data restored (RE-2026-0001 back to open).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/dropdown_open.png",
+    "/app/test_reports/invoices_768_final.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoicesTab.jsx L133-136 setStatus early-return uses strict equality against invoice.status (string) — correct and idempotent.",
+    "Dropdown uses shadcn DropdownMenu portal; options rendered only when open, which is correct for a11y and testability (test IDs stable via data-testid on DropdownMenuItem).",
+    "Pill label rendered via CSS uppercase transform; DOM text is 'Bezahlt'/'Offen' — automated regex/string checks should be case-insensitive."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "None. RE-2026-0001 was toggled paid then restored back to open (2 PATCH calls total, both 200).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 47 verified invoice status DropdownMenu behavior on Stefan Haas (student 443c0166-8f6e-4274-8c6a-9dfd6cc27e27). Seed invoices RE-2026-0001 (open/twint) and RE-2026-0044 (paid/kreditkarte) are intact. Note DropdownMenu content is portaled to body — option testids only exist after clicking the trigger. Also note the pill CSS uppercases the label so match with regex or .lower() when asserting text.",
+  "test_results_detail": {
+    "TEST_1_chevron_and_pill_text": "PASS - pill shows 'OFFEN' with 2 SVGs (status icon + ChevronDown)",
+    "TEST_2_three_options_with_testids": "PASS - option-open/option-paid/option-cancelled all present with labels Offen/Bezahlt/Storniert",
+    "TEST_3_check_mark_on_current_status": "PASS - only option-open has the Check svg (1 svg) when status=open; paid/cancelled have 0",
+    "TEST_4_same_status_no_patch": "PASS - clicking Offen while status=open fired 0 PATCH requests",
+    "TEST_5a_diff_status_fires_patch": "PASS - clicking Bezahlt fired PATCH 200 to /api/students/{sid}/invoices/{iid}",
+    "TEST_5b_pill_inline_update_no_reload": "PASS - pill text becomes 'BEZAHLT' and style background changes to rgb(220,252,231) green without reload",
+    "TEST_5c_restore_to_open": "PASS - selecting Offen restores pill to 'OFFEN' (PATCH 200)",
+    "LAYOUT_1440x900": "PASS - scrollWidth==clientWidth==1440; PDF/E-Mail/Delete buttons visible on each row",
+    "LAYOUT_768x900": "PASS - scrollWidth==clientWidth==768; PDF/E-Mail/Delete buttons visible on each row"
+  }
+}

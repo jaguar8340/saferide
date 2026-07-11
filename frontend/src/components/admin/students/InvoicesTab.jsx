@@ -8,8 +8,14 @@
  * on top. A "PDF" button per row streams a formatted invoice PDF.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive } from "lucide-react";
+import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { api, formatApiError } from "@/lib/api";
 
 const STATUS_META = {
@@ -124,9 +130,8 @@ export default function InvoicesTab({ student }) {
     }
   };
 
-  const cycleStatus = async (invoice) => {
-    const order = ["open", "paid", "cancelled"];
-    const next = order[(order.indexOf(invoice.status) + 1) % order.length];
+  const setStatus = async (invoice, next) => {
+    if (next === invoice.status) return;
     await patch(invoice.id, "status", next);
   };
 
@@ -399,17 +404,41 @@ export default function InvoicesTab({ student }) {
 
               {/* Row 2: status · note · actions */}
               <div className="mt-3 pt-3 border-t border-[#f3f0eb] flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => cycleStatus(inv)}
-                  data-testid={`invoice-status-${inv.id}`}
-                  className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full transition-colors shrink-0"
-                  style={{ background: st.bg, color: st.text }}
-                >
-                  {inv.status === "paid" && <Check size={11} strokeWidth={3} />}
-                  {inv.status === "open" && <CircleDot size={11} />}
-                  {inv.status === "cancelled" && <XCircle size={11} />}
-                  {st.label}
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      data-testid={`invoice-status-${inv.id}`}
+                      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full transition-colors shrink-0 hover:opacity-90"
+                      style={{ background: st.bg, color: st.text }}
+                      title="Status ändern"
+                    >
+                      {inv.status === "paid" && <Check size={11} strokeWidth={3} />}
+                      {inv.status === "open" && <CircleDot size={11} />}
+                      {inv.status === "cancelled" && <XCircle size={11} />}
+                      {st.label}
+                      <ChevronDown size={11} className="opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[140px]">
+                    {Object.entries(STATUS_META).map(([key, meta]) => (
+                      <DropdownMenuItem
+                        key={key}
+                        data-testid={`invoice-status-${inv.id}-option-${key}`}
+                        onClick={() => setStatus(inv, key)}
+                        className="text-xs font-semibold tracking-widest uppercase cursor-pointer"
+                      >
+                        <span
+                          className="inline-block w-2 h-2 rounded-full mr-2"
+                          style={{ background: meta.dot }}
+                        />
+                        {meta.label}
+                        {inv.status === key && (
+                          <Check size={12} className="ml-auto text-[#166534]" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <input
                   type="text"
                   defaultValue={inv.note}
