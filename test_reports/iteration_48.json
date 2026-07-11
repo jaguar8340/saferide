@@ -1,0 +1,38 @@
+{
+  "summary": "Frontend-only regression test of the new payment-method DropdownMenu on /admin/students/{id}?tab=invoices. Verified (a) the 'Neue Rechnung' Zahlungsweise field (invoice-new-payment-method) renders as a button with coloured dot + label + ChevronDown and opens a dropdown with exactly 4 options (bar/rechnung/kreditkarte/twint) — labels 'Bar', 'Rechnung', 'Kreditkarte', 'Twint' — with a green Check icon on the current selection that follows the selected value; (b) each existing row shows the same pattern with testid invoice-payment-method-{id} and invoice-payment-method-{id}-option-{k}; (c) clicking the SAME payment method on a row fires 0 PATCH (idempotent); (d) clicking a DIFFERENT method fires exactly one PATCH /api/students/{sid}/invoices/{iid} with the new payment_method in the body and updates the trigger label inline without page reload; (e) no horizontal scroll at 1440x900 or 768x900 and all row action buttons (PDF, E-Mail, Delete) remain visible; (f) at 1024px the 4 Neue-Rechnung row-1 fields align on a single grid row. Seed data restored (RE-2026-0001 back to twint, RE-2026-0044 untouched at kreditkarte).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iter48_final.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoicesTab.jsx L441 row option onClick uses idempotency guard `k !== inv.payment_method && patch(...)` — confirmed no PATCH on same-method click.",
+    "New-form option onClick (L292) does not need an idempotency guard since it only mutates local draft state — behaviour is correct.",
+    "Both DropdownMenuTrigger children have data-testids on the underlying button (invoice-new-payment-method and invoice-payment-method-{id}); options carry stable testids on DropdownMenuItem — good for automated tests.",
+    "PAYMENT_META dots verified: bar=#84cc16 (green), rechnung=#0ea5e9 (blue), kreditkarte=#8b5cf6 (purple), twint=#0f172a (near-black). Matches the spec.",
+    "Row-2 Status pill (invoice-status-{id}) remains a shadcn DropdownMenu — unchanged from iteration 47, no regression."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a", "frontend": "100%" },
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "None. RE-2026-0001 payment_method was toggled twint -> bar (PATCH 1) then restored to twint (PATCH 2). Both PATCHes were network-observed. RE-2026-0044 was not modified.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 48 verified invoice payment-method DropdownMenu on Stefan Haas (student 443c0166-8f6e-4274-8c6a-9dfd6cc27e27). Seeds are intact: RE-2026-0001 (open, twint) and RE-2026-0044 (paid, kreditkarte). DropdownMenu content is portaled to body — option testids only exist after clicking the trigger. Trigger label is plain-cased (no CSS uppercase), so direct text.lower() checks against 'bar/rechnung/kreditkarte/twint' work fine. Status dropdown behavior (iteration 47) also still passes visually.",
+  "test_results_detail": {
+    "T1_new_form_trigger": "PASS - initial label 'Bar', chevron+dot present, 4 options all rendered, Check on current only",
+    "T1_new_form_selection_follow": "PASS - selecting Twint updates trigger label to 'Twint' and moves the Check to twint option",
+    "T2_row_triggers_and_options": "PASS - both rows (twint, kreditkarte) render trigger + all 4 options with Check on current",
+    "T3_idempotent_same_click": "PASS - clicking current method fires 0 PATCH",
+    "T4_diff_click_patches_and_updates_inline": "PASS - clicking Bar fired 1x PATCH with body {payment_method:'bar'} and trigger label switched to 'Bar' without reload",
+    "RESTORE": "PASS - restored RE-2026-0001 back to twint (PATCH 200)",
+    "LAYOUT_1440x900": "PASS - scrollWidth == clientWidth == 1440; PDF/E-Mail/Delete visible on every row",
+    "LAYOUT_768x900": "PASS - scrollWidth == clientWidth == 768; PDF/E-Mail/Delete visible on every row",
+    "LAYOUT_1024_form_row1": "PASS - all 4 fields share same y (=300px), no wrap"
+  }
+}

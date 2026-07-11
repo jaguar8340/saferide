@@ -25,10 +25,10 @@ const STATUS_META = {
 };
 
 const PAYMENT_META = {
-  bar:         { label: "Bar" },
-  rechnung:    { label: "Rechnung" },
-  kreditkarte: { label: "Kreditkarte" },
-  twint:       { label: "Twint" },
+  bar:         { label: "Bar",         dot: "#84cc16" },
+  rechnung:    { label: "Rechnung",    dot: "#0ea5e9" },
+  kreditkarte: { label: "Kreditkarte", dot: "#8b5cf6" },
+  twint:       { label: "Twint",       dot: "#0f172a" },
 };
 
 const formatDMY = (iso) => {
@@ -267,16 +267,43 @@ export default function InvoicesTab({ student }) {
             />
           </FieldGroup>
           <FieldGroup label="Zahlungsweise">
-            <select
-              value={draft.payment_method}
-              onChange={(e) => setDraft({ ...draft, payment_method: e.target.value })}
-              data-testid="invoice-new-payment-method"
-              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
-            >
-              {Object.entries(PAYMENT_META).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  data-testid="invoice-new-payment-method"
+                  className="w-full inline-flex items-center justify-between gap-2 text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] hover:border-[#cbd5e1]"
+                >
+                  <span className="inline-flex items-center gap-2 truncate">
+                    <span
+                      className="inline-block w-2 h-2 rounded-full shrink-0"
+                      style={{ background: PAYMENT_META[draft.payment_method]?.dot || "#94a3b8" }}
+                    />
+                    {PAYMENT_META[draft.payment_method]?.label || "—"}
+                  </span>
+                  <ChevronDown size={13} className="opacity-50 shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[160px]">
+                {Object.entries(PAYMENT_META).map(([k, v]) => (
+                  <DropdownMenuItem
+                    key={k}
+                    data-testid={`invoice-new-payment-method-option-${k}`}
+                    onClick={() => setDraft({ ...draft, payment_method: k })}
+                    className="text-sm cursor-pointer"
+                  >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full mr-2"
+                      style={{ background: v.dot }}
+                    />
+                    {v.label}
+                    {draft.payment_method === k && (
+                      <Check size={12} className="ml-auto text-[#166534]" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </FieldGroup>
         </div>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-3 items-end">
@@ -389,16 +416,43 @@ export default function InvoicesTab({ student }) {
                   <label className="text-[9px] tracking-widest uppercase text-[#94a3b8] block">
                     Zahlungsweise
                   </label>
-                  <select
-                    defaultValue={inv.payment_method}
-                    onChange={(e) => e.target.value !== inv.payment_method && patch(inv.id, "payment_method", e.target.value)}
-                    data-testid={`invoice-payment-method-${inv.id}`}
-                    className="text-sm border-0 bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36] w-full min-w-0"
-                  >
-                    {Object.entries(PAYMENT_META).map(([k, v]) => (
-                      <option key={k} value={k}>{v.label}</option>
-                    ))}
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        data-testid={`invoice-payment-method-${inv.id}`}
+                        className="w-full inline-flex items-center justify-between gap-1.5 text-sm bg-transparent hover:bg-[#fafaf9] rounded px-1 py-0.5 -ml-1 focus:outline-none focus:bg-[#fafaf9]"
+                      >
+                        <span className="inline-flex items-center gap-1.5 truncate">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full shrink-0"
+                            style={{ background: PAYMENT_META[inv.payment_method]?.dot || "#94a3b8" }}
+                          />
+                          {PAYMENT_META[inv.payment_method]?.label || "—"}
+                        </span>
+                        <ChevronDown size={12} className="opacity-50 shrink-0" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[150px]">
+                      {Object.entries(PAYMENT_META).map(([k, v]) => (
+                        <DropdownMenuItem
+                          key={k}
+                          data-testid={`invoice-payment-method-${inv.id}-option-${k}`}
+                          onClick={() => k !== inv.payment_method && patch(inv.id, "payment_method", k)}
+                          className="text-sm cursor-pointer"
+                        >
+                          <span
+                            className="inline-block w-2 h-2 rounded-full mr-2"
+                            style={{ background: v.dot }}
+                          />
+                          {v.label}
+                          {inv.payment_method === k && (
+                            <Check size={12} className="ml-auto text-[#166534]" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
