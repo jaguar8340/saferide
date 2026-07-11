@@ -93,6 +93,9 @@ async def run_startup_seeds() -> None:
     # edited by the admin (differs from the previous default) is left alone.
     await _migrate_why_pillar_bodies_short()
 
+    # One-time migration: rename hero CTA from "Probelektion" → "Lektion".
+    await _migrate_hero_cta_primary()
+
     # One-time migration: seed real UBS bank details for the QR-Bill.
     # Only fills in fields still on their placeholder value ("folgt" / "").
     await _migrate_business_bank_defaults()
@@ -494,3 +497,34 @@ async def _migrate_business_bank_defaults() -> None:
                 "Invalidated %s archived invoice PDFs (bank details changed)",
                 result.modified_count,
             )
+
+
+
+# ---------------------------------------------------------------------------
+# One-time migration: rename Hero CTA from "Probelektion" → "Lektion".
+# Only overwrites values that still exactly match the previous default so
+# any admin customisation is preserved.
+# ---------------------------------------------------------------------------
+_OLD_HERO_CTA_VALUES = {
+    "cta_primary_de": {"Jetzt Probelektion anfragen", "Jetzt Probe­lektion anfragen"},
+    "cta_primary_en": {"Book trial lesson", "Request trial lesson"},
+}
+_NEW_HERO_CTA_VALUES = {
+    "cta_primary_de": "Jetzt Lektion anfragen",
+    "cta_primary_en": "Request a lesson",
+}
+
+
+async def _migrate_hero_cta_primary() -> None:
+    doc = await db.site_content.find_one({"id": "main"}, {"hero": 1})
+    if not doc:
+        return
+    hero = doc.get("hero") or {}
+    updates = {}
+    for key, old_values in _OLD_HERO_CTA_VALUES.items():
+        current = (hero.get(key) or "").strip()
+        if current in old_values:
+            updates[f"hero.{key}"] = _NEW_HERO_CTA_VALUES[key]
+    if updates:
+        await db.site_content.update_one({"id": "main"}, {"$set": updates})
+        log.info("Migrated Hero CTA labels: %s", list(updates.keys()))

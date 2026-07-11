@@ -1,0 +1,20 @@
+{
+  "summary": "Verified 3 fixes for Hero CTA rename + inline-CMS editable click. All PASS. (1) DB value at /api/content hero.cta_primary_de == 'Jetzt Lektion anfragen' after startup migration. (2) Clicking the Editable span inside the primary CTA <a> in edit mode no longer navigates or scrolls to #contact — document.activeElement is the span with data-edit-path='hero.cta_primary_de'. (3) Typing new text and blurring triggers a PATCH /api/content that persists ('Jetzt Lektion anfragen TEST' persisted, then restored to original).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Note: EditContext.updateField uses api.patch('/content', updates) with dot-path keys (e.g. 'hero.cta_primary_de' -> value), NOT PUT — the review-request description said PUT. Behaviour is functionally equivalent and persistence is verified, but the request wording is slightly off.",
+    "EditContext default editMode=true means whenever an admin visits a public page they immediately see contentEditable widgets. This is fine for now but could confuse admins who just want to preview; consider defaulting to false or persisting the toggle across reloads.",
+    "AuthContext stores JWT in localStorage under 'saferide_admin_token' (not 'token'). Automation scripts and any other integration must use this exact key."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "Temporarily changed hero.cta_primary_de to 'Jetzt Lektion anfragen TEST' for Fix 3, then restored to 'Jetzt Lektion anfragen'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Public URL: REACT_APP_BACKEND_URL. Admin JWT localStorage key = 'saferide_admin_token'. Admin toolbar defaults to editMode=true (Bearbeiten shown as active). Editable component now stops click/mousedown propagation so clicks on inline text inside enclosing <a>/<button> place the caret instead of triggering navigation. Persistence uses PATCH /api/content (not PUT) with dot-path payloads via EditContext.updateField.",
+  "rca of the issue": "Root cause of previous inline-edit-navigates bug: the Hero primary CTA is an <a href='#contact'> with onClick=scroll('contact'). The Editable child span was contentEditable but did not stop event propagation, so a click inside the span bubbled to the <a>'s onClick which called preventDefault + scrollIntoView. The fix adds onClick={e => {stopPropagation();preventDefault();}} + onMouseDown stopPropagation on the contentEditable element in /app/frontend/src/components/edit/Editable.jsx. Verified: clicking the span now leaves window.location.hash unchanged and document.activeElement is the editable span."
+}

@@ -70,6 +70,14 @@ export default function Editable({
       spellCheck={false}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
+      // Prevent the enclosing <a>/<button> from stealing the click:
+      // when contentEditable is on, clicks must place the caret, NOT
+      // trigger navigation or bubble to a parent link handler.
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
       data-edit-path={path}
       data-placeholder={placeholder}
       className={`${className} editable-text`}
