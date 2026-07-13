@@ -23,6 +23,7 @@ export default function Webmail() {
   const [search, setSearch] = useState("");
   const [configError, setConfigError] = useState(null);
   const [dragOverFolder, setDragOverFolder] = useState(null);   // folder name currently hovered
+  const [contextMenu, setContextMenu] = useState(null);         // {x, y, msg}
 
   const loadFolders = useCallback(async () => {
     try {
@@ -177,7 +178,7 @@ export default function Webmail() {
           Ordner
         </div>
         <div className="text-[10px] text-[#a8a29e] mb-2 px-2 leading-snug">
-          Tipp: Nachricht per Drag & Drop hierher ziehen zum Verschieben.
+          Tipp: Nachricht per Drag & Drop ziehen oder Rechtsklick → „In Ordner verschieben“.
         </div>
         {sortedFolders.length === 0 && (
           <div className="text-xs text-[#a8a29e] p-2">
@@ -251,6 +252,10 @@ export default function Webmail() {
               <button
                 type="button"
                 onClick={() => openMessage(m)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ x: e.clientX, y: e.clientY, msg: m });
+                }}
                 draggable
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = "move";
@@ -387,7 +392,71 @@ export default function Webmail() {
           onSend={sendCompose}
         />
       )}
+
+      {contextMenu && (
+        <FolderContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          folders={sortedFolders.filter((f) => f.name !== contextMenu.msg.folder)}
+          onPick={(target) => {
+            moveMessage(contextMenu.msg.folder, contextMenu.msg.uid, target);
+            setContextMenu(null);
+          }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
+  );
+}
+
+
+function FolderContextMenu({ x, y, folders, onPick, onClose }) {
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Clamp position to viewport so the menu never renders off-screen
+  const menuW = 240;
+  const menuH = Math.min(60 + folders.length * 34, 340);
+  const left = Math.min(x, window.innerWidth - menuW - 8);
+  const top = Math.min(y, window.innerHeight - menuH - 8);
+
+  return (
+    <>
+      {/* Click-outside overlay */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+        onContextMenu={(e) => { e.preventDefault(); onClose(); }}
+        data-testid="webmail-ctx-overlay"
+      />
+      <div
+        style={{ left, top, width: menuW }}
+        className="fixed z-50 bg-white border border-[#e7e5e4] rounded-2xl shadow-2xl py-2 max-h-[70vh] overflow-y-auto"
+        data-testid="webmail-context-menu"
+      >
+        <div className="px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-[#78716c]">
+          In Ordner verschieben
+        </div>
+        {folders.length === 0 && (
+          <div className="px-3 py-2 text-xs text-[#a8a29e]">Keine anderen Ordner</div>
+        )}
+        {folders.map((f) => (
+          <button
+            key={f.name}
+            type="button"
+            onClick={() => onPick(f.name)}
+            data-testid={`webmail-ctx-folder-${f.name}`}
+            className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-sm text-[#334155] hover:bg-[#fff7ed] hover:text-[#c2410c] transition-colors"
+          >
+            {f.name === "INBOX" ? <Inbox size={12} /> : <Folder size={12} />}
+            <span className="truncate">{f.name}</span>
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 

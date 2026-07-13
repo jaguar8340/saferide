@@ -264,6 +264,13 @@ function OverviewTab({ student, onSave }) {
         <EditField label="Beginn Ausbildung" value={student.start_date}    type="date" onSave={(v) => onSave("start_date", v)} />
         <EditField label="Datum Vorprüfung"  value={student.prep_exam_date} type="date" onSave={(v) => onSave("prep_exam_date", v)} />
         <EditField label="Datum Prüfung"     value={student.exam_date}     type="date" onSave={(v) => onSave("exam_date", v)} />
+        <div className="md:col-span-2 mt-2 pt-3 border-t border-[#f3f0eb]">
+          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c]">
+            Erziehungsberechtigte:r (freiwillig · empfohlen bei Schüler:innen unter 18)
+          </div>
+        </div>
+        <EditField label="Name Erziehungsberechtigte:r"    value={student.guardian_name}    onSave={(v) => onSave("guardian_name", v)} />
+        <EditField label="E-Mail Erziehungsberechtigte:r"  value={student.guardian_email}   onSave={(v) => onSave("guardian_email", v)} />
       </div>
     </div>
   );

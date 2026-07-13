@@ -111,18 +111,26 @@ async def send_terms(student_id: str, admin=Depends(get_current_admin)):
     settings = await get_or_create_settings()
     cfg = _build_smtp_config(settings, override=None)
     sent, detail = False, "SMTP nicht konfiguriert"
+    guardian_email = (student.get("guardian_email") or "").strip()
+    guardian_name = (student.get("guardian_name") or "").strip()
+    recipients = [student["email"]]
+    if guardian_email and guardian_email.lower() != student["email"].lower():
+        recipients.append(guardian_email)
     if cfg.get("host"):
         business = settings.get("business_name") or "Fahrschule Safe Ride"
         first = student.get("first_name") or ""
         msg = EmailMessage()
         msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
-        msg["To"] = student["email"]
+        msg["To"] = ", ".join(recipients)
         msg["Subject"] = f"AGB {business} – bitte kurz bestätigen"
-        msg.set_content(f"""Hallo {first},
+        greeting = f"Hallo {first}"
+        if guardian_email:
+            greeting += f" und {guardian_name or 'liebe Eltern'}"
+        msg.set_content(f"""{greeting},
 
-anbei die Allgemeinen Geschäftsbedingungen der {business}. Bitte lies sie
-kurz durch und bestätige sie mit einem Klick auf den Link unten oder
-antworte einfach auf diese E-Mail mit "einverstanden".
+anbei die Allgemeinen Geschäftsbedingungen der {business}. Bitte lest sie
+kurz durch und bestätigt sie mit einem Klick auf den Link unten oder
+antwortet einfach auf diese E-Mail mit "einverstanden".
 
 Bestätigen:
     {confirm_url}

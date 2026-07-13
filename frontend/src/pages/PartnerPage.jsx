@@ -52,15 +52,15 @@ function PartnerCard({ partner, onPatch, onRemove }) {
       className="group relative bg-white border border-[#e2e8f0] rounded-3xl p-7 md:p-8 hover:-translate-y-1 hover:border-[#ff5a36] transition-all duration-300"
     >
       {/* Logo */}
-      <div className="relative w-28 h-28 rounded-2xl bg-[#fbf9f6] overflow-hidden flex items-center justify-center mb-6">
+      <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-2xl bg-[#fbf9f6] overflow-hidden flex items-center justify-center mb-6">
         {partner.logo_url ? (
           <img
             src={resolveUrl(partner.logo_url)}
             alt={partner.name}
-            className="max-w-[80%] max-h-[80%] object-contain"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <span className="font-display text-3xl text-[#0f172a]/30 tracking-tight">
+          <span className="font-display text-5xl text-[#0f172a]/30 tracking-tight">
             {partner.name?.charAt(0) || "P"}
           </span>
         )}

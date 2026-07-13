@@ -12,6 +12,9 @@ import {
   Trash2,
   ChevronRight,
   UserRound,
+  ShieldCheck,
+  Clock,
+  Circle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -29,6 +32,8 @@ const EMPTY_FORM = {
   start_date: "",
   prep_exam_date: "",
   exam_date: "",
+  guardian_name: "",
+  guardian_email: "",
   notes: "",
 };
 
@@ -211,6 +216,23 @@ export default function StudentsManager() {
             onChange={(v) => setForm((f) => ({ ...f, exam_date: v }))}
             testid="admin-student-exam-date"
           />
+          <div className="md:col-span-2 mt-2 pt-3 border-t border-[#f3f0eb]">
+            <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] mb-2">
+              Erziehungsberechtigte:r (freiwillig · empfohlen für Schüler:innen unter 18)
+            </div>
+          </div>
+          <FormField
+            label="Name Erziehungsberechtigte:r"
+            value={form.guardian_name}
+            onChange={(v) => setForm((f) => ({ ...f, guardian_name: v }))}
+            testid="admin-student-guardian-name"
+          />
+          <FormField
+            label="E-Mail Erziehungsberechtigte:r"
+            value={form.guardian_email}
+            onChange={(v) => setForm((f) => ({ ...f, guardian_email: v }))}
+            testid="admin-student-guardian-email"
+          />
           <div className="md:col-span-2 pt-2 flex items-center gap-2">
             <button
               type="submit"
@@ -274,6 +296,7 @@ export default function StudentsManager() {
                     .join(" · ")}
                 </div>
               </div>
+              <AgbBadge student={s} />
               <Link
                 to={`/admin/students/${s.id}`}
                 data-testid={`admin-student-open-${s.id}`}
@@ -312,5 +335,40 @@ function FormField({ label, value, onChange, testid, type = "text" }) {
         className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
       />
     </div>
+  );
+}
+
+/** Small pill showing where the student is in the AGB flow. */
+function AgbBadge({ student }) {
+  if (student.agb_confirmed_at) {
+    return (
+      <span
+        data-testid={`admin-student-agb-badge-${student.id}`}
+        className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase bg-[#dcfce7] text-[#15803d] border border-[#86efac] px-2.5 py-1 rounded-full"
+        title={`AGB akzeptiert am ${new Date(student.agb_confirmed_at).toLocaleString("de-CH")}`}
+      >
+        <ShieldCheck size={11} /> AGB ok
+      </span>
+    );
+  }
+  if (student.agb_sent_at) {
+    return (
+      <span
+        data-testid={`admin-student-agb-badge-${student.id}`}
+        className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2.5 py-1 rounded-full"
+        title={`AGB gesendet am ${new Date(student.agb_sent_at).toLocaleString("de-CH")} — noch keine Bestätigung`}
+      >
+        <Clock size={11} /> AGB offen
+      </span>
+    );
+  }
+  return (
+    <span
+      data-testid={`admin-student-agb-badge-${student.id}`}
+      className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0] px-2.5 py-1 rounded-full"
+      title="AGB noch nicht gesendet"
+    >
+      <Circle size={11} /> AGB —
+    </span>
   );
 }
