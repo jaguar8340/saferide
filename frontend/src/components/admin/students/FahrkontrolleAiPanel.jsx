@@ -17,6 +17,8 @@ export default function FahrkontrolleAiPanel({ studentId, studentName }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [activeDate, setActiveDate] = useState(null);   // null = latest
 
   // Voice recording state
   const [recording, setRecording] = useState(false);
@@ -24,15 +26,35 @@ export default function FahrkontrolleAiPanel({ studentId, studentName }) {
   const mediaRef = useRef(null);
   const chunksRef = useRef([]);
 
-  // On mount, try to load the cached previous analysis.
+  const loadHistory = async () => {
+    try {
+      const r = await api.get(`/students/${studentId}/fahrkontrolle/ai/history`);
+      setHistory(r.data);
+      if (r.data.length && !activeDate) {
+        setActiveDate(r.data[0].date);
+        setResult(r.data[0]);
+      }
+    } catch { /* ignore */ }
+  };
+
+  // On mount, load full history (falls back to /ai for legacy carry-over).
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const h = await api.get(`/students/${studentId}/fahrkontrolle/ai/history`);
+        if (cancelled) return;
+        setHistory(h.data);
+        if (h.data.length) {
+          setActiveDate(h.data[0].date);
+          setResult(h.data[0]);
+          return;
+        }
+        // Fallback: legacy single "last_ai_analysis"
         const r = await api.get(`/students/${studentId}/fahrkontrolle/ai`);
         if (!cancelled) setResult(r.data);
       } catch {
-        /* no previous analysis – nothing to show */
+        /* no previous analysis */
       }
     })();
     return () => { cancelled = true; };
@@ -45,6 +67,8 @@ export default function FahrkontrolleAiPanel({ studentId, studentName }) {
         extra_note: note.trim(),
       }, { timeout: 120_000 });
       setResult(r.data);
+      setActiveDate(new Date().toISOString().slice(0, 10));
+      await loadHistory();
       toast.success("KI-Analyse aktualisiert");
     } catch (e) {
       toast.error(formatApiError(e));
@@ -179,6 +203,41 @@ export default function FahrkontrolleAiPanel({ studentId, studentName }) {
         {result ? "Neu analysieren" : "KI-Analyse anfragen"}
       </button>
 
+      {/* Per-day history chips */}
+      {history.length > 0 && (
+        <div className="mt-4" data-testid="fk-ai-history">
+          <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] mb-2">
+            Analyse-Historie ({history.length})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {history.map((h) => {
+              const isActive = h.date === activeDate;
+              return (
+                <button
+                  key={h.date}
+                  type="button"
+                  onClick={() => { setActiveDate(h.date); setResult(h); }}
+                  data-testid={`fk-ai-day-${h.date}`}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                    isActive
+                      ? "bg-[#ff5a36] text-white border-[#ff5a36]"
+                      : "bg-white text-[#0f172a] border-[#e7e5e4] hover:border-[#ff5a36]"
+                  }`}
+                  title={h.readiness_label || ""}
+                >
+                  {formatDay(h.date)}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    isActive ? "bg-white/25" : "bg-[#fafaf9]"
+                  }`}>
+                    {h.exam_readiness_percent}%
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Result panel */}
       {result && (
         <div className="mt-6 space-y-5" data-testid="fk-ai-result">
@@ -294,3 +353,16 @@ export default function FahrkontrolleAiPanel({ studentId, studentName }) {
     </section>
   );
 }
+
+
+
+function formatDay(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("de-CH", { day: "2-digit", month: "short" });
+  } catch {
+    return iso;
+  }
+}
+

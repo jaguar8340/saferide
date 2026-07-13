@@ -40,6 +40,7 @@ from routers import (
     invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
+    mail,
     portal_auth,
     portal_data,
     rating_scale,
@@ -48,6 +49,7 @@ from routers import (
     student_documents,
     student_invoices,
     students,
+    terms,
     testimonials,
     uploads,
     users,
@@ -91,6 +93,9 @@ api.include_router(vouchers.portal_router)
 api.include_router(portal_auth.router)
 api.include_router(portal_auth.admin_router)
 api.include_router(portal_data.router)
+api.include_router(terms.router)
+api.include_router(terms.admin_router)
+api.include_router(mail.router)
 api.include_router(users.router)
 api.include_router(invoice_email.invoice_router)
 api.include_router(invoice_email.settings_router)

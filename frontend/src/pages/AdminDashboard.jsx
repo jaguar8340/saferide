@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Mail,
+  FileText,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,6 +40,8 @@ import UsersManager from "@/components/admin/UsersManager";
 import BackupManager from "@/components/admin/BackupManager";
 import CalendarManager from "@/components/admin/CalendarManager";
 import EmailSettingsManager from "@/components/admin/EmailSettingsManager";
+import MailModule from "@/components/admin/MailModule";
+import TermsManager from "@/components/admin/TermsManager";
 import AccountingPage from "@/pages/AccountingPage";
 import {
   BlogManager,
@@ -53,7 +56,8 @@ const TABS = [
   { id: "accounting", icon: Wallet, key: "accounting", label_de: "Buchhaltung", label_en: "Accounting" },
   { id: "fk_master", icon: ClipboardList, key: "fk_master", label_de: "Fahrkontrolle-Stammdaten", label_en: "Fahrkontrolle Masters" },
   { id: "business", icon: Building2, key: "business", label_de: "Fahrschul-Daten", label_en: "Business Settings" },
-  { id: "email", icon: Mail, key: "email", label_de: "E-Mail-Versand", label_en: "Email" },
+  { id: "email", icon: Mail, key: "email", label_de: "Mail", label_en: "Mail" },
+  { id: "terms", icon: FileText, key: "terms", label_de: "AGB", label_en: "Terms" },
   { id: "backup", icon: HardDriveDownload, key: "backup", label_de: "Datensicherung", label_en: "Backup" },
   { id: "users", icon: UserCog, key: "users", label_de: "Benutzer", label_en: "Users" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
@@ -217,7 +221,8 @@ export default function AdminDashboard() {
           {tab === "accounting" && <AccountingPage />}
           {tab === "fk_master" && <MasterDataTab />}
           {tab === "business" && <BusinessSettingsManager />}
-          {tab === "email" && <EmailSettingsManager />}
+          {tab === "email" && <MailModule />}
+          {tab === "terms" && <TermsManager />}
           {tab === "backup" && <BackupManager />}
           {tab === "users" && <UsersManager />}
           {tab === "content" && <ContentEditor />}

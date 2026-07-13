@@ -230,12 +230,39 @@ async def analyse_readiness(
         model="claude-sonnet-4-5",
     )
 
-    # Persist last analysis on student doc so a page-reload shows it.
+    # Persist as a per-day document so the admin can browse the history.
+    # Multiple analyses on the same date replace the day's entry (latest
+    # wins) — this keeps the panel focused on "one card per day".
+    today_iso = datetime.now(timezone.utc).date().isoformat()
+    await db.ai_analyses.update_one(
+        {"student_id": sid, "date": today_iso},
+        {"$set": {
+            **result.model_dump(),
+            "student_id": sid,
+            "date": today_iso,
+            "extra_note": payload.extra_note.strip(),
+        }},
+        upsert=True,
+    )
+
+    # Also keep the "latest" pointer on the student doc for backwards
+    # compat with the portal + old UI paths.
     await db.students.update_one(
         {"id": sid},
         {"$set": {"last_ai_analysis": result.model_dump()}},
     )
     return result
+
+
+@router.get("/{sid}/fahrkontrolle/ai/history")
+async def list_analysis_history(sid: str, admin=Depends(get_current_admin)):
+    """Return one analysis per day (most recent first)."""
+    if not await db.students.find_one({"id": sid}, {"_id": 0, "id": 1}):
+        raise HTTPException(404, "Schüler nicht gefunden")
+    docs = await db.ai_analyses.find(
+        {"student_id": sid}, {"_id": 0}
+    ).sort("date", -1).to_list(365)
+    return docs
 
 
 @router.get("/{sid}/fahrkontrolle/ai")

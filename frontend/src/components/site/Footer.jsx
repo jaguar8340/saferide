@@ -144,8 +144,8 @@ export default function Footer({ data }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-white/15 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/45">
-          <div className="flex items-center gap-4 order-2 md:order-1">
+        <div className="mt-10 pt-6 border-t border-white/15 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-xs text-white/45">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 order-2 md:order-1">
             <span>© {year} Fahrschule Safe Ride · {t.footer.rights}</span>
             <Link
               to="/admin/login"

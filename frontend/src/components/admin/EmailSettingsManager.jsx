@@ -16,6 +16,13 @@ const SMTP_FIELDS = [
   { key: "smtp_from_name",  label: "Absender-Name",           placeholder: "z. B. Fahrschule Safe Ride" },
 ];
 
+const IMAP_FIELDS = [
+  { key: "imap_host",     label: "IMAP-Server (Host)",       placeholder: "z. B. imap.gmail.com", cols: 2 },
+  { key: "imap_port",     label: "Port",                     type: "number", placeholder: "993" },
+  { key: "imap_user",     label: "Benutzername",             placeholder: "z. B. name@gmail.com" },
+  { key: "imap_password", label: "Passwort / App-Passwort",  type: "password", cols: 2 },
+];
+
 export default function EmailSettingsManager() {
   const [data, setData] = useState(null);
   const [savingKey, setSavingKey] = useState(null);
@@ -142,6 +149,48 @@ export default function EmailSettingsManager() {
               />
               <span>
                 STARTTLS aktivieren <span className="text-[#94a3b8]">(empfohlen bei Port 587 · deaktivieren nur bei Port 465 mit implizitem SSL)</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* IMAP settings (for the Posteingang / webmail) */}
+      <div className="bg-white border border-[#e7e5e4] rounded-2xl p-5 mb-4">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-4">
+          IMAP · Posteingang lesen
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {IMAP_FIELDS.map((f) => (
+            <div key={f.key} className={f.cols === 2 ? "md:col-span-2" : ""}>
+              <label className="text-[11px] font-semibold text-[#475569] block mb-1">
+                {f.label}
+                {savingKey === f.key && (
+                  <Loader2 size={10} className="inline-block ml-2 animate-spin text-[#ff5a36]" />
+                )}
+              </label>
+              <input
+                type={f.type || "text"}
+                defaultValue={data[f.key] ?? ""}
+                onBlur={(e) => save(f.key, e.target.value)}
+                placeholder={f.placeholder}
+                data-testid={`bs-${f.key}`}
+                autoComplete="off"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </div>
+          ))}
+          <div className="md:col-span-2 flex items-center gap-2">
+            <label className="inline-flex items-start gap-2 text-xs text-[#475569] cursor-pointer">
+              <input
+                type="checkbox"
+                defaultChecked={data.imap_use_ssl !== false}
+                onChange={(e) => saveBool("imap_use_ssl", e.target.checked)}
+                data-testid="bs-imap_use_ssl"
+                className="accent-[#ff5a36] mt-0.5"
+              />
+              <span>
+                SSL/TLS aktivieren <span className="text-[#94a3b8]">(empfohlen · Port 993)</span>
               </span>
             </label>
           </div>
