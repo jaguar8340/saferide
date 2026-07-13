@@ -244,3 +244,37 @@ class TestMailConfig:
             assert "IMAP nicht konfiguriert" in r.text
         else:
             assert r.status_code in (200, 502)
+
+    def test_move_requires_auth(self):
+        r = requests.post(
+            f"{BASE_URL}/api/mail/move",
+            json={"folder": "INBOX", "uid": "1", "target": "Trash"},
+            timeout=15,
+        )
+        assert r.status_code in (401, 403)
+
+    def test_move_same_folder_noop(self, admin_headers):
+        r = requests.post(
+            f"{BASE_URL}/api/mail/move",
+            json={"folder": "INBOX", "uid": "1", "target": "INBOX"},
+            headers=admin_headers,
+            timeout=15,
+        )
+        # Short-circuits BEFORE hitting IMAP → always 200
+        assert r.status_code == 200
+        assert r.json().get("noop") is True
+
+    def test_move_without_imap(self, admin_headers):
+        cfg = requests.get(f"{BASE_URL}/api/mail/config", headers=admin_headers, timeout=15).json()
+        r = requests.post(
+            f"{BASE_URL}/api/mail/move",
+            json={"folder": "INBOX", "uid": "1", "target": "Trash"},
+            headers=admin_headers,
+            timeout=15,
+        )
+        if not (cfg["imap_host"] and cfg["imap_user"] and cfg["imap_password_set"]):
+            assert r.status_code == 400
+            assert "IMAP nicht konfiguriert" in r.text
+        else:
+            assert r.status_code in (200, 400, 502)
+

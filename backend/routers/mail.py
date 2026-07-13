@@ -70,6 +70,12 @@ class MarkReadIn(BaseModel):
     read: bool = True
 
 
+class MoveIn(BaseModel):
+    folder: str = "INBOX"           # source folder
+    uid: str                        # source UID
+    target: str                     # destination folder name
+
+
 # ---------------------------------------------------------------------------
 #  Helpers
 # ---------------------------------------------------------------------------
@@ -470,5 +476,45 @@ async def delete_message(
         conn.expunge()
         conn.logout()
         return {"ok": True}
+    except Exception as e:      # noqa: BLE001
+        raise HTTPException(502, str(e))
+
+
+@router.post("/move")
+async def move_message(payload: MoveIn, admin=Depends(get_current_admin)):
+    """Move a message between IMAP folders.
+
+    Uses the IMAP MOVE extension (RFC 6851) when supported and gracefully
+    falls back to COPY + STORE \\Deleted + EXPUNGE for older servers.
+    """
+    if payload.folder == payload.target:
+        return {"ok": True, "noop": True}
+    cfg = await _imap_config()
+    try:
+        conn = _open_imap(cfg)
+        typ, _ = conn.select(payload.folder)
+        if typ != "OK":
+            conn.logout()
+            raise HTTPException(400, f"Ordner nicht gefunden: {payload.folder}")
+        # Try native MOVE first
+        moved = False
+        try:
+            typ, data = conn.uid("MOVE", payload.uid, payload.target)
+            if typ == "OK":
+                moved = True
+        except Exception:
+            moved = False
+        # Fallback: COPY + STORE + EXPUNGE
+        if not moved:
+            typ, data = conn.uid("COPY", payload.uid, payload.target)
+            if typ != "OK":
+                conn.logout()
+                raise HTTPException(502, f"Kopieren fehlgeschlagen: {data!r}")
+            conn.uid("store", payload.uid, "+FLAGS", "(\\Deleted)")
+            conn.expunge()
+        conn.logout()
+        return {"ok": True}
+    except HTTPException:
+        raise
     except Exception as e:      # noqa: BLE001
         raise HTTPException(502, str(e))

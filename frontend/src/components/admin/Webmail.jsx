@@ -22,6 +22,7 @@ export default function Webmail() {
   const [compose, setCompose] = useState(null);   // {mode: 'new'|'reply'|'reply-all', to, subject, body, replyTo}
   const [search, setSearch] = useState("");
   const [configError, setConfigError] = useState(null);
+  const [dragOverFolder, setDragOverFolder] = useState(null);   // folder name currently hovered
 
   const loadFolders = useCallback(async () => {
     try {
@@ -62,7 +63,7 @@ export default function Webmail() {
       setOpenMsg(r.data);
       // Mark read
       if (m.unread) {
-        try { await api.post("/mail/mark-read", { folder: m.folder, uid: m.uid, read: true }); } catch {}
+        try { await api.post("/mail/mark-read", { folder: m.folder, uid: m.uid, read: true }); } catch { /* silent - just a UX hint */ }
         setMessages((prev) => prev.map((x) => x.uid === m.uid ? { ...x, unread: false } : x));
       }
     } catch (e) {
@@ -78,6 +79,21 @@ export default function Webmail() {
       setOpenMsg(null);
       loadMessages(activeFolder, search);
     } catch (e) { toast.error(formatApiError(e)); }
+  };
+
+  const moveMessage = async (folder, uid, target) => {
+    if (!folder || !uid || !target || folder === target) return;
+    // Optimistic UI: drop from current list immediately
+    setMessages((prev) => prev.filter((x) => x.uid !== uid));
+    if (openMsg?.uid === uid) setOpenMsg(null);
+    try {
+      await api.post("/mail/move", { folder, uid, target });
+      toast.success(`Verschoben nach ${target}`);
+    } catch (e) {
+      toast.error(formatApiError(e));
+      // Reload to restore accurate state
+      loadMessages(activeFolder, search);
+    }
   };
 
   const startReply = (allRecipients = false) => {
@@ -138,7 +154,7 @@ export default function Webmail() {
             {configError}
           </p>
           <p className="text-sm text-[#78716c] leading-relaxed mt-2">
-            Wechsle zu "E-Mail Einstellungen" und trage IMAP-Host, Port, Benutzer + Passwort ein.
+            Wechsle zu „E-Mail Einstellungen“ und trage IMAP-Host, Port, Benutzer + Passwort ein.
           </p>
         </div>
       </div>
@@ -160,6 +176,9 @@ export default function Webmail() {
         <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] mb-1 px-2">
           Ordner
         </div>
+        <div className="text-[10px] text-[#a8a29e] mb-2 px-2 leading-snug">
+          Tipp: Nachricht per Drag & Drop hierher ziehen zum Verschieben.
+        </div>
         {sortedFolders.length === 0 && (
           <div className="text-xs text-[#a8a29e] p-2">
             <Loader2 size={12} className="inline animate-spin mr-1" /> lade…
@@ -169,9 +188,23 @@ export default function Webmail() {
           <button
             key={f.name}
             onClick={() => { setActiveFolder(f.name); setOpenMsg(null); }}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolder(f.name); }}
+            onDragLeave={() => setDragOverFolder((cur) => cur === f.name ? null : cur)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOverFolder(null);
+              try {
+                const raw = e.dataTransfer.getData("application/x-mail-uid");
+                if (!raw) return;
+                const { folder, uid } = JSON.parse(raw);
+                moveMessage(folder, uid, f.name);
+              } catch { /* ignore malformed drop */ }
+            }}
             data-testid={`webmail-folder-${f.name}`}
             className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
-              activeFolder === f.name
+              dragOverFolder === f.name
+                ? "bg-[#ffedd5] text-[#c2410c] ring-2 ring-[#ff5a36] ring-offset-1"
+                : activeFolder === f.name
                 ? "bg-[#fff7ed] text-[#c2410c] font-semibold"
                 : "text-[#334155] hover:bg-[#fafaf9]"
             }`}
@@ -218,8 +251,16 @@ export default function Webmail() {
               <button
                 type="button"
                 onClick={() => openMessage(m)}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(
+                    "application/x-mail-uid",
+                    JSON.stringify({ folder: m.folder, uid: m.uid })
+                  );
+                }}
                 data-testid={`webmail-msg-${m.uid}`}
-                className={`w-full text-left p-3 flex flex-col gap-0.5 hover:bg-[#fafaf9] ${
+                className={`w-full text-left p-3 flex flex-col gap-0.5 hover:bg-[#fafaf9] cursor-grab active:cursor-grabbing ${
                   openMsg?.uid === m.uid ? "bg-[#fff7ed]" : ""
                 }`}
               >
