@@ -8,6 +8,7 @@ import AdminStudentDetail from "@/pages/AdminStudentDetail";
 import PortalLogin from "@/pages/PortalLogin";
 import PortalSetup from "@/pages/PortalSetup";
 import PortalDashboard from "@/pages/PortalDashboard";
+import AgbConfirm from "@/pages/AgbConfirm";
 import AblaufPage from "@/pages/AblaufPage";
 import VkuPage from "@/pages/VkuPage";
 import LocationPage from "@/pages/LocationPage";
@@ -87,6 +88,7 @@ function App() {
                 <Route path="/portal/login" element={<PortalLogin />} />
                 <Route path="/portal/setup" element={<PortalSetup />} />
                 <Route path="/portal" element={<PortalDashboard />} />
+                <Route path="/agb/:token" element={<AgbConfirm />} />
                 <Route
                   path="/admin"
                   element={

@@ -1,0 +1,53 @@
+{
+  "summary": "Iteration 49 verification — AGB (Terms) editor + email-flow + public confirm page + Webmail module. Backend: 11 pytest tests PASS + 1 XFAIL (documents a real /api/students schema gap). Frontend: full happy-path traversed on production URL — /agb/{token} shows body + confirm button → POST /api/terms/confirm → agb-thanks; consumed token shows agb-invalid; admin login → admin-tab-email opens mail-module with correct 'IMAP nicht konfiguriert' error panel; mail-subtab-settings shows SMTP+IMAP inputs; admin-tab-terms opens terms-manager with both DE/EN textareas — blur fires PATCH /api/terms + 'AGB gespeichert' toast; clicking terms-send-{sid} for Stefan Haas fires POST /api/terms/send/{sid} + refreshes students + shows terms-invite-result overlay with confirm URL + toast 'Link erstellt / SMTP nicht konfiguriert'. One critical UI integration issue found: student-list badges + stats stay stuck at OFFEN 5 / GESENDET 0 / BESTÄTIGT 0 because GET /api/students strips the agb_* fields.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/students",
+        "issue": "Response body is missing agb_sent_at, agb_confirmed_at, agb_confirmed_version, agb_confirmation_token fields even though they are persisted in Mongo. Root cause: /app/backend/models/schemas.py Student(StudentCreate) model does not declare these agb_* fields and StudentCreate uses ConfigDict(extra='ignore'). Consequence: TermsManager.jsx badges (AgbBadge component) always render 'Offen' for every student — even ones who have been sent or already confirmed — and the top stats chips read 'Bestätigt 0 / Gesendet 0 / Offen N'. Stefan Haas verified in DB: agb_confirmed_at='2026-07-13T15:41:43.789647+00:00' but API returns him without that field, so the badge is wrong.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "TermsManager status badges / stats chips",
+        "issue": "AgbBadge always shows 'Offen' for every student because the /students API response never carries agb_sent_at / agb_confirmed_at (see backend_issues.critical above). This is the visible consequence of the schema bug.",
+        "affected_selectors": ["[data-testid^=\"terms-row-\"]", "[data-testid=\"terms-manager\"] .StatChip"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration49_terms_mail.py",
+    "/app/test_reports/pytest/it49_results.xml"
+  ],
+  "action_items": [
+    "Add agb_sent_at, agb_confirmed_at, agb_confirmed_version, agb_confirmation_token (all Optional[str]) to the Student model in /app/backend/models/schemas.py (or better: on StudentCreate so they flow through PATCH-response as well). Without this fix TermsManager stats + row badges are always wrong."
+  ],
+  "critical_code_review_comments": [
+    "schemas.py: Student inherits StudentCreate which uses ConfigDict(extra='ignore') — silently drops fields. Even though get_students() reads the raw Mongo doc, FastAPI's response_model=List[Student] validates and re-serialises, dropping unknown keys. Best fix: declare the four agb_* fields as Optional[str] = None on Student (post-inheritance) so they survive the response validation.",
+    "routers/terms.py L108 uses _portal_public_url() from portal_auth — good re-use; produced URL matches the frontend Route path='/agb/:token'.",
+    "routers/terms.py L156-159: the try/except swallows both ValueError and TypeError but re-raises HTTPException(400) inside the except block — the outer except (ValueError, TypeError) does NOT catch HTTPException so the 400 propagates correctly. Fine.",
+    "routers/mail.py L100 returns HTTP 400 'IMAP nicht konfiguriert (Mail → Einstellungen)' — verified end-to-end by Webmail which surfaces it via webmail-config-error panel.",
+    "AgbConfirm.jsx L26: if(already_confirmed) setConfirmed(true) — sends the user straight to agb-thanks. That means a repeat click on a still-valid token (before token clear) also shows the thanks panel, which is correct UX.",
+    "TermsManager.jsx L58 uses toast.message with description=detail — verified that 'Link erstellt / SMTP nicht konfiguriert' surfaces exactly as expected when SMTP is absent.",
+    "WhatsApp FAB IS rendered on /agb/* (public route). Per task note this is intentional; confirmed it does not overlap the confirm button on desktop (1280x900). On very small screens FAB sits at bottom-right and confirm button is on the left half — no overlap observed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration49_terms_mail.py (NEW — 12 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (11 passed, 1 xfailed documenting the schema bug)",
+    "frontend": "100% (all iteration-49 testids resolved + all integrations fired the expected API calls)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! (worked). Portal student s.haas@auto-hinwil.ch not needed for iteration 49 verification.",
+  "seed_data_creation": "Test PATCH /api/terms set terms_de to a marker text during backend tests; frontend test then overwrote it with a UI marker. Finally reset terms_de='' via admin PATCH. Stefan Haas agb_confirmed_at was temporarily unset for the FE test then RESTORED to the pre-existing timestamp '2026-07-13T15:41:43.789647+00:00' (matches iteration-48 baseline). Two extra tokens were generated during testing; both are now invalid (consumed by confirm test or superseded by later send calls). Business_settings.terms_updated_at will have been touched — this is intended data.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 49 is functionally complete on both API + UI. The ONE outstanding item is a Pydantic response-model gap on the Student schema — trivial 4-line fix in /app/backend/models/schemas.py (add agb_sent_at / agb_confirmed_at / agb_confirmed_version / agb_confirmation_token as Optional[str] = None to the Student class). After that fix the frontend badge + stats will start rendering the correct state without any FE changes. Test file /app/backend/tests/test_iteration49_terms_mail.py has an xfail block that will start passing (turning XPASS) once the fix lands — flip it back to a real assert at that point. Available fresh admin token isn't needed as tests re-login. Stefan Haas (id 443c0166-8f6e-4274-8c6a-9dfd6cc27e27) has agb_confirmed_at restored; the only student with an email address in the DB.",
+  "rca of the issue": "PROBLEM: TermsManager badge + stats always show 'Offen' regardless of actual student AGB state. STEPS TO REPRODUCE: 1) Admin login /admin. 2) Click AGB tab. 3) Observe badges + top 3 chips. Expected: Stefan Haas shows 'Bestätigt'. Actual: he shows 'Offen'. RCA: /app/backend/models/schemas.py class Student(StudentCreate) with ConfigDict(extra='ignore') does not declare agb_sent_at/agb_confirmed_at etc. FastAPI response_model=List[Student] serialises via this model, dropping the fields even though they exist in Mongo (verified with direct Mongo query). MITIGATION: Add the four Optional[str] fields to Student (or move them into StudentCreate with default=None). No frontend change needed — TermsManager already reads them off the student object."
+}
