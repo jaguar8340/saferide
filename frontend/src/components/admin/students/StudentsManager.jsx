@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Clock,
   Circle,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -87,6 +88,30 @@ export default function StudentsManager() {
     try {
       await api.delete(`/students/${student.id}`);
       setItems((cur) => cur.filter((s) => s.id !== student.id));
+    } catch (err) {
+      toast.error(formatApiError(err));
+    }
+  };
+
+  const sendAgb = async (student) => {
+    if (!student.email) {
+      toast.error("Kein E-Mail hinterlegt");
+      return;
+    }
+    const extra = student.guardian_email
+      ? ` und ${student.guardian_email}`
+      : "";
+    if (!confirm(`AGB an ${student.email}${extra} ${student.agb_sent_at ? "erneut " : ""}senden?`)) return;
+    try {
+      const r = await api.post(`/terms/send/${student.id}`);
+      if (r.data.sent) {
+        toast.success(`AGB an ${student.email}${extra} versendet`);
+      } else {
+        toast.warning(`Link erstellt (SMTP: ${r.data.detail}). Manuell weiterleiten: ${r.data.confirm_url}`);
+      }
+      // Refresh badge state
+      const list = await api.get("/students");
+      setItems(list.data || []);
     } catch (err) {
       toast.error(formatApiError(err));
     }
@@ -297,6 +322,24 @@ export default function StudentsManager() {
                 </div>
               </div>
               <AgbBadge student={s} />
+              {s.email && (
+                <button
+                  type="button"
+                  onClick={() => sendAgb(s)}
+                  data-testid={`admin-student-send-agb-${s.id}`}
+                  title={
+                    s.agb_confirmed_at
+                      ? "AGB erneut senden (bereits bestätigt)"
+                      : s.agb_sent_at
+                      ? "AGB neu senden"
+                      : "AGB senden"
+                  }
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-[#78716c] hover:text-[#ff5a36] hover:bg-[#fff7ed] transition-colors"
+                  aria-label="AGB senden"
+                >
+                  <Send size={13} />
+                </button>
+              )}
               <Link
                 to={`/admin/students/${s.id}`}
                 data-testid={`admin-student-open-${s.id}`}

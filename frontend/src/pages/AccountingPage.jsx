@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Receipt,
+  Zap,
   ArrowDownLeft,
   BookOpenCheck,
   BarChart3,
@@ -23,6 +24,7 @@ import {
   ChevronRight,
   FileDown,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -34,6 +36,7 @@ const SUBTABS = [
   { id: "expenses",       icon: ArrowDownLeft,   label: "Ausgaben" },
   { id: "accounts",       icon: BookOpenCheck,   label: "Kontenplan" },
   { id: "income",         icon: BarChart3,       label: "Erfolgsrechnung" },
+  { id: "direct",         icon: Zap,             label: "DIREKT" },
 ];
 
 const money = (n) =>
@@ -96,10 +99,11 @@ export default function AccountingPage() {
 
       {subtab === "overview"  && <OverviewSubtab year={year} onGoto={setSubtab} />}
       {subtab === "monthly"   && <MonthlyJournalSubtab year={year} />}
-      {subtab === "invoices"  && <InvoicesSubtab year={year} />}
+      {subtab === "invoices"  && <InvoicesSubtab year={year} direct={false} />}
       {subtab === "expenses"  && <ExpensesSubtab year={year} />}
       {subtab === "accounts"  && <AccountsSubtab />}
       {subtab === "income"    && <IncomeStatementSubtab year={year} />}
+      {subtab === "direct"    && <InvoicesSubtab year={year} direct={true} />}
     </div>
   );
 }
@@ -264,10 +268,12 @@ function QuickAction({ label, onClick, icon: Icon }) {
 // -----------------------------------------------------------------------------
 //  Invoices (global list)
 // -----------------------------------------------------------------------------
-function InvoicesSubtab({ year }) {
+function InvoicesSubtab({ year, direct = false }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -276,6 +282,7 @@ function InvoicesSubtab({ year }) {
       try {
         const params = { year };
         if (statusFilter) params.status = statusFilter;
+        if (direct) params.direct = true;
         const r = await api.get("/accounting/invoices", { params });
         if (!cancelled) setItems(r.data);
       } catch (e) {
@@ -285,7 +292,7 @@ function InvoicesSubtab({ year }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [year, statusFilter]);
+  }, [year, statusFilter, direct, reloadTick]);
 
   const totals = useMemo(() => {
     const t = { count: items.length, open: 0, paid: 0, cancelled: 0 };
@@ -300,6 +307,13 @@ function InvoicesSubtab({ year }) {
 
   return (
     <div className="space-y-4">
+      {direct && (
+        <div className="bg-[#fff7ed] border border-[#fed7aa] rounded-2xl p-4 text-xs text-[#9a3412] leading-relaxed">
+          <strong className="font-semibold">DIREKT-Rechnungen</strong> erscheinen weder in der
+          Übersicht, im Monatsjournal noch in der Erfolgsrechnung. Sie dienen für Barzahlungen
+          und Direkt-Abwicklungen ausserhalb der offiziellen Buchhaltung.
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="text-xs text-[#78716c] flex flex-wrap items-center gap-3">
           <span><span className="font-semibold text-[#0f172a]">{totals.count}</span> Rechnungen</span>
@@ -308,21 +322,31 @@ function InvoicesSubtab({ year }) {
           <span className="text-[#a8a29e]">·</span>
           <span className="text-[#c2410c] font-semibold">{money(totals.open)} offen</span>
         </div>
-        <div className="inline-flex gap-1 bg-white border border-[#e7e5e4] rounded-full p-1">
-          {[["", "Alle"], ["open", "Offen"], ["paid", "Bezahlt"], ["cancelled", "Storniert"]].map(([v, l]) => (
-            <button
-              key={v || "all"}
-              onClick={() => setStatusFilter(v)}
-              data-testid={`invoice-filter-${v || "all"}`}
-              className={`text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full transition-colors ${
-                statusFilter === v
-                  ? "bg-[#0f172a] text-white"
-                  : "text-[#78716c] hover:text-[#0f172a]"
-              }`}
-            >
-              {l}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex gap-1 bg-white border border-[#e7e5e4] rounded-full p-1">
+            {[["", "Alle"], ["open", "Offen"], ["paid", "Bezahlt"], ["cancelled", "Storniert"]].map(([v, l]) => (
+              <button
+                key={v || "all"}
+                onClick={() => setStatusFilter(v)}
+                data-testid={`invoice-filter-${v || "all"}`}
+                className={`text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full transition-colors ${
+                  statusFilter === v
+                    ? "bg-[#0f172a] text-white"
+                    : "text-[#78716c] hover:text-[#0f172a]"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            data-testid={direct ? "accounting-new-invoice-direct" : "accounting-new-invoice"}
+            className="inline-flex items-center gap-1.5 bg-[#ff5a36] hover:bg-[#e94418] text-white text-xs font-semibold px-3.5 py-2 rounded-full transition-colors"
+          >
+            <Plus size={13} />
+            Neue Rechnung
+          </button>
         </div>
       </div>
 
@@ -332,7 +356,7 @@ function InvoicesSubtab({ year }) {
         </div>
       ) : items.length === 0 ? (
         <div className="bg-white border border-dashed border-[#e7e5e4] rounded-2xl p-10 text-center text-sm text-[#78716c]">
-          Keine Rechnungen gefunden für {year}.
+          Keine {direct ? "DIREKT-" : ""}Rechnungen gefunden für {year}.
         </div>
       ) : (
         <div className="bg-white border border-[#e7e5e4] rounded-2xl overflow-x-auto">
@@ -346,6 +370,7 @@ function InvoicesSubtab({ year }) {
                 <th className="text-left px-4 py-3">Zahlungsweise</th>
                 <th className="text-right px-4 py-3">Preis</th>
                 <th className="text-center px-4 py-3">Status</th>
+                {!direct && <th className="text-center px-4 py-3">Direkt</th>}
                 <th className="text-left px-4 py-3">Bemerkung</th>
               </tr>
             </thead>
@@ -377,6 +402,15 @@ function InvoicesSubtab({ year }) {
                   <td className="px-4 py-3 text-center">
                     <StatusPill status={i.status} />
                   </td>
+                  {!direct && (
+                    <td className="px-4 py-3 text-center">
+                      {i.is_direct && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fff7ed] text-[#c2410c] border border-[#fed7aa] px-2 py-0.5 rounded-full">
+                          <Zap size={10} /> DIREKT
+                        </span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-xs text-[#475569] max-w-[240px] truncate" title={i.note}>{i.note || ""}</td>
                 </tr>
               ))}
@@ -384,7 +418,251 @@ function InvoicesSubtab({ year }) {
           </table>
         </div>
       )}
+
+      {showCreate && (
+        <CreateInvoiceModal
+          defaultDirect={direct}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); setReloadTick((t) => t + 1); }}
+        />
+      )}
     </div>
+  );
+}
+
+
+function CreateInvoiceModal({ defaultDirect, onClose, onCreated }) {
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({
+    student_id: "",
+    lesson_date: today,
+    duration_min: 45,
+    price_chf: "",
+    payment_method: "bar",
+    status: "open",
+    note: "",
+    is_direct: !!defaultDirect,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await api.get("/students");
+        if (!cancelled) {
+          const active = (r.data || []).filter((s) => !s.archived);
+          active.sort((a, b) =>
+            (a.last_name || "").localeCompare(b.last_name || "", "de") ||
+            (a.first_name || "").localeCompare(b.first_name || "", "de")
+          );
+          setStudents(active);
+        }
+      } catch (e) {
+        if (!cancelled) toast.error(formatApiError(e));
+      } finally {
+        if (!cancelled) setStudentsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const canSubmit =
+    form.student_id && Number(form.price_chf) > 0 && !saving;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setSaving(true);
+    try {
+      const payload = {
+        lesson_date: form.lesson_date,
+        duration_min: Number(form.duration_min) || 0,
+        price_chf: Number(form.price_chf) || 0,
+        payment_method: form.payment_method,
+        status: form.status,
+        note: form.note,
+        is_direct: !!form.is_direct,
+      };
+      const r = await api.post(`/students/${form.student_id}/invoices`, payload);
+      toast.success(`Rechnung ${r.data.number} erstellt`);
+      onCreated?.();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      data-testid="accounting-create-invoice-modal"
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#f1f5f9]">
+          <h3 className="font-display text-2xl leading-none">Neue Rechnung</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schliessen"
+            className="p-1.5 rounded-full hover:bg-[#fafaf9] text-[#78716c]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <Field label="Schüler:in *">
+            <select
+              value={form.student_id}
+              onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))}
+              data-testid="new-invoice-student-select"
+              disabled={studentsLoading}
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+            >
+              <option value="">— bitte wählen —</option>
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.last_name} {s.first_name} {s.category ? `· Kat. ${s.category}` : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Lektionsdatum">
+              <input
+                type="date"
+                value={form.lesson_date}
+                onChange={(e) => setForm((f) => ({ ...f, lesson_date: e.target.value }))}
+                data-testid="new-invoice-lesson-date"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </Field>
+            <Field label="Dauer (min)">
+              <input
+                type="number"
+                min="0"
+                max="600"
+                value={form.duration_min}
+                onChange={(e) => setForm((f) => ({ ...f, duration_min: e.target.value }))}
+                data-testid="new-invoice-duration"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Preis CHF *">
+              <input
+                type="number"
+                step="0.05"
+                min="0"
+                value={form.price_chf}
+                onChange={(e) => setForm((f) => ({ ...f, price_chf: e.target.value }))}
+                data-testid="new-invoice-price"
+                placeholder="0.00"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </Field>
+            <Field label="Zahlungsweise">
+              <select
+                value={form.payment_method}
+                onChange={(e) => setForm((f) => ({ ...f, payment_method: e.target.value }))}
+                data-testid="new-invoice-payment-method"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+              >
+                <option value="bar">Bar</option>
+                <option value="rechnung">Rechnung</option>
+                <option value="kreditkarte">Kreditkarte</option>
+                <option value="twint">Twint</option>
+              </select>
+            </Field>
+          </div>
+
+          <Field label="Status">
+            <select
+              value={form.status}
+              onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+              data-testid="new-invoice-status"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+            >
+              <option value="open">Offen</option>
+              <option value="paid">Bezahlt</option>
+              <option value="cancelled">Storniert</option>
+            </select>
+          </Field>
+
+          <Field label="Bemerkung">
+            <textarea
+              rows={2}
+              value={form.note}
+              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              data-testid="new-invoice-note"
+              placeholder="Optional …"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36] resize-none"
+            />
+          </Field>
+
+          <label className="flex items-start gap-3 bg-[#fff7ed] border border-[#fed7aa] rounded-xl px-4 py-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.is_direct}
+              onChange={(e) => setForm((f) => ({ ...f, is_direct: e.target.checked }))}
+              data-testid="new-invoice-direct-toggle"
+              className="mt-0.5 accent-[#ff5a36]"
+            />
+            <span className="text-xs text-[#9a3412] leading-snug">
+              <strong className="font-semibold flex items-center gap-1.5 mb-0.5">
+                <Zap size={12} /> DIREKT-Rechnung
+              </strong>
+              Diese Rechnung erscheint nicht in der Standard-Buchhaltung, im
+              Monatsjournal oder in der Erfolgsrechnung — sondern nur im Tab „DIREKT“.
+            </span>
+          </label>
+        </div>
+        <div className="px-6 py-4 bg-[#fafaf9] flex items-center justify-end gap-2 border-t border-[#f1f5f9]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs font-semibold tracking-widest uppercase text-[#78716c] hover:text-[#0f172a] px-4 py-2"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!canSubmit}
+            data-testid="new-invoice-submit"
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase px-4 py-2.5 rounded-full transition-colors ${
+              canSubmit
+                ? "bg-[#ff5a36] text-white hover:bg-[#e94418]"
+                : "bg-[#e7e5e4] text-[#a8a29e] cursor-not-allowed"
+            }`}
+          >
+            {saving ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+            Erstellen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
 

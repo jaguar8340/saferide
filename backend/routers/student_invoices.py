@@ -260,18 +260,29 @@ async def export_invoice_pdf(
 async def list_all_invoices(
     status: Optional[str] = Query(default=None),
     year: Optional[int] = Query(default=None),
+    direct: Optional[bool] = Query(
+        default=None,
+        description="False/None: nur Standard-Rechnungen · True: nur DIREKT-Rechnungen",
+    ),
     admin=Depends(get_current_admin),
 ):
     """Global invoice list across all students (Buchhaltung view).
 
     Joins each invoice with its student's basic info (name) so the UI
-    doesn't need N+1 lookups.
+    doesn't need N+1 lookups. DIREKT-Rechnungen (`is_direct=True`) sind
+    aus der Standard-Buchhaltung ausgeblendet und werden nur mit
+    `?direct=true` geliefert.
     """
     q: dict = {}
     if status and status in INVOICE_STATUSES:
         q["status"] = status
     if year:
         q["date"] = {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31"}
+    if direct is True:
+        q["is_direct"] = True
+    else:
+        # Standard Buchhaltung: DIREKT-Rechnungen ausschliessen (auch alte ohne Feld = false)
+        q["is_direct"] = {"$ne": True}
 
     invoices = await db.student_invoices.find(q, {"_id": 0}).sort("date", -1).to_list(5000)
     student_ids = list({i["student_id"] for i in invoices})

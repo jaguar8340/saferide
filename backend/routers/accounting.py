@@ -259,7 +259,7 @@ async def accounting_summary(
     year_filter = {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31"}
 
     invoices = await db.student_invoices.find(
-        {"date": year_filter}, {"_id": 0}
+        {"date": year_filter, "is_direct": {"$ne": True}}, {"_id": 0}
     ).to_list(5000)
     expenses = await db.expenses.find(
         {"date": year_filter}, {"_id": 0}
@@ -309,7 +309,7 @@ async def monthly_journal(year: int, month: int, admin=Depends(get_current_admin
     date_filter = {"$gte": date_from, "$lte": date_to}
 
     invoices = await db.student_invoices.find(
-        {"date": date_filter}, {"_id": 0}
+        {"date": date_filter, "is_direct": {"$ne": True}}, {"_id": 0}
     ).to_list(5000)
     expenses = await db.expenses.find({"date": date_filter}, {"_id": 0}).to_list(5000)
 
@@ -434,7 +434,7 @@ async def income_statement(year: int, admin=Depends(get_current_admin)):
     await ensure_default_accounts()
     year_filter = {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31"}
     invoices = await db.student_invoices.find(
-        {"date": year_filter, "status": "paid"}, {"_id": 0}
+        {"date": year_filter, "status": "paid", "is_direct": {"$ne": True}}, {"_id": 0}
     ).to_list(5000)
     expenses = await db.expenses.find({"date": year_filter}, {"_id": 0}).to_list(5000)
     accounts = await db.accounts.find({}, {"_id": 0}).sort("number", 1).to_list(500)

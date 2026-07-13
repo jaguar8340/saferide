@@ -352,6 +352,7 @@ class StudentInvoiceCreate(BaseModel):
     note: str = Field(default="", max_length=2000)
     payment_method: str = Field(default="bar", max_length=20)
     status: str = Field(default="open", max_length=20)
+    is_direct: bool = False                                 # DIREKT-Rechnung: nicht in Standard-Buchhaltung/Erfolgsrechnung
 
 
 class StudentInvoice(StudentInvoiceCreate):
@@ -375,6 +376,7 @@ class StudentInvoicePatch(BaseModel):
     note: Optional[str] = None
     payment_method: Optional[str] = None
     status: Optional[str] = None
+    is_direct: Optional[bool] = None
     date: Optional[str] = None                              # invoice date (rarely edited)
 
 
