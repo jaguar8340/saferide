@@ -467,6 +467,12 @@ class BusinessSettings(BaseModel):
     smtp_from_email: str = ""
     smtp_from_name: str = ""
     smtp_use_tls: bool = True                               # STARTTLS on 587 / implicit SSL on 465
+    # IMAP (Webmail Posteingang lesen)
+    imap_host: str = ""
+    imap_port: int = 993
+    imap_user: str = ""
+    imap_password: str = ""
+    imap_use_ssl: bool = True
     email_subject_template: str = "Rechnung {number} – {business_name}"
     email_body_template: str = (
         "Hallo {first_name},\n\n"
@@ -507,6 +513,11 @@ class BusinessSettingsPatch(BaseModel):
     smtp_from_email: Optional[str] = None
     smtp_from_name: Optional[str] = None
     smtp_use_tls: Optional[bool] = None
+    imap_host: Optional[str] = None
+    imap_port: Optional[int] = None
+    imap_user: Optional[str] = None
+    imap_password: Optional[str] = None
+    imap_use_ssl: Optional[bool] = None
     email_subject_template: Optional[str] = None
     email_body_template: Optional[str] = None
 
