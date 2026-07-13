@@ -206,6 +206,12 @@ class StudentCreate(BaseModel):
 class Student(StudentCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # AGB (Terms) confirmation state — populated by /api/terms/send + /api/terms/confirm
+    agb_sent_at: Optional[str] = None
+    agb_sent_by: Optional[str] = None
+    agb_confirmed_at: Optional[str] = None
+    agb_confirmed_version: Optional[str] = None
+    agb_confirmation_expires: Optional[str] = None
 
 
 class StudentPatch(BaseModel):

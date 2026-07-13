@@ -358,9 +358,21 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **About-Section – Tachos durch Hunde-Foto ersetzt**: 3 Speedo-Tachos (`about-speedo-0/1/2`) komplett aus dem DOM entfernt. Stattdessen wird das existierende `about.dog_photo_url` als kompaktes 180–220 px-Bild direkt unter dem Nadine-Foto gezeigt. Sektion ist deutlich kompakter. Der duplizierte untere Hunde-Slot entfernt.
 
 ## Offene Punkte / Backlog
-- 🤖 **KI-Unterstützung Fahrkontrolle** — Prüfungsreife-Analyse + Lektionsvorschläge (P2).
-- 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 💳 **Stripe-Integration** für Pakete/Gutscheine (P2).
+- 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
+- 🗜️ **ZIP-Export aller Rechnungs-Snapshots** für Steuererklärung (P3).
+
+- ✅ **Iteration 49 (13.07.2026) — AGB-Editor + öffentliche Bestätigungsseite + Webmail-Client (DONE, Backend 12/12 pytest + Frontend 100 % via testing_agent_v3_fork):**
+  - **Backend `/app/backend/routers/terms.py`** — AGB-CRUD (`GET /api/terms` public, `PATCH /api/terms` admin), Versand (`POST /api/terms/send/{sid}` erzeugt Token + Confirm-URL, sendet via SMTP wenn konfiguriert, sonst sent=false), Öffentliche Confirm-Endpoints (`GET /api/terms/confirm/validate?token=`, `POST /api/terms/confirm`), Portal-Route (`POST /api/terms/portal/confirm` via Student-JWT). Token wird nach Confirm konsumiert (via `$unset`).
+  - **Backend `/app/backend/routers/mail.py`** — Vollständiger Webmail-Client via IMAP + SMTP. Endpoints: `GET/PATCH /api/mail/config`, `GET /api/mail/folders`, `GET /api/mail/messages`, `GET /api/mail/message`, `POST /api/mail/send`, `POST /api/mail/reply`, `POST /api/mail/mark-read`, `DELETE /api/mail/message`. Gesendete Mails werden best-effort in den IMAP-Sent-Ordner appended. Deutsche Fehlermeldungen wenn IMAP nicht konfiguriert (HTTP 400 „IMAP nicht konfiguriert (Mail → Einstellungen)").
+  - **Frontend `/app/frontend/src/pages/AgbConfirm.jsx`** — Public Confirm-Seite unter `/agb/:token`. testids: `agb-confirm-page`, `agb-body`, `agb-confirm-button`, `agb-thanks`, `agb-invalid`, `agb-checking`. Zeigt AGB-Text + „Ich stimme zu"-Button. Bereits verwendete/abgelaufene Tokens → freundliche Fehlerkarte.
+  - **Frontend Admin-Tab „Mail"** (`admin-tab-email`) — `MailModule.jsx` mit 2 Sub-Tabs (Posteingang / Einstellungen). `Webmail.jsx` implementiert Ordner-Sidebar + Nachrichtenliste + Message-Viewer + Compose/Reply/Reply-All-Modal. Bei fehlendem IMAP-Config zeigt `webmail-config-error`-Panel mit Hinweis zum Einstellungen-Sub-Tab.
+  - **Frontend Admin-Tab „AGB"** (`admin-tab-terms`) — `TermsManager.jsx` mit AGB-Editor (DE + optional EN, Markdown-fähig, autospeichern onBlur) + Schüler-Tabelle mit Status-Badges (Offen/Gesendet/Bestätigt) + „Senden"-Button pro Schüler. Toast „Link erstellt / SMTP nicht konfiguriert" wenn kein SMTP hinterlegt.
+  - **Fixes in dieser Session**:
+    - `App.js`: Route `<Route path="/agb/:token" element={<AgbConfirm />} />` hinzugefügt (war vergessen).
+    - `AdminDashboard.jsx`: doppelter `FileText`-Import aus lucide-react entfernt (Compile-Fehler blockte den gesamten Frontend-Bundle).
+    - `models/schemas.py`: `Student` erweitert um `agb_sent_at`, `agb_sent_by`, `agb_confirmed_at`, `agb_confirmed_version`, `agb_confirmation_expires` (alle Optional[str] = None). Ohne diese Deklaration filterte FastAPI die Felder aus `GET /api/students` raus → TermsManager-Badges zeigten fälschlich immer „Offen". `agb_confirmation_token` bewusst NICHT im Response-Model, weil Client-Secret.
+  - **Testing**: `/app/backend/tests/test_iteration49_terms_mail.py` (12 Tests, 100 %). Frontend E2E via `testing_agent_v3_fork` bestätigt: /agb/{token} rendert korrekt (agb-body + confirm-button → agb-thanks), verbrauchter Token zeigt agb-invalid, Admin-Mail-Tab zeigt config-error-Panel, Admin-AGB-Tab persistiert PATCH und Send-Button erzeugt Confirm-URL.
 
 - ✅ **Iteration 48 (11.02.2026) — Zahlungsweise als Dropdown (DONE, Frontend 100 % via testing_agent_v3_fork):**
   - Native `<select>` für Zahlungsweise in Neuer Rechnung + jeder Rechnungs-Zeile durch shadcn `DropdownMenu` ersetzt. Trigger zeigt farbigen Punkt + Label + Chevron; Optionen zeigen Farbpunkte + grünes Häkchen für aktuelle Auswahl. `PAYMENT_META` erweitert mit `dot`-Farbe pro Zahlungsmethode. Idempotent (kein PATCH bei Klick auf gleiche Methode), Inline-Update ohne Reload. Konsistent mit Status-Dropdown aus Iteration 47.
