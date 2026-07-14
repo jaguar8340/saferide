@@ -47,6 +47,7 @@ class AdminDocument(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     note: str = ""
+    category: str = ""                              # z. B. „Verträge", „Steuer", „Versicherung"
     original_filename: str = ""
     storage_path: str
     url: str
@@ -60,16 +61,20 @@ class AdminDocument(BaseModel):
 class AdminDocumentPatch(BaseModel):
     title: Optional[str] = None
     note: Optional[str] = None
+    category: Optional[str] = None
+
+
+DEFAULT_CATEGORIES = ["Verträge", "Steuer", "Versicherung", "Buchhaltung", "Allgemein"]
 
 
 @router.get("", response_model=List[AdminDocument])
 async def list_documents(
     q: Optional[str] = Query(default=None, description="Volltextsuche in Titel + Notiz"),
+    category: Optional[str] = Query(default=None, description="Nur Dateien dieser Kategorie"),
     admin=Depends(get_current_admin),
 ):
     query: dict = {}
     if q:
-        # Case-insensitive substring in title OR note (and filename fallback).
         safe = q.strip()
         if safe:
             regex = {"$regex": _escape_regex(safe), "$options": "i"}
@@ -78,8 +83,69 @@ async def list_documents(
                 {"note": regex},
                 {"original_filename": regex},
             ]
+    if category is not None:
+        # Empty string filters unclassified documents intentionally
+        query["category"] = category
     docs = await db.admin_documents.find(query, {"_id": 0}).sort("created_at", -1).to_list(5000)
     return docs
+
+
+@router.get("/categories")
+async def list_categories(admin=Depends(get_current_admin)):
+    """Return the list of category names + doc count. Merges DB categories
+    with the default seed so newcomers see suggestions immediately."""
+    pipeline = [
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}},
+    ]
+    rows = await db.admin_documents.aggregate(pipeline).to_list(1000)
+    by_name: dict = {}
+    for r in rows:
+        name = (r["_id"] or "").strip()
+        if not name:
+            by_name.setdefault("", {"name": "", "count": 0})
+            by_name[""]["count"] += r["count"]
+        else:
+            by_name[name] = {"name": name, "count": r["count"]}
+    for seed in DEFAULT_CATEGORIES:
+        by_name.setdefault(seed, {"name": seed, "count": 0})
+    # Load user-added categories that have no docs yet
+    stored = await db.admin_document_categories.find({}, {"_id": 0}).to_list(500)
+    for s in stored:
+        by_name.setdefault(s["name"], {"name": s["name"], "count": 0})
+    ordered = [by_name.get(n) for n in DEFAULT_CATEGORIES if by_name.get(n)]
+    extras = sorted(
+        [v for n, v in by_name.items() if n and n not in DEFAULT_CATEGORIES],
+        key=lambda x: x["name"].lower(),
+    )
+    unclassified = by_name.get("")
+    return ordered + extras + ([unclassified] if unclassified else [])
+
+
+class CategoryIn(BaseModel):
+    name: str
+
+
+@router.post("/categories")
+async def create_category(payload: CategoryIn, admin=Depends(get_current_admin)):
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(400, "Name darf nicht leer sein")
+    if len(name) > 60:
+        raise HTTPException(400, "Kategorie zu lang (max. 60 Zeichen)")
+    await db.admin_document_categories.update_one(
+        {"name": name}, {"$setOnInsert": {"name": name}}, upsert=True,
+    )
+    return {"name": name}
+
+
+@router.delete("/categories/{name}")
+async def delete_category(name: str, admin=Depends(get_current_admin)):
+    count = await db.admin_documents.count_documents({"category": name})
+    if count > 0:
+        raise HTTPException(400, f"Kategorie enthält noch {count} Datei(en) — bitte zuerst leeren oder verschieben")
+    await db.admin_document_categories.delete_one({"name": name})
+    return {"ok": True}
 
 
 @router.post("", response_model=AdminDocument)
@@ -87,6 +153,7 @@ async def upload_document(
     file: UploadFile = File(...),
     title: str = Form(""),
     note: str = Form(""),
+    category: str = Form(""),
     admin=Depends(get_current_admin),
 ):
     if not title.strip():
@@ -108,6 +175,7 @@ async def upload_document(
     doc = AdminDocument(
         title=title.strip(),
         note=note.strip(),
+        category=category.strip(),
         original_filename=file.filename or "",
         storage_path=path,
         url=f"/api/files/{path}",
