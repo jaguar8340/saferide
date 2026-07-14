@@ -78,7 +78,9 @@ export default function LocationPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+    // Re-fetch when navigating between location slugs so the "other
+    // regions" grid always reflects the latest hero_image_url values.
+  }, [slug]);
 
   useEffect(() => {
     if (loc?.seo_title_de) {
@@ -215,6 +217,7 @@ export default function LocationPage() {
         currentSlug={loc.slug}
         currentName={loc.name}
         allLocations={allLocs}
+        onAllLocationsChange={setAllLocs}
         texts={{
           overline_de: loc.other_regions_overline_de,
           overline_en: loc.other_regions_overline_en,

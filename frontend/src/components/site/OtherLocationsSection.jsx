@@ -12,10 +12,10 @@ import CantonWappen from "@/components/site/CantonWappen";
 /**
  * Card that links to another location landing page. In admin edit mode
  * exposes an inline upload button that PATCHes the OTHER location's
- * hero_image_url so the admin can fix all 11 location previews from one
+ * hero_image_url so the admin can fix all 17 location previews from one
  * page without having to navigate to each one.
  */
-function OtherLocationCard({ loc, onLocalImageUpdate }) {
+function OtherLocationCard({ loc, onImageUpdate }) {
   const { editMode } = useEdit();
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -39,7 +39,7 @@ function OtherLocationCard({ loc, onLocalImageUpdate }) {
       });
       const newUrl = up.data.url;
       await api.patch(`/locations/${loc.slug}`, { hero_image_url: newUrl });
-      onLocalImageUpdate(loc.slug, newUrl);
+      onImageUpdate(loc.slug, newUrl);
       toast.success(`Bild für ${loc.name} aktualisiert`);
     } catch (err) {
       toast.error(formatApiError(err, "Upload fehlgeschlagen"));
@@ -125,25 +125,30 @@ function OtherLocationCard({ loc, onLocalImageUpdate }) {
  * "Ausserdem in folgenden Regionen für dich da" – shows ALL OTHER
  * Safe Ride locations as compact cards with image + name + canton + link.
  * Excludes the current location (matched by `currentSlug`).
+ *
+ * When admin uploads a new image on a card, the parent's `allLocations`
+ * array is updated in-place via `onAllLocationsChange` so the change is
+ * visible immediately across every card render and survives navigation.
  */
 export default function OtherLocationsSection({
   currentSlug,
   allLocations = [],
+  onAllLocationsChange,
   texts,
   onUpdate,
 }) {
   const { lang, pick } = useLang();
-  const [localOverrides, setLocalOverrides] = useState({});
-  const others = allLocations
-    .filter((l) => l.slug !== currentSlug)
-    .map((l) =>
-      localOverrides[l.slug]
-        ? { ...l, hero_image_url: localOverrides[l.slug] }
-        : l,
-    );
+  const others = allLocations.filter((l) => l.slug !== currentSlug);
 
-  const onLocalImageUpdate = (slug, url) =>
-    setLocalOverrides((o) => ({ ...o, [slug]: url }));
+  const onImageUpdate = (slug, url) => {
+    if (typeof onAllLocationsChange === "function") {
+      onAllLocationsChange((prev) =>
+        (prev || []).map((l) =>
+          l.slug === slug ? { ...l, hero_image_url: url } : l,
+        ),
+      );
+    }
+  };
 
   if (others.length === 0) return null;
 
@@ -193,7 +198,7 @@ export default function OtherLocationsSection({
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.4, delay: (i % 3) * 0.05 }}
             >
-              <OtherLocationCard loc={loc} onLocalImageUpdate={onLocalImageUpdate} />
+              <OtherLocationCard loc={loc} onImageUpdate={onImageUpdate} />
             </motion.div>
           ))}
         </div>
