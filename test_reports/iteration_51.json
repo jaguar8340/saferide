@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration 51 verified end-to-end. Backend: 6 passed + 1 skipped in existing test_iteration51_split_agb_documents.py + 5 new tests added in test_iteration51_extra.py (JPG upload → kind='image', search on note field, search on filename fragment, PATCH note-only, DELETE removes DB row → PATCH returns 404 + not in list, all endpoints reject unauth, guardian-without-email returns 400 with correct German message, confirming student-token leaves guardian-token intact). Frontend Documents E2E: admin login → Dateien tab (data-testid=admin-tab-documents in sidebar) → 'Neue Datei' opens upload modal → PDF uploaded with title+note → item appears in list with PDF icon + metadata + Download link → Suche filters correctly (both match + no-match paths: 'Keine Treffer für …') → Bearbeiten opens inline form + Speichern updates title → Löschen with confirm-dialog removes item + toast 'Datei gelöscht'. Frontend AGB Split E2E: In Schüler-Detail Übersicht, guardian_email set → AgbSection renders with two rows (student-agb-section testid) → both buttons (student-agb-send-student + student-agb-send-guardian) present + enabled → clicks fire POST /api/terms/send/{sid}?target=<x> → toast 'Link erstellt · SMTP nicht konfiguriert' → GET /students returns fresh agb_student_sent_at AND agb_guardian_sent_at. AGB tab (TermsManager) shows two RecipientRows per student side-by-side with terms-send-{sid}-student and terms-send-{sid}-guardian testids + Bestätigt/Gesendet/Offen stat chips. Cleanup: guardian_email cleared, all test documents deleted. Baseline: 0 admin_documents.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration51_split_agb_documents.py",
+    "/app/backend/tests/test_iteration51_extra.py",
+    "/app/test_reports/pytest/it51_results.xml",
+    "/app/test_reports/pytest/it51_extra_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "backend/routers/admin_documents.py L38-43 — DOC_ALLOWED_TYPES correctly restricts to PDF+JPG. size guard 20MB returns 413. `_escape_regex` prevents regex injection in ?q=. All-good.",
+    "backend/routers/admin_documents.py L81 — `find(..., {'_id': 0}).sort('created_at', -1)` returns descending order (newest first) and excludes MongoDB ObjectId — good serialization hygiene.",
+    "backend/routers/admin_documents.py L147-150 — best-effort blob delete via try/except is intentional for orphan storage-blob resilience. OK.",
+    "frontend DocumentsManager.jsx L46-54 — Client-side filter mirrors backend regex (title + note + original_filename). Both client-only filter AND ?q= would work if the front-end passed q — currently front-end filters CLIENT-SIDE only, but the review spec says both are acceptable. Since list is capped at 5000 (backend .to_list(5000)) the client-side approach is fine.",
+    "frontend AdminStudentDetail.jsx L284-331 — AgbSection cleanly composed from two AgbRows with proper testids + disabled state when email missing. Uses `student.agb_student_sent_at || student.agb_sent_at` fallback so legacy sends still register — matches spec.",
+    "frontend TermsManager stat chips — 'Bestätigt N · Gesendet N · Offen N' correctly derived from student-side timestamps (agb_student_confirmed_at with agb_confirmed_at fallback). Reflects the semantic that ONLY the student's confirmation gates the acceptance state.",
+    "frontend DocumentsManager.jsx L221-227 — Client-side type + size guard before POST duplicates server-side validation → nice UX, avoids upload of oversized files. OK.",
+    "test_iteration51_split_agb_documents.py::test_send_guardian_fails_without_guardian_email SKIPS when all existing students already have guardian_email — this can happen after other tests populate the fixture. The new test_iteration51_extra.py version CREATES a fresh student without guardian_email so the 400 path is always exercised. Recommend removing the SKIP fallback in the older file or letting the extra version supersede it."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration51_extra.py (NEW)"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests pass — 6 existing + 5 new; 1 skip in older file is superseded by extra test)",
+    "frontend": "100% (Documents CRUD + Search + Edit + Delete flows verified; AGB split on both student-detail AND AGB tab verified — both send buttons fire per target, both timestamps updated)"
+  },
+  "test_credentials": "admin@saferide.ch / SafeRide2026! — worked",
+  "seed_data_creation": "During tests: created + deleted 1 admin_document (PDF via E2E) + 2 admin_documents (JPGs in test_iteration51_extra) + 1 temp student without guardian_email + rotated AGB tokens on Stefan Haas (id=443c0166-8f6e-4274-8c6a-9dfd6cc27e27) 6× (3× student + 3× guardian). All cleaned up. guardian_email on Stefan Haas set to 'e2e-guardian@example.com' during test then cleared to empty at teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 51 (Split-AGB per Empfänger + Admin-Dateien) is functionally complete. Backend: `/api/documents` (list, upload, patch, delete) + `/api/terms/send/{sid}?target=student|guardian` + `/api/terms/confirm/validate` + `/api/terms/confirm` all work as specified. Frontend: Documents tab in AdminDashboard sidebar (admin-tab-documents) + Documents UI (documents-search / documents-new / documents-upload-modal / documents-upload-title/note/file/submit + documents-item-{id} / documents-download-{id} / documents-edit-{id} / documents-delete-{id} + documents-edit-title/note/save-{id}) all resolvable. AGB: TermsManager renders two RecipientRows per student (terms-send-{sid}-student + terms-send-{sid}-guardian). AdminStudentDetail.jsx has AgbSection under master-data grid (student-agb-section + student-agb-send-student + student-agb-send-guardian). Baseline state at end: admin_documents=empty, Stefan Haas guardian_email=empty, agb_student_confirmed_at STILL set from prior iterations (that's why stat chip = 'Bestätigt 1'). SMTP intentionally unconfigured — terms/send returns {sent: false, detail: 'SMTP nicht konfiguriert', confirm_url}. That is by design.",
+  "rca of the issue": "N/A — no bugs found."
+}

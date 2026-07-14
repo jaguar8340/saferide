@@ -23,6 +23,9 @@ import {
   Send,
   Copy,
   Check,
+  ShieldCheck,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -175,7 +178,7 @@ export default function AdminStudentDetail() {
       </nav>
 
       <main className="p-4 md:p-8 max-w-7xl mx-auto">
-        {tab === "overview" && <OverviewTab student={student} onSave={saveField} />}
+        {tab === "overview" && <OverviewTab student={student} onSave={saveField} onRefresh={load} />}
         {tab === "lessons" && <LessonsTab student={student} />}
         {tab === "invoices" && <InvoicesTab student={student} />}
         {tab === "activities" && <ActivitiesTab student={student} />}
@@ -186,7 +189,7 @@ export default function AdminStudentDetail() {
   );
 }
 
-function OverviewTab({ student, onSave }) {
+function OverviewTab({ student, onSave, onRefresh }) {
   const [summary, setSummary] = useState(null);
   useEffect(() => {
     (async () => {
@@ -272,9 +275,119 @@ function OverviewTab({ student, onSave }) {
         <EditField label="Name Erziehungsberechtigte:r"    value={student.guardian_name}    onSave={(v) => onSave("guardian_name", v)} />
         <EditField label="E-Mail Erziehungsberechtigte:r"  value={student.guardian_email}   onSave={(v) => onSave("guardian_email", v)} />
       </div>
+
+      <AgbSection student={student} onRefresh={onRefresh} />
     </div>
   );
 }
+
+function AgbSection({ student, onRefresh }) {
+  const [sending, setSending] = useState(null);
+  const send = async (target) => {
+    setSending(target);
+    try {
+      const r = await api.post(`/terms/send/${student.id}`, null, { params: { target } });
+      if (r.data.sent) {
+        toast.success(`AGB an ${r.data.email} versendet`);
+      } else {
+        toast.message("Link erstellt", { description: r.data.detail });
+      }
+      onRefresh?.();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSending(null);
+    }
+  };
+
+  return (
+    <div
+      data-testid="student-agb-section"
+      className="bg-white border border-[#e7e5e4] rounded-2xl p-5 md:p-6 space-y-3"
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <ShieldCheck size={16} className="text-[#ff5a36]" />
+        <h3 className="font-display text-lg">AGB / Einwilligung</h3>
+      </div>
+      <AgbRow
+        label="Schüler:in"
+        email={student.email}
+        sentAt={student.agb_student_sent_at || student.agb_sent_at}
+        confirmedAt={student.agb_student_confirmed_at || student.agb_confirmed_at}
+        onSend={() => send("student")}
+        isSending={sending === "student"}
+        testid="student-agb-send-student"
+      />
+      <AgbRow
+        label="Erziehungsberechtigte:r"
+        email={student.guardian_email}
+        sentAt={student.agb_guardian_sent_at}
+        confirmedAt={student.agb_guardian_confirmed_at}
+        onSend={() => send("guardian")}
+        isSending={sending === "guardian"}
+        testid="student-agb-send-guardian"
+      />
+    </div>
+  );
+}
+
+
+function AgbRow({ label, email, sentAt, confirmedAt, onSend, isSending, testid }) {
+  const disabled = !email || isSending;
+  return (
+    <div className="flex items-center gap-3 bg-[#fafaf9] border border-[#f3f0eb] rounded-xl px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c]">
+          {label}
+        </div>
+        <div className="text-sm text-[#334155] truncate">
+          {email || <span className="text-[#a8a29e] italic text-xs">keine E-Mail hinterlegt</span>}
+        </div>
+      </div>
+      <AgbStatePill sentAt={sentAt} confirmedAt={confirmedAt} />
+      <button
+        type="button"
+        onClick={onSend}
+        disabled={disabled}
+        data-testid={testid}
+        className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3.5 py-2 rounded-full hover:opacity-90 disabled:bg-[#e7e5e4] disabled:text-[#a8a29e] disabled:cursor-not-allowed"
+      >
+        {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+        Senden
+      </button>
+    </div>
+  );
+}
+
+
+function AgbStatePill({ sentAt, confirmedAt }) {
+  if (confirmedAt) {
+    return (
+      <span
+        title={`Bestätigt am ${new Date(confirmedAt).toLocaleString("de-CH")}`}
+        className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#f0fdf4] text-[#166534] px-2.5 py-1 rounded-full whitespace-nowrap"
+      >
+        <ShieldCheck size={11} /> Bestätigt
+      </span>
+    );
+  }
+  if (sentAt) {
+    return (
+      <span
+        title={`Gesendet am ${new Date(sentAt).toLocaleString("de-CH")}`}
+        className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fff7ed] text-[#c2410c] px-2.5 py-1 rounded-full whitespace-nowrap"
+      >
+        <Clock size={11} /> Gesendet
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fef2f2] text-[#991b1b] px-2.5 py-1 rounded-full whitespace-nowrap">
+      <AlertCircle size={11} /> Offen
+    </span>
+  );
+}
+
 
 function SummaryTile({ label, value, sub, testid, accent = "muted" }) {
   const palette = {

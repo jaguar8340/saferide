@@ -5,19 +5,21 @@ Data model:
   business_settings.terms_en   (optional English translation)
   business_settings.terms_updated_at
 
-  students.agb_confirmation_token       – random uuid, set on send
-  students.agb_confirmation_expires     – 30d after send
-  students.agb_sent_at
-  students.agb_confirmed_at
-  students.agb_confirmed_version        – terms_updated_at at confirm-time
+  # Split per-recipient tokens: student vs. Erziehungsberechtigte
+  students.agb_student_token / _expires / agb_student_sent_at / _confirmed_at / _confirmed_version
+  students.agb_guardian_token / _expires / agb_guardian_sent_at / _confirmed_at / _confirmed_version
+
+  # Legacy fields (still populated for backwards compat with old UI badges):
+  students.agb_sent_at, agb_confirmed_at, agb_confirmed_version, agb_sent_by
 """
 from __future__ import annotations
 
 import secrets
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from core.db import db
@@ -31,6 +33,9 @@ router = APIRouter(prefix="/terms", tags=["terms"])
 admin_router = APIRouter(prefix="/terms", tags=["terms-admin"])
 
 
+TargetType = Literal["student", "guardian"]
+
+
 class TermsPatch(BaseModel):
     terms_de: str | None = None
     terms_en: str | None = None
@@ -38,6 +43,7 @@ class TermsPatch(BaseModel):
 
 class SendResponse(BaseModel):
     email: str
+    target: TargetType = "student"
     confirm_url: str
     sent: bool
     detail: str = ""
@@ -83,59 +89,87 @@ async def update_terms(payload: TermsPatch, admin=Depends(get_current_admin)):
 
 
 # ---------------------------------------------------------------------------
-#  Admin: send terms to student for confirmation
+#  Admin: send terms to student OR guardian for confirmation
 # ---------------------------------------------------------------------------
 @admin_router.post("/send/{student_id}", response_model=SendResponse)
-async def send_terms(student_id: str, admin=Depends(get_current_admin)):
+async def send_terms(
+    student_id: str,
+    target: TargetType = Query("student", description="Empfänger: 'student' oder 'guardian'"),
+    admin=Depends(get_current_admin),
+):
     student = await db.students.find_one({"id": student_id})
     if not student:
         raise HTTPException(404, "Schüler nicht gefunden")
-    if not (student.get("email") or "").strip():
-        raise HTTPException(400, "Schüler hat keine E-Mail-Adresse")
+
+    if target == "guardian":
+        email = (student.get("guardian_email") or "").strip()
+        recipient_name = (student.get("guardian_name") or "").strip()
+        if not email:
+            raise HTTPException(400, "Keine E-Mail-Adresse für Erziehungsberechtigte hinterlegt")
+    else:
+        email = (student.get("email") or "").strip()
+        recipient_name = (student.get("first_name") or "").strip()
+        if not email:
+            raise HTTPException(400, "Schüler hat keine E-Mail-Adresse")
 
     token = secrets.token_urlsafe(32)
     expires = datetime.now(timezone.utc) + timedelta(days=30)
     now = datetime.now(timezone.utc).isoformat()
-    await db.students.update_one(
-        {"id": student_id},
-        {"$set": {
-            "agb_confirmation_token": token,
-            "agb_confirmation_expires": expires.isoformat(),
+
+    if target == "guardian":
+        set_fields = {
+            "agb_guardian_token": token,
+            "agb_guardian_token_expires": expires.isoformat(),
+            "agb_guardian_sent_at": now,
+            "agb_guardian_sent_by": admin.get("email", ""),
+        }
+    else:
+        set_fields = {
+            "agb_student_token": token,
+            "agb_student_token_expires": expires.isoformat(),
+            "agb_student_sent_at": now,
+            "agb_student_sent_by": admin.get("email", ""),
+            # Legacy mirror
             "agb_sent_at": now,
             "agb_sent_by": admin.get("email", ""),
-        }},
-    )
+            "agb_confirmation_token": token,
+            "agb_confirmation_expires": expires.isoformat(),
+        }
+    await db.students.update_one({"id": student_id}, {"$set": set_fields})
     confirm_url = f"{_portal_public_url()}/agb/{token}"
 
     # Try to send via SMTP; fall back to returning the raw URL.
     settings = await get_or_create_settings()
     cfg = _build_smtp_config(settings, override=None)
     sent, detail = False, "SMTP nicht konfiguriert"
-    guardian_email = (student.get("guardian_email") or "").strip()
-    guardian_name = (student.get("guardian_name") or "").strip()
-    recipients = [student["email"]]
-    if guardian_email and guardian_email.lower() != student["email"].lower():
-        recipients.append(guardian_email)
     if cfg.get("host"):
         business = settings.get("business_name") or "Fahrschule Safe Ride"
-        first = student.get("first_name") or ""
         msg = EmailMessage()
         msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
-        msg["To"] = ", ".join(recipients)
-        msg["Subject"] = f"AGB {business} – bitte kurz bestätigen"
-        greeting = f"Hallo {first}"
-        if guardian_email:
-            greeting += f" und {guardian_name or 'liebe Eltern'}"
+        msg["To"] = email
+        if target == "guardian":
+            msg["Subject"] = f"AGB {business} – bitte für {student.get('first_name', '')} {student.get('last_name', '')} bestätigen"
+            greeting = f"Guten Tag {recipient_name or 'liebe Eltern'}"
+            intro = (
+                f"anbei die Allgemeinen Geschäftsbedingungen der {business} für die "
+                f"Fahrausbildung von {student.get('first_name', '')} {student.get('last_name', '')}. "
+                f"Bitte lesen Sie diese kurz durch und bestätigen Sie mit einem Klick auf "
+                f"den Link unten."
+            )
+        else:
+            msg["Subject"] = f"AGB {business} – bitte kurz bestätigen"
+            greeting = f"Hallo {recipient_name}"
+            intro = (
+                f"anbei die Allgemeinen Geschäftsbedingungen der {business}. Bitte lies "
+                f"sie kurz durch und bestätige sie mit einem Klick auf den Link unten oder "
+                f'antworte einfach auf diese E-Mail mit "einverstanden".'
+            )
         msg.set_content(f"""{greeting},
 
-anbei die Allgemeinen Geschäftsbedingungen der {business}. Bitte lest sie
-kurz durch und bestätigt sie mit einem Klick auf den Link unten oder
-antwortet einfach auf diese E-Mail mit "einverstanden".
+{intro}
 
 Bestätigen:
     {confirm_url}
-
-Die AGB findest du auch jederzeit unter deinem Schülerbereich.
 
 Vielen Dank und bis bald auf der Strasse!
 {business}
@@ -147,69 +181,103 @@ Vielen Dank und bis bald auf der Strasse!
         except Exception as e:      # noqa: BLE001
             detail = str(e)
 
-    return SendResponse(email=student["email"], confirm_url=confirm_url,
+    return SendResponse(email=email, target=target, confirm_url=confirm_url,
                         sent=sent, detail=detail)
 
 
 # ---------------------------------------------------------------------------
 #  Public: token-based confirmation (from e-mail link)
 # ---------------------------------------------------------------------------
+async def _find_token_student(token: str):
+    """Return (student, target) for a token, or (None, None)."""
+    student = await db.students.find_one({"agb_student_token": token})
+    if student:
+        return student, "student"
+    student = await db.students.find_one({"agb_guardian_token": token})
+    if student:
+        return student, "guardian"
+    # Legacy: token stored under old key
+    student = await db.students.find_one({"agb_confirmation_token": token})
+    if student:
+        return student, "student"
+    return None, None
+
+
 @router.get("/confirm/validate")
 async def validate_agb_token(token: str):
-    student = await db.students.find_one({"agb_confirmation_token": token})
+    student, target = await _find_token_student(token)
     if not student:
         raise HTTPException(404, "Link ungültig oder bereits verwendet")
-    exp = student.get("agb_confirmation_expires") or ""
+    exp_key = "agb_guardian_token_expires" if target == "guardian" else "agb_student_token_expires"
+    exp = student.get(exp_key) or student.get("agb_confirmation_expires") or ""
     try:
         if datetime.fromisoformat(exp) < datetime.now(timezone.utc):
             raise HTTPException(400, "Link abgelaufen")
     except (ValueError, TypeError):
         raise HTTPException(400, "Link abgelaufen")
     settings = await get_or_create_settings()
+    conf_key = "agb_guardian_confirmed_at" if target == "guardian" else "agb_student_confirmed_at"
     return {
         "student_first_name": student.get("first_name", ""),
         "student_last_name": student.get("last_name", ""),
+        "target": target,
+        "recipient_label": "Erziehungsberechtigte:r" if target == "guardian" else "Schüler:in",
         "terms_de": settings.get("terms_de") or "",
         "terms_updated_at": settings.get("terms_updated_at") or "",
-        "already_confirmed": bool(student.get("agb_confirmed_at")),
+        "already_confirmed": bool(student.get(conf_key)) or (target == "student" and bool(student.get("agb_confirmed_at"))),
     }
 
 
 @router.post("/confirm")
 async def confirm_agb(payload: ConfirmRequest):
-    student = await db.students.find_one({"agb_confirmation_token": payload.token})
+    student, target = await _find_token_student(payload.token)
     if not student:
         raise HTTPException(404, "Link ungültig oder bereits verwendet")
     settings = await get_or_create_settings()
     now = datetime.now(timezone.utc).isoformat()
+    version = settings.get("terms_updated_at") or ""
+
+    if target == "guardian":
+        set_fields = {
+            "agb_guardian_confirmed_at": now,
+            "agb_guardian_confirmed_version": version,
+        }
+        unset_fields = {"agb_guardian_token": ""}
+    else:
+        set_fields = {
+            "agb_student_confirmed_at": now,
+            "agb_student_confirmed_version": version,
+            # Legacy mirror
+            "agb_confirmed_at": now,
+            "agb_confirmed_version": version,
+        }
+        unset_fields = {"agb_student_token": "", "agb_confirmation_token": ""}
+
     await db.students.update_one(
         {"id": student["id"]},
-        {
-            "$set": {
-                "agb_confirmed_at": now,
-                "agb_confirmed_version": settings.get("terms_updated_at") or "",
-            },
-            "$unset": {"agb_confirmation_token": ""},
-        },
+        {"$set": set_fields, "$unset": unset_fields},
     )
-    return {"ok": True, "confirmed_at": now}
+    return {"ok": True, "confirmed_at": now, "target": target}
 
 
 # ---------------------------------------------------------------------------
-#  Student portal: confirm in-app (uses portal JWT, no token needed)
+#  Student portal: confirm in-app (uses portal JWT, no token needed) — legacy
 # ---------------------------------------------------------------------------
 @router.post("/portal/confirm")
 async def portal_confirm_agb(student=Depends(get_current_student)):
     settings = await get_or_create_settings()
     now = datetime.now(timezone.utc).isoformat()
+    version = settings.get("terms_updated_at") or ""
     await db.students.update_one(
         {"id": student["id"]},
         {
             "$set": {
+                "agb_student_confirmed_at": now,
+                "agb_student_confirmed_version": version,
                 "agb_confirmed_at": now,
-                "agb_confirmed_version": settings.get("terms_updated_at") or "",
+                "agb_confirmed_version": version,
             },
-            "$unset": {"agb_confirmation_token": ""},
+            "$unset": {"agb_student_token": "", "agb_confirmation_token": ""},
         },
     )
     return {"ok": True, "confirmed_at": now}

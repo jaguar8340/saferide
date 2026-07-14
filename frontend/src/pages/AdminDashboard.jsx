@@ -19,6 +19,7 @@ import {
   Wallet,
   UserCog,
   HardDriveDownload,
+  FolderOpen,
   Menu,
   X,
   Mail,
@@ -41,6 +42,7 @@ import CalendarManager from "@/components/admin/CalendarManager";
 import EmailSettingsManager from "@/components/admin/EmailSettingsManager";
 import MailModule from "@/components/admin/MailModule";
 import TermsManager from "@/components/admin/TermsManager";
+import DocumentsManager from "@/components/admin/DocumentsManager";
 import AccountingPage from "@/pages/AccountingPage";
 import {
   BlogManager,
@@ -57,6 +59,7 @@ const TABS = [
   { id: "business", icon: Building2, key: "business", label_de: "Fahrschul-Daten", label_en: "Business Settings" },
   { id: "email", icon: Mail, key: "email", label_de: "Mail", label_en: "Mail" },
   { id: "terms", icon: FileText, key: "terms", label_de: "AGB", label_en: "Terms" },
+  { id: "documents", icon: FolderOpen, key: "documents", label_de: "Dateien", label_en: "Documents" },
   { id: "backup", icon: HardDriveDownload, key: "backup", label_de: "Datensicherung", label_en: "Backup" },
   { id: "users", icon: UserCog, key: "users", label_de: "Benutzer", label_en: "Users" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
@@ -222,6 +225,7 @@ export default function AdminDashboard() {
           {tab === "business" && <BusinessSettingsManager />}
           {tab === "email" && <MailModule />}
           {tab === "terms" && <TermsManager />}
+          {tab === "documents" && <DocumentsManager />}
           {tab === "backup" && <BackupManager />}
           {tab === "users" && <UsersManager />}
           {tab === "content" && <ContentEditor />}

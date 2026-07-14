@@ -23,6 +23,7 @@ from core.db import client
 from seeds.startup import run_startup_seeds
 from routers import (
     accounting,
+    admin_documents,
     auth,
     backup,
     backup_scripts,
@@ -79,6 +80,7 @@ api.include_router(student_invoices.router)
 api.include_router(student_invoices.accounting_router)
 api.include_router(accounting.router)
 api.include_router(student_documents.router)
+api.include_router(admin_documents.router)
 api.include_router(student_activities.router)
 api.include_router(business_settings.router)
 api.include_router(business_settings.assets_router)

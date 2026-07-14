@@ -48,15 +48,22 @@ export default function TermsManager() {
     } finally { setSaving(false); }
   };
 
-  const sendTo = async (student) => {
-    if (!student.email) return toast.error("Kein E-Mail hinterlegt");
-    setSending(student.id);
+  const sendTo = async (student, target) => {
+    const email = target === "guardian" ? student.guardian_email : student.email;
+    if (!email) {
+      return toast.error(
+        target === "guardian"
+          ? "Keine E-Mail für Erziehungsberechtigte hinterlegt"
+          : "Kein E-Mail hinterlegt",
+      );
+    }
+    setSending(`${student.id}-${target}`);
     try {
-      const r = await api.post(`/terms/send/${student.id}`);
+      const r = await api.post(`/terms/send/${student.id}`, null, { params: { target } });
       setInviteResult({ ...r.data, student });
-      if (r.data.sent) toast.success("AGB per E-Mail versendet");
+      if (r.data.sent) toast.success(`AGB an ${email} versendet`);
       else toast.message("Link erstellt", { description: r.data.detail });
-      // Refresh students to update sent_at
+      // Refresh students to update sent_at + confirmed_at
       const s = await api.get("/students");
       setStudents(s.data);
     } catch (e) {
@@ -72,8 +79,14 @@ export default function TermsManager() {
   };
 
   const stats = useMemo(() => {
-    const confirmed = students.filter((s) => s.agb_confirmed_at).length;
-    const sent = students.filter((s) => s.agb_sent_at && !s.agb_confirmed_at).length;
+    // Combined view: an entry is „confirmed“ if student side confirmed,
+    // „sent“ if either side sent but not confirmed, else „open“.
+    const confirmed = students.filter((s) => s.agb_student_confirmed_at || s.agb_confirmed_at).length;
+    const sent = students.filter((s) => {
+      const c = s.agb_student_confirmed_at || s.agb_confirmed_at;
+      const anySent = s.agb_student_sent_at || s.agb_sent_at || s.agb_guardian_sent_at;
+      return !c && anySent;
+    }).length;
     const open = students.length - confirmed - sent;
     return { confirmed, sent, open };
   }, [students]);
@@ -137,24 +150,32 @@ export default function TermsManager() {
 
         <ul className="divide-y divide-[#f3f0eb]">
           {students.map((s) => (
-            <li key={s.id} className="flex flex-wrap items-center gap-3 py-2.5" data-testid={`terms-row-${s.id}`}>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-[#0f172a]">
-                  {s.first_name} {s.last_name}
-                </div>
-                <div className="text-xs text-[#78716c]">{s.email || "keine E-Mail"}</div>
+            <li key={s.id} className="py-3 flex flex-col gap-2" data-testid={`terms-row-${s.id}`}>
+              <div className="text-sm font-semibold text-[#0f172a]">
+                {s.first_name} {s.last_name}
               </div>
-              <AgbBadge student={s} />
-              <button
-                type="button"
-                onClick={() => sendTo(s)}
-                disabled={sending === s.id || !s.email}
-                data-testid={`terms-send-${s.id}`}
-                className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3 py-2 rounded-full hover:opacity-90 disabled:opacity-40"
-              >
-                {sending === s.id ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                Senden
-              </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <RecipientRow
+                  label="Schüler:in"
+                  email={s.email}
+                  sentAt={s.agb_student_sent_at || s.agb_sent_at}
+                  confirmedAt={s.agb_student_confirmed_at || s.agb_confirmed_at}
+                  disabled={sending === `${s.id}-student` || !s.email}
+                  isSending={sending === `${s.id}-student`}
+                  onSend={() => sendTo(s, "student")}
+                  testid={`terms-send-${s.id}-student`}
+                />
+                <RecipientRow
+                  label="Erziehungsberechtigte:r"
+                  email={s.guardian_email}
+                  sentAt={s.agb_guardian_sent_at}
+                  confirmedAt={s.agb_guardian_confirmed_at}
+                  disabled={sending === `${s.id}-guardian` || !s.guardian_email}
+                  isSending={sending === `${s.id}-guardian`}
+                  onSend={() => sendTo(s, "guardian")}
+                  testid={`terms-send-${s.id}-guardian`}
+                />
+              </div>
             </li>
           ))}
         </ul>
@@ -230,21 +251,21 @@ function StatChip({ icon, label, tone }) {
 }
 
 
-function AgbBadge({ student }) {
-  if (student.agb_confirmed_at) {
+function AgbBadge({ sentAt, confirmedAt }) {
+  if (confirmedAt) {
     return (
       <span
-        title={`Bestätigt: ${new Date(student.agb_confirmed_at).toLocaleString("de-CH")}`}
+        title={`Bestätigt: ${new Date(confirmedAt).toLocaleString("de-CH")}`}
         className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#f0fdf4] text-[#166534] px-2 py-1 rounded-full"
       >
         <CheckCircle2 size={11} /> Bestätigt
       </span>
     );
   }
-  if (student.agb_sent_at) {
+  if (sentAt) {
     return (
       <span
-        title={`Gesendet: ${new Date(student.agb_sent_at).toLocaleString("de-CH")}`}
+        title={`Gesendet: ${new Date(sentAt).toLocaleString("de-CH")}`}
         className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fff7ed] text-[#c2410c] px-2 py-1 rounded-full"
       >
         <Clock size={11} /> Gesendet
@@ -255,5 +276,32 @@ function AgbBadge({ student }) {
     <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fef2f2] text-[#991b1b] px-2 py-1 rounded-full">
       <AlertCircle size={11} /> Offen
     </span>
+  );
+}
+
+
+function RecipientRow({ label, email, sentAt, confirmedAt, disabled, isSending, onSend, testid }) {
+  return (
+    <div className="flex items-center gap-3 bg-[#fafaf9] border border-[#f3f0eb] rounded-xl px-3 py-2">
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c]">
+          {label}
+        </div>
+        <div className="text-xs text-[#334155] truncate">
+          {email || <span className="text-[#a8a29e] italic">keine E-Mail</span>}
+        </div>
+      </div>
+      <AgbBadge sentAt={sentAt} confirmedAt={confirmedAt} />
+      <button
+        type="button"
+        onClick={onSend}
+        disabled={disabled}
+        data-testid={testid}
+        className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3 py-2 rounded-full hover:opacity-90 disabled:bg-[#e7e5e4] disabled:text-[#a8a29e]"
+      >
+        {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+        Senden
+      </button>
+    </div>
   );
 }
