@@ -63,6 +63,7 @@ export default function LocHero({ loc, updateField, phone }) {
               path="hero_image_url"
               src={loc.hero_image_url}
               onUpdate={(url) => updateField("hero_image_url", url)}
+              broadcast={{ slug: loc.slug, field: "hero_image_url" }}
               alt={loc.name}
               className="block rounded-3xl overflow-hidden border border-[#e2e8f0]"
               imgClassName="w-full h-[320px] md:h-[460px] object-cover"

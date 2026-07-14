@@ -56,3 +56,35 @@ async def delete_location(slug: str, admin=Depends(get_current_admin)):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Standort nicht gefunden")
     return {"ok": True}
+
+
+@router.post("/locations/{slug}/broadcast-field")
+async def broadcast_field_to_all_locations(
+    slug: str,
+    payload: Dict[str, Any],
+    admin=Depends(get_current_admin),
+):
+    """Copy one field value from this location to ALL other locations.
+
+    Body: `{"field": "hero_image_url"}` (or any allowed field name).
+    The source value is fetched from the current location, then applied to
+    every other location document via `$set`. Blocked keys (`slug`, `id`,
+    `_id`) cannot be broadcast.
+    """
+    field = (payload.get("field") or "").strip()
+    if not field:
+        raise HTTPException(status_code=400, detail="Feldname fehlt")
+    if field in ("_id", "id", "slug"):
+        raise HTTPException(status_code=400, detail=f"Feld '{field}' darf nicht übertragen werden")
+
+    source = await db.locations.find_one({"slug": slug}, {"_id": 0})
+    if not source:
+        raise HTTPException(status_code=404, detail="Quell-Standort nicht gefunden")
+    if field not in source:
+        raise HTTPException(status_code=400, detail=f"Feld '{field}' nicht am Quell-Standort vorhanden")
+
+    value = source[field]
+    result = await db.locations.update_many(
+        {"slug": {"$ne": slug}}, {"$set": {field: value}}
+    )
+    return {"ok": True, "field": field, "updated": result.modified_count}

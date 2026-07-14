@@ -158,14 +158,6 @@ async def run_startup_seeds() -> None:
                     for r in existing_routes
                 ]
                 await db.locations.update_one({"slug": slug}, {"$set": {"exam_routes": upgraded}})
-            # One-time fix: replace any remaining broken/unrelated Unsplash
-            # hero images with the curated Pexels fallback.
-            current_hero = existing.get("hero_image_url", "")
-            if "images.unsplash.com" in current_hero and default_loc.get("hero_image_url") != current_hero:
-                await db.locations.update_one(
-                    {"slug": slug},
-                    {"$set": {"hero_image_url": default_loc["hero_image_url"]}},
-                )
             # Migrate exam_routes → "Hier fahren wir" (features + places).
             # If the current title still equals the old "Typische Prüfungsstrecken"
             # we rewrite it and its intro to the new compact copy. Also seed
