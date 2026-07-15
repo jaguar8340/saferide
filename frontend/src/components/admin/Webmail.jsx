@@ -163,9 +163,9 @@ export default function Webmail() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[220px_360px_1fr] gap-3 h-[calc(100vh-260px)] min-h-[500px]" data-testid="webmail">
-      {/* Folders */}
-      <aside className="bg-white border border-[#e7e5e4] rounded-2xl p-3 overflow-y-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-[220px_360px_1fr] gap-3 h-auto lg:h-[calc(100vh-260px)] min-h-[500px]" data-testid="webmail">
+      {/* Folders — vertical sidebar on desktop, horizontal chip strip on mobile */}
+      <aside className="bg-white border border-[#e7e5e4] rounded-2xl p-3 lg:overflow-y-auto">
         <button
           type="button"
           onClick={startNew}
@@ -174,10 +174,10 @@ export default function Webmail() {
         >
           <PenSquare size={13} /> Neue E-Mail
         </button>
-        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] mb-1 px-2">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] mb-1 lg:px-2">
           Ordner
         </div>
-        <div className="text-[10px] text-[#a8a29e] mb-2 px-2 leading-snug">
+        <div className="hidden lg:block text-[10px] text-[#a8a29e] mb-2 px-2 leading-snug">
           Tipp: Nachricht per Drag & Drop ziehen oder Rechtsklick → „In Ordner verschieben“.
         </div>
         {sortedFolders.length === 0 && (
@@ -185,39 +185,41 @@ export default function Webmail() {
             <Loader2 size={12} className="inline animate-spin mr-1" /> lade…
           </div>
         )}
-        {sortedFolders.map((f) => (
-          <button
-            key={f.name}
-            onClick={() => { setActiveFolder(f.name); setOpenMsg(null); }}
-            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolder(f.name); }}
-            onDragLeave={() => setDragOverFolder((cur) => cur === f.name ? null : cur)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOverFolder(null);
-              try {
-                const raw = e.dataTransfer.getData("application/x-mail-uid");
-                if (!raw) return;
-                const { folder, uid } = JSON.parse(raw);
-                moveMessage(folder, uid, f.name);
-              } catch { /* ignore malformed drop */ }
-            }}
-            data-testid={`webmail-folder-${f.name}`}
-            className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
-              dragOverFolder === f.name
-                ? "bg-[#ffedd5] text-[#c2410c] ring-2 ring-[#ff5a36] ring-offset-1"
-                : activeFolder === f.name
-                ? "bg-[#fff7ed] text-[#c2410c] font-semibold"
-                : "text-[#334155] hover:bg-[#fafaf9]"
-            }`}
-          >
-            {f.name === "INBOX" ? <Inbox size={12} /> : <Folder size={12} />}
-            <span className="truncate">{f.name}</span>
-          </button>
-        ))}
+        <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible -mx-1 lg:mx-0 px-1 lg:px-0 pb-1 lg:pb-0">
+          {sortedFolders.map((f) => (
+            <button
+              key={f.name}
+              onClick={() => { setActiveFolder(f.name); setOpenMsg(null); }}
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolder(f.name); }}
+              onDragLeave={() => setDragOverFolder((cur) => cur === f.name ? null : cur)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverFolder(null);
+                try {
+                  const raw = e.dataTransfer.getData("application/x-mail-uid");
+                  if (!raw) return;
+                  const { folder, uid } = JSON.parse(raw);
+                  moveMessage(folder, uid, f.name);
+                } catch { /* ignore malformed drop */ }
+              }}
+              data-testid={`webmail-folder-${f.name}`}
+              className={`shrink-0 lg:w-full text-left flex items-center gap-2 px-3 lg:px-2 py-1.5 rounded-full lg:rounded-lg text-sm transition-colors ${
+                dragOverFolder === f.name
+                  ? "bg-[#ffedd5] text-[#c2410c] ring-2 ring-[#ff5a36] ring-offset-1"
+                  : activeFolder === f.name
+                  ? "bg-[#fff7ed] text-[#c2410c] font-semibold"
+                  : "bg-[#fafaf9] lg:bg-transparent text-[#334155] hover:bg-[#fafaf9]"
+              }`}
+            >
+              {f.name === "INBOX" ? <Inbox size={12} /> : <Folder size={12} />}
+              <span className="truncate max-w-[140px] lg:max-w-none">{f.name}</span>
+            </button>
+          ))}
+        </div>
       </aside>
 
       {/* Message list */}
-      <section className={`bg-white border border-[#e7e5e4] rounded-2xl flex flex-col ${openMsg ? "hidden lg:flex" : ""}`}>
+      <section className={`bg-white border border-[#e7e5e4] rounded-2xl flex flex-col min-h-[420px] lg:min-h-0 ${openMsg ? "hidden lg:flex" : ""}`}>
         <div className="p-3 border-b border-[#f3f0eb] flex items-center gap-2">
           <Search size={13} className="text-[#94a3b8]" />
           <input
@@ -291,7 +293,7 @@ export default function Webmail() {
       </section>
 
       {/* Message view */}
-      <section className={`bg-white border border-[#e7e5e4] rounded-2xl flex flex-col overflow-hidden ${openMsg ? "" : "hidden lg:flex"}`} data-testid="webmail-viewer">
+      <section className={`bg-white border border-[#e7e5e4] rounded-2xl flex flex-col overflow-hidden min-h-[420px] lg:min-h-0 ${openMsg ? "" : "hidden lg:flex"}`} data-testid="webmail-viewer">
         {loadingMsg && (
           <div className="flex-1 flex items-center justify-center text-sm text-[#78716c]">
             <Loader2 size={16} className="animate-spin mr-2" /> lade …

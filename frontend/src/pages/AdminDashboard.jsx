@@ -20,6 +20,7 @@ import {
   UserCog,
   HardDriveDownload,
   FolderOpen,
+  Route as RouteIcon,
   Menu,
   X,
   Mail,
@@ -43,6 +44,7 @@ import EmailSettingsManager from "@/components/admin/EmailSettingsManager";
 import MailModule from "@/components/admin/MailModule";
 import TermsManager from "@/components/admin/TermsManager";
 import DocumentsManager from "@/components/admin/DocumentsManager";
+import GpsTrackerModule from "@/components/admin/GpsTrackerModule";
 import AccountingPage from "@/pages/AccountingPage";
 import {
   BlogManager,
@@ -60,6 +62,7 @@ const TABS = [
   { id: "email", icon: Mail, key: "email", label_de: "Mail", label_en: "Mail" },
   { id: "terms", icon: FileText, key: "terms", label_de: "AGB", label_en: "Terms" },
   { id: "documents", icon: FolderOpen, key: "documents", label_de: "Dateien", label_en: "Documents" },
+  { id: "gps", icon: RouteIcon, key: "gps", label_de: "GPS-Tracker", label_en: "GPS Tracker" },
   { id: "backup", icon: HardDriveDownload, key: "backup", label_de: "Datensicherung", label_en: "Backup" },
   { id: "users", icon: UserCog, key: "users", label_de: "Benutzer", label_en: "Users" },
   { id: "content", icon: FileText, key: "content", label_de: "Inhalte", label_en: "Content" },
@@ -226,6 +229,7 @@ export default function AdminDashboard() {
           {tab === "email" && <MailModule />}
           {tab === "terms" && <TermsManager />}
           {tab === "documents" && <DocumentsManager />}
+          {tab === "gps" && <GpsTrackerModule />}
           {tab === "backup" && <BackupManager />}
           {tab === "users" && <UsersManager />}
           {tab === "content" && <ContentEditor />}

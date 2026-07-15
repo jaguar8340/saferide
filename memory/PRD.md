@@ -362,6 +362,22 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
 - 📥 **CSV-Export für Admin-Tabs** — VKU/Kontakt/Buchungen (P2).
 - 🗜️ **ZIP-Export aller Rechnungs-Snapshots** für Steuererklärung (P3).
 
+- ✅ **Iteration 54 (15.07.2026) — GPS-Tracker MVP (Web-only) + Webmail Mobile-Responsive (DONE, 4/4 pytest + Screenshots verifiziert):**
+  - **Backend `/api/gps/tracks`** (`routers/gps.py`, neu): CRUD-Endpoints für GPS-Aufzeichnungen. POST /tracks (start), POST /tracks/{id}/points (batch), PATCH /tracks/{id} (stop/edit), GET /tracks (?student_id), GET /tracks/{id} (with points), DELETE /tracks/{id}. Portal-Router `/portal/gps/tracks` scoped auf eigene Schülertracks (nur beendete). Haversine-Distanzberechnung + Dauer-Aggregation serverseitig.
+  - **Frontend Admin-Tab „GPS-Tracker"** (`GpsTrackerModule.jsx`, neu): Schüler-Select (optional) + Notiz + „Aufzeichnen"-Button. Nach Klick: `navigator.geolocation.watchPosition` mit Jitter-Filter (< 4m ignoriert), 4s-Batching an Backend, Live-Stats (Distanz, Punkte, letzter Timestamp), Stopp-Button. Liste aller Fahrten mit Distanz/Dauer/Datum, Klick öffnet Leaflet-Karte mit Polyline + Start/Ende-Marker.
+  - **Frontend Portal** (`PortalDashboard.jsx`): Neue Sektion „Deine Fahrten" mit gleichen Karten (nur eigene, nur beendete). Reuse der `TrackDetailPanel`-Komponente. Erscheint nur wenn mind. 1 Track vorhanden.
+  - **Webmail Mobile-Optimierung** (`Webmail.jsx`): Ordner-Sidebar wird auf Mobile zu einem horizontalen Chip-Streifen mit Pill-Buttons und horizontalem Scroll (statt vertikaler Kolonne). Höhe passt sich an (`h-auto lg:h-[calc(100vh-260px)]` + `min-h-[500px]`). Message-List und Reader haben je `min-h-[420px]` auf Mobile für bessere Touch-Ergonomie. Drag&Drop-Tipp auf Mobile ausgeblendet (Touch kann kein Drag). Compose-Modal war bereits fullscreen-optimiert (max-h-[92dvh], items-end sm:items-center).
+  - **Neue Sidebar-Menupunkte**: „GPS-Tracker" (Route-Icon) zwischen Dateien und Datensicherung.
+  - **Library**: `leaflet@1.9.4` + `react-leaflet@4.2.1` via yarn add — verwendet OpenStreetMap-Tiles (kostenlos, kein API-Key).
+  - **Tests**: `/app/backend/tests/test_iteration54_gps.py` (4 Tests) → 4/4 grün. Screenshots bestätigen Admin-GPS-Tab und Mobile-Webmail-Layout.
+
+- ✅ **Iteration 53 (14.07.2026) — Standort-Bilder Snap-back-Fix + Broadcast (DONE, 6/6 pytest):**
+  - Bug entfernt in `startup.py`: die „one-time-fix"-Seed-Zeile überschrieb bei JEDEM Deploy Unsplash-URLs. Deine Admin-Edits blieben nicht permanent.
+  - Frontend `LocationPage.jsx`: `allLocs` refetcht jetzt bei jedem `slug`-Wechsel (`[slug]` deps).
+  - `OtherLocationsSection.jsx`: `localOverrides`-State entfernt, aktualisiert stattdessen den geteilten `allLocs`-Array über neue `onAllLocationsChange`-Prop → Änderungen persistieren SPA-übergreifend.
+  - Neuer Endpoint `POST /api/locations/{slug}/broadcast-field` — kopiert ein beliebiges Feld einer Location auf ALLE anderen (Block-List für slug/id/_id).
+  - `EditableImage.jsx` + `LocHero.jsx`: Zweiter „Auf alle Standorte"-Button im Hover-Overlay (Edit-Mode) mit Confirm-Dialog.
+
 - ✅ **Iteration 52 (14.07.2026) — Kategorien für Admin-Dateien (DONE, 11/11 pytest + Frontend Screenshot verifiziert):**
   - **Backend `/api/documents/categories`**: `GET` liefert `[{name, count}]` gemergt aus Default-Set (`Verträge, Steuer, Versicherung, Buchhaltung, Allgemein`), User-angelegten Kategorien (`admin_document_categories`-Collection) und aggregierten `admin_documents.category`-Werten. `POST /categories` legt eine leere Kategorie an (Trim + Max 60 Zeichen). `DELETE /categories/{name}` löscht nur wenn Kategorie leer (sonst HTTP 400 mit deutscher Meldung).
   - **Backend Upload/PATCH**: `category` als optionales Form-Feld beim Upload + Optional-Feld im Patch-Model. `GET /documents?category=X` filtert exakt (leerer String = „Ohne Kategorie").

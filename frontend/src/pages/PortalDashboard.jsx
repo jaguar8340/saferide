@@ -14,9 +14,11 @@ import { Navigate } from "react-router-dom";
 import {
   Loader2, CalendarClock, Wallet, Ticket, TrendingUp,
   LogOut, GraduationCap, FileDown, CheckCircle2, Sparkles,
+  Route as RouteIcon, MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePortalAuth } from "@/contexts/PortalAuthContext";
+import { TrackDetailPanel } from "@/components/admin/GpsTrackerModule";
 
 export default function PortalDashboard() {
   const { status, student, logout, api } = usePortalAuth();
@@ -233,9 +235,86 @@ export default function PortalDashboard() {
               </button>
             </form>
           </section>
+
+          <PortalGpsSection api={api} />
         </div>
       )}
     </main>
+  );
+}
+
+
+function PortalGpsSection({ api }) {
+  const [tracks, setTracks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState(null);
+  const [openTrack, setOpenTrack] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.get("/portal/gps/tracks");
+        setTracks(r.data || []);
+      } catch { /* silent — feature is optional */ }
+      finally { setLoading(false); }
+    })();
+  }, [api]);
+
+  const openTrack_ = async (id) => {
+    setOpenId(id);
+    setOpenTrack(null);
+    try {
+      const r = await api.get(`/portal/gps/tracks/${id}`);
+      setOpenTrack(r.data);
+    } catch { setOpenId(null); }
+  };
+
+  if (loading || tracks.length === 0) return null;
+
+  return (
+    <section
+      data-testid="portal-gps-section"
+      className="bg-[#fff7ed] border border-[#fed7aa] rounded-3xl p-5 md:p-6"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <RouteIcon size={16} className="text-[#c2410c]" />
+        <h2 className="font-display text-xl">Deine Fahrten</h2>
+        <span className="ml-auto text-[10px] text-[#c2410c]/70">{tracks.length}</span>
+      </div>
+      {openId && (
+        <div className="mb-3">
+          <TrackDetailPanel
+            trackId={openId}
+            track={openTrack}
+            onClose={() => { setOpenId(null); setOpenTrack(null); }}
+          />
+        </div>
+      )}
+      <ul className="space-y-2">
+        {tracks.map((t) => (
+          <li
+            key={t.id}
+            data-testid={`portal-gps-track-${t.id}`}
+            className="bg-white border border-[#fed7aa] rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:border-[#ff5a36]"
+            onClick={() => openTrack_(t.id)}
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#fff7ed] text-[#c2410c] flex items-center justify-center shrink-0">
+              <MapPin size={15} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-base truncate">
+                {t.note || `Fahrt vom ${new Date(t.started_at).toLocaleDateString("de-CH")}`}
+              </div>
+              <div className="text-[10px] text-[#78716c] mt-0.5 flex flex-wrap gap-x-3">
+                <span>{new Date(t.started_at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                <span>· {t.distance_km.toFixed(2)} km</span>
+                <span>· {t.duration_min.toFixed(0)} min</span>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

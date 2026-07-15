@@ -38,6 +38,7 @@ from routers import (
     fahrkontrolle_ai,
     fahrkontrolle_pdf,
     gallery,
+    gps,
     invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
     locations,
@@ -92,6 +93,8 @@ api.include_router(fahrkontrolle_ai.router)
 api.include_router(fahrkontrolle_pdf.router)
 api.include_router(vouchers.router)
 api.include_router(vouchers.portal_router)
+api.include_router(gps.router)
+api.include_router(gps.portal_router)
 api.include_router(portal_auth.router)
 api.include_router(portal_auth.admin_router)
 api.include_router(portal_data.router)
