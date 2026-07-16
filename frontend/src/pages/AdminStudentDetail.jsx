@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Clock,
   AlertCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -34,6 +35,24 @@ import LessonsTab from "@/components/admin/students/LessonsTab";
 import InvoicesTab from "@/components/admin/students/InvoicesTab";
 import ActivitiesTab from "@/components/admin/students/ActivitiesTab";
 import DocumentsTab from "@/components/admin/students/DocumentsTab";
+
+/** Return years between an ISO birthdate (YYYY-MM-DD) and today.
+ *  Returns null when input is missing/invalid. */
+function ageFromBirthdate(iso) {
+  if (!iso || typeof iso !== "string") return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return null;
+  const [_, y, mo, d] = m;
+  const bd = new Date(Number(y), Number(mo) - 1, Number(d));
+  if (Number.isNaN(bd.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - bd.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < bd.getMonth() ||
+    (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
 
 const SUB_TABS = [
   { id: "overview",     icon: LayoutDashboard, label: "Übersicht" },
@@ -121,13 +140,30 @@ export default function AdminStudentDetail() {
             <UserRound size={17} />
           </div>
           <div className="min-w-0">
-            <div className="font-display text-xl leading-tight truncate">
-              {student.first_name} {student.last_name}
+            <div className="font-display text-xl leading-tight truncate flex items-center gap-2">
+              <span className="truncate">{student.first_name} {student.last_name}</span>
+              {(() => {
+                const age = ageFromBirthdate(student.birthdate);
+                if (age == null) return null;
+                if (age < 18) {
+                  return (
+                    <span
+                      data-testid="student-minor-badge"
+                      title={`${age} Jahre alt – Erziehungsberechtigte:r einwilligungspflichtig`}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fef2f2] text-[#991b1b] border border-[#fecaca] px-2 py-0.5 rounded-full whitespace-nowrap"
+                    >
+                      <ShieldAlert size={10} strokeWidth={2.4} /> Unter 18 · {age}J
+                    </span>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div className="text-xs text-[#78716c] truncate">
               {[
                 student.category && `Kat. ${student.category}`,
                 student.city,
+                student.company,
                 student.instructor,
               ]
                 .filter(Boolean)
@@ -262,6 +298,7 @@ function OverviewTab({ student, onSave, onRefresh }) {
         </div>
         <EditField label="Telefon"           value={student.phone}         onSave={(v) => onSave("phone", v)} />
         <EditField label="E-Mail"            value={student.email}         onSave={(v) => onSave("email", v)} />
+        <EditField label="Firma"             value={student.company}       onSave={(v) => onSave("company", v)} />
         <EditField label="Kategorie"         value={student.category}      onSave={(v) => onSave("category", v)} />
         <EditField label="Fahrlehrer"        value={student.instructor}    onSave={(v) => onSave("instructor", v)} />
         <EditField label="Beginn Ausbildung" value={student.start_date}    type="date" onSave={(v) => onSave("start_date", v)} />

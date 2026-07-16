@@ -291,11 +291,13 @@ async def delete_student_lesson(
 class FkNoteIn(BaseModel):
     date: str = ""      # ISO YYYY-MM-DD (kann leer sein)
     text: str = ""
+    image_url: str = ""     # /api/files/... path to uploaded photo (via /api/upload)
 
 
 class FkNotePatch(BaseModel):
     date: Optional[str] = None
     text: Optional[str] = None
+    image_url: Optional[str] = None
 
 
 class FkNote(FkNoteIn):
@@ -322,6 +324,7 @@ async def create_student_note(
         "student_id": student_id,
         "date": (payload.date or now[:10]).strip(),
         "text": (payload.text or "").strip(),
+        "image_url": (payload.image_url or "").strip(),
         "created_at": now,
         "updated_at": now,
     }
@@ -343,6 +346,8 @@ async def update_student_note(
         updates["date"] = payload.date.strip()
     if payload.text is not None:
         updates["text"] = payload.text.strip()
+    if payload.image_url is not None:
+        updates["image_url"] = payload.image_url.strip()
     res = await db.student_fk_notes.update_one(
         {"id": note_id, "student_id": student_id}, {"$set": updates}
     )

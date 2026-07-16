@@ -15,7 +15,7 @@
  *   • GET /api/fahrkontrolle/students/{id}/lessons
  *   • GET /api/fahrkontrolle/students/{id}/assessments
  */
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -29,9 +29,11 @@ import {
   CheckCircle2,
   FileText,
   Pencil,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { api, formatApiError } from "@/lib/api";
+import { api, formatApiError, resolveUrl } from "@/lib/api";
 import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
@@ -902,9 +904,15 @@ function DiverseNotesSection({ studentId }) {
   const today = new Date().toISOString().slice(0, 10);
   const [draftDate, setDraftDate] = useState(today);
   const [draftText, setDraftText] = useState("");
+  const [draftImage, setDraftImage] = useState("");           // /api/files/... URL
+  const [uploadingNew, setUploadingNew] = useState(false);
+  const newFileRef = useRef(null);
   const [editingId, setEditingId] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editText, setEditText] = useState("");
+  const [editImage, setEditImage] = useState("");
+  const [uploadingEdit, setUploadingEdit] = useState(false);
+  const editFileRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -921,19 +929,60 @@ function DiverseNotesSection({ studentId }) {
     return () => { cancelled = true; };
   }, [studentId]);
 
+  /** Upload a single image to Hetzner via /api/upload and return its URL. */
+  const uploadImage = async (file) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const r = await api.post("/upload", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return r.data?.url || "";
+  };
+
+  const handleNewImage = async (file) => {
+    if (!file) return;
+    setUploadingNew(true);
+    try {
+      const url = await uploadImage(file);
+      setDraftImage(url);
+      toast.success("Bild hochgeladen");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setUploadingNew(false);
+      if (newFileRef.current) newFileRef.current.value = "";
+    }
+  };
+
+  const handleEditImage = async (file) => {
+    if (!file) return;
+    setUploadingEdit(true);
+    try {
+      const url = await uploadImage(file);
+      setEditImage(url);
+      toast.success("Bild hochgeladen");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setUploadingEdit(false);
+      if (editFileRef.current) editFileRef.current.value = "";
+    }
+  };
+
   const add = async () => {
-    if (!draftText.trim()) {
-      toast.error("Bitte eine Notiz eintragen");
+    if (!draftText.trim() && !draftImage) {
+      toast.error("Bitte Text oder Bild eintragen");
       return;
     }
     setCreating(true);
     try {
       const r = await api.post(
         `/fahrkontrolle/students/${studentId}/notes`,
-        { date: draftDate, text: draftText.trim() },
+        { date: draftDate, text: draftText.trim(), image_url: draftImage || "" },
       );
       setNotes((cur) => [r.data, ...cur]);
       setDraftText("");
+      setDraftImage("");
       setDraftDate(today);
       toast.success("Notiz gespeichert");
     } catch (e) {
@@ -947,13 +996,14 @@ function DiverseNotesSection({ studentId }) {
     setEditingId(n.id);
     setEditDate(n.date || "");
     setEditText(n.text || "");
+    setEditImage(n.image_url || "");
   };
 
   const saveEdit = async () => {
     try {
       const r = await api.patch(
         `/fahrkontrolle/students/${studentId}/notes/${editingId}`,
-        { date: editDate, text: editText.trim() },
+        { date: editDate, text: editText.trim(), image_url: editImage || "" },
       );
       setNotes((cur) => cur.map((n) => (n.id === editingId ? r.data : n)));
       setEditingId(null);
@@ -993,18 +1043,70 @@ function DiverseNotesSection({ studentId }) {
           data-testid="fk-note-new-date"
           className="text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
         />
-        <textarea
-          rows={2}
-          value={draftText}
-          onChange={(e) => setDraftText(e.target.value)}
-          placeholder="Notiz (z. B. „hat heute Prüfungsangst thematisiert“)"
-          data-testid="fk-note-new-text"
-          className="text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-y"
-        />
+        <div className="space-y-2">
+          <textarea
+            rows={2}
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            placeholder="Notiz (z. B. „hat heute Prüfungsangst thematisiert“)"
+            data-testid="fk-note-new-text"
+            className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-y"
+          />
+          {/* Image controls (upload / preview / remove) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              ref={newFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleNewImage(e.target.files?.[0])}
+              data-testid="fk-note-new-image-input"
+            />
+            <button
+              type="button"
+              onClick={() => newFileRef.current?.click()}
+              disabled={uploadingNew}
+              data-testid="fk-note-new-image-btn"
+              className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase border border-[#e7e5e4] text-[#475569] px-3 py-1.5 rounded-full hover:bg-[#fafaf9] disabled:opacity-50"
+            >
+              {uploadingNew ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <ImagePlus size={11} />
+              )}
+              {draftImage ? "Bild ersetzen" : "Bild anfügen"}
+            </button>
+            {draftImage && (
+              <div className="flex items-center gap-2">
+                <a
+                  href={resolveUrl(draftImage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="fk-note-new-image-preview"
+                >
+                  <img
+                    src={resolveUrl(draftImage)}
+                    alt="Vorschau"
+                    className="w-12 h-12 object-cover rounded-lg border border-[#e7e5e4]"
+                  />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setDraftImage("")}
+                  className="text-[#dc2626] hover:bg-[#fef2f2] rounded-full p-1"
+                  title="Bild entfernen"
+                  data-testid="fk-note-new-image-remove"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <button
           type="button"
           onClick={add}
-          disabled={creating}
+          disabled={creating || uploadingNew}
           data-testid="fk-note-add"
           className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50 h-fit"
         >
@@ -1046,12 +1148,55 @@ function DiverseNotesSection({ studentId }) {
                       className="flex-1 min-w-[240px] text-sm bg-white border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-y"
                     />
                   </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      ref={editFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleEditImage(e.target.files?.[0])}
+                      data-testid={`fk-note-edit-image-input-${n.id}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editFileRef.current?.click()}
+                      disabled={uploadingEdit}
+                      data-testid={`fk-note-edit-image-btn-${n.id}`}
+                      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase border border-[#e7e5e4] text-[#475569] px-3 py-1.5 rounded-full hover:bg-white disabled:opacity-50"
+                    >
+                      {uploadingEdit ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <ImagePlus size={11} />
+                      )}
+                      {editImage ? "Ersetzen" : "Bild anfügen"}
+                    </button>
+                    {editImage && (
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={resolveUrl(editImage)}
+                          alt="Vorschau"
+                          className="w-12 h-12 object-cover rounded-lg border border-[#e7e5e4]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setEditImage("")}
+                          className="text-[#dc2626] hover:bg-[#fef2f2] rounded-full p-1"
+                          title="Bild entfernen"
+                          data-testid={`fk-note-edit-image-remove-${n.id}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={saveEdit}
+                      disabled={uploadingEdit}
                       data-testid={`fk-note-save-${n.id}`}
-                      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3 py-1.5 rounded-full"
+                      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3 py-1.5 rounded-full disabled:opacity-50"
                     >
                       <CheckCircle2 size={11} /> Speichern
                     </button>
@@ -1069,6 +1214,21 @@ function DiverseNotesSection({ studentId }) {
                   <div className="text-[10px] font-semibold tracking-widest uppercase text-[#c2410c] bg-[#fff7ed] px-2 py-1 rounded-full shrink-0 tabular-nums">
                     {formatDateDMY(n.date) || "—"}
                   </div>
+                  {n.image_url && (
+                    <a
+                      href={resolveUrl(n.image_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0"
+                      data-testid={`fk-note-image-${n.id}`}
+                    >
+                      <img
+                        src={resolveUrl(n.image_url)}
+                        alt="Notiz-Bild"
+                        className="w-14 h-14 object-cover rounded-lg border border-[#e7e5e4]"
+                      />
+                    </a>
+                  )}
                   <div className="flex-1 text-sm text-[#334155] whitespace-pre-line leading-relaxed">
                     {n.text}
                   </div>

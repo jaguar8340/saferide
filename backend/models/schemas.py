@@ -201,6 +201,7 @@ class StudentCreate(BaseModel):
     prep_exam_date: str = Field(default="", max_length=40)    # Datum Vorprüfung
     exam_date: str = Field(default="", max_length=40)         # Datum Prüfung
     notes: str = Field(default="", max_length=4000)
+    company: str = Field(default="", max_length=200)          # Firma (z. B. wenn Firmen-Rechnung gewünscht)
     # Optional: Erziehungsberechtigte:r (empfohlen bei Schüler:innen unter 18)
     guardian_name: str = Field(default="", max_length=200)
     guardian_email: str = Field(default="", max_length=200)
@@ -243,6 +244,7 @@ class StudentPatch(BaseModel):
     prep_exam_date: Optional[str] = None
     exam_date: Optional[str] = None
     notes: Optional[str] = None
+    company: Optional[str] = None
     guardian_name: Optional[str] = None
     guardian_email: Optional[str] = None
     archived: Optional[bool] = None
