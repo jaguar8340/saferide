@@ -476,7 +476,7 @@ class BusinessSettings(BaseModel):
     mwst_number: str = ""                                   # empty = nicht MWST-pflichtig
     mwst_rate: float = 0.0                                  # default MWST rate (%)
     invoice_prefix: str = "RE"                              # RE-2026-0001
-    invoice_footer_note: str = "Vielen Dank für Ihr Vertrauen. Zahlbar innert 30 Tagen."
+    invoice_footer_note: str = "Vielen Dank für Ihr Vertrauen. Zahlbar innert 10 Tagen."
     logo_url: str = ""                                      # /api/files/... path to uploaded logo
     # E-Mail-Versand (SMTP – wird meist zusammen mit IMAP-Zugangsdaten vom Mail-Provider geliefert)
     smtp_host: str = ""

@@ -149,10 +149,26 @@ def _draw_qr_bill(
         _last = (student.get("last_name") or "").strip()
         _zip = (student.get("zip") or "").strip()
         _city = (student.get("city") or "").strip()
-        if (_first or _last) and _zip and _city:
+        _company = (student.get("company") or "").strip()
+        _street = (student.get("street") or "").strip()
+        if (_first or _last or _company) and _zip and _city:
+            # Firmenkunde: Firma als Empfänger, Person in eine Zusatzzeile
+            # (QR-Bill „street" darf laut Spec als Zusatzadresszeile
+            # benutzt werden). Kein Firmenname → Person als Empfänger.
+            if _company:
+                person = f"{_first} {_last}".strip()
+                debtor_name = _company[:70]
+                debtor_street = (
+                    f"c/o {person}, {_street}".strip(", ")
+                    if person and _street
+                    else (f"c/o {person}" if person else _street) or None
+                )
+            else:
+                debtor_name = f"{_first} {_last}".strip() or "Kunde"
+                debtor_street = _street or None
             debtor = {
-                "name": f"{_first} {_last}".strip() or "Kunde",
-                "street": (student.get("street") or "").strip() or None,
+                "name": debtor_name,
+                "street": debtor_street,
                 "pcode": _zip,
                 "city": _city,
                 "country": "CH",
@@ -276,8 +292,15 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     rcpt_y = top - 40 * mm         # was 22 mm — bigger gap now
     c.setFillColor(NAVY)
     c.setFont("Helvetica-Bold", 10.5)
+    company = (student.get("company") or "").strip()
     name = f"{student.get('first_name', '')} {student.get('last_name', '')}".strip()
-    c.drawString(left, rcpt_y, name or "—")
+    # Firmenkunde: Firma als 1. Zeile fett, Person als 2. Zeile fett darunter.
+    if company:
+        c.drawString(left, rcpt_y, company)
+        rcpt_y -= 4.7 * mm
+        c.drawString(left, rcpt_y, name or "—")
+    else:
+        c.drawString(left, rcpt_y, name or "—")
 
     c.setFillColor(INK)
     c.setFont("Helvetica", 10)
@@ -317,7 +340,7 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
 
     invoice_date = _fmt_dmy(invoice.get("date") or datetime.utcnow().date().isoformat())
     try:
-        due_iso = (datetime.fromisoformat(invoice.get("date", "")) + timedelta(days=30)).date().isoformat()
+        due_iso = (datetime.fromisoformat(invoice.get("date", "")) + timedelta(days=10)).date().isoformat()
     except Exception:
         due_iso = ""
     due_date = _fmt_dmy(due_iso) if due_iso else "—"
