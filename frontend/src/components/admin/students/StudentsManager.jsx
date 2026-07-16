@@ -31,6 +31,7 @@ const EMPTY_FORM = {
   category: "B",
   instructor: "",
   start_date: "",
+  birthdate: "",
   prep_exam_date: "",
   exam_date: "",
   guardian_name: "",
@@ -226,6 +227,13 @@ export default function StudentsManager() {
             value={form.start_date}
             onChange={(v) => setForm((f) => ({ ...f, start_date: v }))}
             testid="admin-student-start-date"
+          />
+          <FormField
+            label="Geburtsdatum"
+            type="date"
+            value={form.birthdate}
+            onChange={(v) => setForm((f) => ({ ...f, birthdate: v }))}
+            testid="admin-student-birthdate"
           />
           <FormField
             label="Datum Vorprüfung"

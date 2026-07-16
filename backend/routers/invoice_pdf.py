@@ -22,7 +22,7 @@ from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-from reportlab.lib.utils import ImageReader
+from reportlab.lib.utils import ImageReader, simpleSplit
 from reportlab.pdfgen import canvas
 from svglib.svglib import svg2rlg
 
@@ -371,20 +371,43 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     c.setFont("Helvetica", 10)
     c.drawString(col_pos + 1 * mm, row_y, "1")
     c.drawString(col_desc, row_y, description)
-    if note:
-        c.setFillColor(MUTED)
-        c.setFont("Helvetica-Oblique", 8.5)
-        c.drawString(col_desc, row_y - 4 * mm, note[:110])
-        c.setFillColor(INK)
-        c.setFont("Helvetica", 10)
     c.drawRightString(col_qty, row_y, "1")
     c.drawRightString(col_price, row_y, _money(price))
     c.drawRightString(col_total, row_y, _money(price))
 
+    # Notes (up to 5 wrapped lines). Splits on \n first so line breaks the
+    # instructor typed are respected, then wraps long paragraphs to the
+    # available width in the description column.
+    note_lines: list[str] = []
+    if note.strip():
+        max_note_width = (col_qty - 3 * mm) - col_desc
+        for raw_line in note.replace("\r", "").split("\n"):
+            if not raw_line.strip():
+                note_lines.append("")
+                continue
+            wrapped = simpleSplit(raw_line, "Helvetica-Oblique", 9, max_note_width)
+            note_lines.extend(wrapped)
+            if len(note_lines) >= 5:
+                break
+        note_lines = note_lines[:5]
+
+    note_y = row_y - 5.5 * mm
+    if note_lines:
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica-Oblique", 9)
+        for line in note_lines:
+            c.drawString(col_desc, note_y, line)
+            note_y -= 4.2 * mm
+        c.setFillColor(INK)
+        c.setFont("Helvetica", 10)
+
     # Row separator
     c.setStrokeColor(LIGHT)
     c.setLineWidth(0.4)
-    row_bottom = row_y - (9 * mm if note else 4 * mm)
+    if note_lines:
+        row_bottom = note_y + 1.5 * mm
+    else:
+        row_bottom = row_y - 4 * mm
     c.line(left, row_bottom, right, row_bottom)
 
     # ------------------------------------------------------------------

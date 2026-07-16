@@ -7,9 +7,10 @@ code changes.
 """
 import uuid
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel
 
 from core.activity import log_activity
 from core.db import db
@@ -283,6 +284,92 @@ async def delete_student_lesson(
         meta={"lesson_id": lesson_id},
     )
     return {"ok": True}
+
+# ============================================================
+#  Diverse Notizen (per student, freie Datum/Text-Notizen)
+# ============================================================
+class FkNoteIn(BaseModel):
+    date: str = ""      # ISO YYYY-MM-DD (kann leer sein)
+    text: str = ""
+
+
+class FkNotePatch(BaseModel):
+    date: Optional[str] = None
+    text: Optional[str] = None
+
+
+class FkNote(FkNoteIn):
+    id: str
+    student_id: str
+    created_at: str = ""
+    updated_at: str = ""
+
+
+@router.get("/students/{student_id}/notes", response_model=List[FkNote])
+async def list_student_notes(student_id: str, admin=Depends(get_current_admin)):
+    return await db.student_fk_notes.find(
+        {"student_id": student_id}, {"_id": 0}
+    ).sort("date", -1).to_list(500)
+
+
+@router.post("/students/{student_id}/notes", response_model=FkNote)
+async def create_student_note(
+    student_id: str, payload: FkNoteIn, admin=Depends(get_current_admin),
+):
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "student_id": student_id,
+        "date": (payload.date or now[:10]).strip(),
+        "text": (payload.text or "").strip(),
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.student_fk_notes.insert_one(doc)
+    await log_activity(
+        student_id, "note.create", "Diverse Notiz hinzugefügt",
+        actor=admin.get("email"), meta={"note_id": doc["id"]},
+    )
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+
+@router.patch("/students/{student_id}/notes/{note_id}", response_model=FkNote)
+async def update_student_note(
+    student_id: str, note_id: str, payload: FkNotePatch,
+    admin=Depends(get_current_admin),
+):
+    updates: dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.date is not None:
+        updates["date"] = payload.date.strip()
+    if payload.text is not None:
+        updates["text"] = payload.text.strip()
+    res = await db.student_fk_notes.update_one(
+        {"id": note_id, "student_id": student_id}, {"$set": updates}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Notiz nicht gefunden")
+    doc = await db.student_fk_notes.find_one(
+        {"id": note_id, "student_id": student_id}, {"_id": 0}
+    )
+    return doc
+
+
+@router.delete("/students/{student_id}/notes/{note_id}")
+async def delete_student_note(
+    student_id: str, note_id: str, admin=Depends(get_current_admin),
+):
+    res = await db.student_fk_notes.delete_one(
+        {"id": note_id, "student_id": student_id}
+    )
+    if res.deleted_count == 0:
+        raise HTTPException(404, "Notiz nicht gefunden")
+    await log_activity(
+        student_id, "note.delete", "Diverse Notiz gelöscht",
+        actor=admin.get("email"), meta={"note_id": note_id},
+    )
+    return {"ok": True}
+
+
 
 
 # ============================================================

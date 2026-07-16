@@ -265,6 +265,7 @@ function OverviewTab({ student, onSave, onRefresh }) {
         <EditField label="Kategorie"         value={student.category}      onSave={(v) => onSave("category", v)} />
         <EditField label="Fahrlehrer"        value={student.instructor}    onSave={(v) => onSave("instructor", v)} />
         <EditField label="Beginn Ausbildung" value={student.start_date}    type="date" onSave={(v) => onSave("start_date", v)} />
+        <EditField label="Geburtsdatum"      value={student.birthdate}     type="date" onSave={(v) => onSave("birthdate", v)} />
         <EditField label="Datum Vorprüfung"  value={student.prep_exam_date} type="date" onSave={(v) => onSave("prep_exam_date", v)} />
         <EditField label="Datum Prüfung"     value={student.exam_date}     type="date" onSave={(v) => onSave("exam_date", v)} />
         <div className="md:col-span-2 mt-2 pt-3 border-t border-[#f3f0eb]">

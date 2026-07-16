@@ -598,14 +598,14 @@ function CreateInvoiceModal({ defaultDirect, onClose, onCreated }) {
             </select>
           </Field>
 
-          <Field label="Bemerkung">
+          <Field label="Bemerkung (max. 5 Zeilen auf dem PDF)">
             <textarea
-              rows={2}
+              rows={5}
               value={form.note}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               data-testid="new-invoice-note"
-              placeholder="Optional …"
-              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36] resize-none"
+              placeholder={"z. B.\nStrecke: Zürich → Winterthur\nSchüler war pünktlich"}
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36] resize-y whitespace-pre-wrap"
             />
           </Field>
 

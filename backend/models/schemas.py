@@ -197,6 +197,7 @@ class StudentCreate(BaseModel):
     category: str = Field(default="B", max_length=20)         # Fahrzeugkategorie
     instructor: str = Field(default="", max_length=120)       # Fahrlehrer-Name
     start_date: str = Field(default="", max_length=40)        # Beginn Ausbildung (ISO)
+    birthdate: str = Field(default="", max_length=40)          # Geburtsdatum (ISO YYYY-MM-DD)
     prep_exam_date: str = Field(default="", max_length=40)    # Datum Vorprüfung
     exam_date: str = Field(default="", max_length=40)         # Datum Prüfung
     notes: str = Field(default="", max_length=4000)
@@ -238,6 +239,7 @@ class StudentPatch(BaseModel):
     category: Optional[str] = None
     instructor: Optional[str] = None
     start_date: Optional[str] = None
+    birthdate: Optional[str] = None
     prep_exam_date: Optional[str] = None
     exam_date: Optional[str] = None
     notes: Optional[str] = None

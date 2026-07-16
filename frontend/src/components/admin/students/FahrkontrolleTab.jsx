@@ -27,6 +27,8 @@ import {
   AlertCircle,
   CircleDashed,
   CheckCircle2,
+  FileText,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -174,6 +176,20 @@ export default function FahrkontrolleTab({ student }) {
         if (next[k].lesson_id === lesson.id) delete next[k];
       }
       setAssessments(next);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  const patchLessonDate = async (lessonId, newDate) => {
+    if (!newDate) return;
+    try {
+      const r = await api.patch(
+        `/fahrkontrolle/students/${student.id}/lessons/${lessonId}`,
+        { date: newDate },
+      );
+      setLessons((cur) => cur.map((l) => (l.id === lessonId ? r.data : l)));
+      toast.success("Datum gespeichert");
     } catch (e) {
       toast.error(formatApiError(e));
     }
@@ -394,6 +410,9 @@ export default function FahrkontrolleTab({ student }) {
         />
       )}
 
+      {/* Diverse Notizen */}
+      <DiverseNotesSection studentId={student.id} />
+
       {/* Matrix (horizontal scroll on narrow screens) */}
       {lessons.length === 0 ? (
         <div className="py-16 text-center bg-white border border-dashed border-[#e7e5e4] rounded-2xl text-[#78716c] text-sm">
@@ -420,12 +439,14 @@ export default function FahrkontrolleTab({ student }) {
                       <div className="font-display text-base leading-none">
                         L{l.lesson_number}
                       </div>
-                      <div
-                        data-testid={`fahrkontrolle-lesson-date-${l.lesson_number}`}
-                        className="text-[10px] text-[#a8a29e] leading-tight tabular-nums whitespace-nowrap"
-                      >
-                        {formatDateDMY(l.date)}
-                      </div>
+                      <input
+                        type="date"
+                        value={l.date || ""}
+                        onChange={(e) => patchLessonDate(l.id, e.target.value)}
+                        data-testid={`fahrkontrolle-lesson-date-input-${l.lesson_number}`}
+                        title="Datum bearbeiten"
+                        className="text-[10px] text-[#334155] leading-tight tabular-nums bg-transparent border border-transparent hover:border-[#e2e8f0] rounded px-1 py-0.5 focus:outline-none focus:border-[#ff5a36] focus:bg-white w-[70px] text-center cursor-pointer"
+                      />
                       <button
                         onClick={() => removeLesson(l)}
                         className="mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
@@ -869,3 +890,215 @@ function ProgressRing({ percent = 0, size = 72, stroke = 8 }) {
     </svg>
   );
 }
+
+
+// ---------------------------------------------------------------------------
+//  Diverse Notizen (free-form date + text notes, editable inline)
+// ---------------------------------------------------------------------------
+function DiverseNotesSection({ studentId }) {
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const [draftDate, setDraftDate] = useState(today);
+  const [draftText, setDraftText] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editText, setEditText] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await api.get(`/fahrkontrolle/students/${studentId}/notes`);
+        if (!cancelled) setNotes(r.data || []);
+      } catch (e) {
+        if (!cancelled) toast.error(formatApiError(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [studentId]);
+
+  const add = async () => {
+    if (!draftText.trim()) {
+      toast.error("Bitte eine Notiz eintragen");
+      return;
+    }
+    setCreating(true);
+    try {
+      const r = await api.post(
+        `/fahrkontrolle/students/${studentId}/notes`,
+        { date: draftDate, text: draftText.trim() },
+      );
+      setNotes((cur) => [r.data, ...cur]);
+      setDraftText("");
+      setDraftDate(today);
+      toast.success("Notiz gespeichert");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const startEdit = (n) => {
+    setEditingId(n.id);
+    setEditDate(n.date || "");
+    setEditText(n.text || "");
+  };
+
+  const saveEdit = async () => {
+    try {
+      const r = await api.patch(
+        `/fahrkontrolle/students/${studentId}/notes/${editingId}`,
+        { date: editDate, text: editText.trim() },
+      );
+      setNotes((cur) => cur.map((n) => (n.id === editingId ? r.data : n)));
+      setEditingId(null);
+      toast.success("Notiz aktualisiert");
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  const remove = async (id) => {
+    if (!confirm("Notiz löschen?")) return;
+    try {
+      await api.delete(`/fahrkontrolle/students/${studentId}/notes/${id}`);
+      setNotes((cur) => cur.filter((n) => n.id !== id));
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  return (
+    <div
+      data-testid="fk-diverse-notes"
+      className="bg-white border border-[#e7e5e4] rounded-2xl p-4 md:p-5 space-y-3"
+    >
+      <div className="flex items-center gap-2">
+        <FileText size={14} className="text-[#ff5a36]" />
+        <h3 className="font-display text-base">Diverse Notizen</h3>
+        <span className="ml-auto text-[10px] text-[#a8a29e]">{notes.length}</span>
+      </div>
+
+      {/* New-note form */}
+      <div className="grid grid-cols-1 md:grid-cols-[140px,1fr,auto] gap-2 items-start">
+        <input
+          type="date"
+          value={draftDate}
+          onChange={(e) => setDraftDate(e.target.value)}
+          data-testid="fk-note-new-date"
+          className="text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+        />
+        <textarea
+          rows={2}
+          value={draftText}
+          onChange={(e) => setDraftText(e.target.value)}
+          placeholder="Notiz (z. B. „hat heute Prüfungsangst thematisiert“)"
+          data-testid="fk-note-new-text"
+          className="text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-y"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={creating}
+          data-testid="fk-note-add"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50 h-fit"
+        >
+          {creating ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+          Hinzufügen
+        </button>
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <div className="text-xs text-[#78716c] flex items-center gap-2">
+          <Loader2 size={12} className="animate-spin" /> Lade …
+        </div>
+      ) : notes.length === 0 ? (
+        <div className="text-xs text-[#a8a29e] italic">Noch keine Notizen.</div>
+      ) : (
+        <ul className="space-y-2 pt-1">
+          {notes.map((n) => (
+            <li
+              key={n.id}
+              data-testid={`fk-note-${n.id}`}
+              className="bg-[#fafaf9] border border-[#f3f0eb] rounded-xl p-3"
+            >
+              {editingId === n.id ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2 flex-wrap items-start">
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      data-testid={`fk-note-edit-date-${n.id}`}
+                      className="text-sm bg-white border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                    />
+                    <textarea
+                      rows={3}
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      data-testid={`fk-note-edit-text-${n.id}`}
+                      className="flex-1 min-w-[240px] text-sm bg-white border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-y"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      data-testid={`fk-note-save-${n.id}`}
+                      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-3 py-1.5 rounded-full"
+                    >
+                      <CheckCircle2 size={11} /> Speichern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c] hover:text-[#0f172a] px-3 py-1.5"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="text-[10px] font-semibold tracking-widest uppercase text-[#c2410c] bg-[#fff7ed] px-2 py-1 rounded-full shrink-0 tabular-nums">
+                    {formatDateDMY(n.date) || "—"}
+                  </div>
+                  <div className="flex-1 text-sm text-[#334155] whitespace-pre-line leading-relaxed">
+                    {n.text}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(n)}
+                      data-testid={`fk-note-edit-${n.id}`}
+                      className="w-7 h-7 flex items-center justify-center rounded-full text-[#334155] hover:text-[#0f172a] hover:bg-white"
+                      title="Bearbeiten"
+                    >
+                      <Pencil size={11} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(n.id)}
+                      data-testid={`fk-note-delete-${n.id}`}
+                      className="w-7 h-7 flex items-center justify-center rounded-full text-[#dc2626] hover:bg-[#fef2f2]"
+                      title="Löschen"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
