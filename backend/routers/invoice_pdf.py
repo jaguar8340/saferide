@@ -174,6 +174,7 @@ def _draw_qr_bill(
                 "country": "CH",
             }
 
+        _qr_topic = (invoice.get("item_title") or "").strip() or "Fahrstunde"
         bill = QRBill(
             account=iban,
             creditor=creditor,
@@ -181,7 +182,7 @@ def _draw_qr_bill(
             debtor=debtor,
             additional_information=(
                 f"Rechnung {invoice.get('number', '')} · "
-                f"Fahrstunde {_fmt_dmy(invoice.get('lesson_date'))}"
+                f"{_qr_topic} {_fmt_dmy(invoice.get('lesson_date'))}"
             )[:140],
             language="de",
             top_line=True,       # printed perforation line on top of slip
@@ -324,7 +325,10 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
 
     c.setFillColor(MUTED)                           # muted grey, no red
     c.setFont("Helvetica", 10)
-    subtitle = f"Fahrstunde vom {_fmt_dmy(invoice.get('lesson_date'))}"
+    # Untertitel: „Kurs XY vom …" oder „Fahrstunde vom …" wenn kein Titel gesetzt
+    _item_title = (invoice.get("item_title") or "").strip()
+    subtitle_topic = _item_title if _item_title else "Fahrstunde"
+    subtitle = f"{subtitle_topic} vom {_fmt_dmy(invoice.get('lesson_date'))}"
     c.drawString(left, title_y - 5.5 * mm, subtitle)
 
     # Metadata table (2 rows × 3 cols)
@@ -355,18 +359,17 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     meta_pair(left + 115 * mm, "Status", STATUS_LABEL.get(invoice.get("status"), "—"))
 
     # ------------------------------------------------------------------
-    #  Salutation
+    #  Salutation  (kein "Hallo Name," mehr — nur noch der Einleitungssatz)
     # ------------------------------------------------------------------
     salut_y = meta_y - 15 * mm
     c.setFillColor(INK)
     c.setFont("Helvetica", 10)
-    c.drawString(left, salut_y, f"Hallo {student.get('first_name', '')},")
-    c.drawString(left, salut_y - 5 * mm, "wir erlauben uns, Ihnen wie folgt in Rechnung zu stellen:")
+    c.drawString(left, salut_y, "wir erlauben uns, Ihnen wie folgt in Rechnung zu stellen:")
 
     # ------------------------------------------------------------------
     #  Positions table (single row for now)
     # ------------------------------------------------------------------
-    table_top = salut_y - 12 * mm
+    table_top = salut_y - 7 * mm
     col_pos = left
     col_desc = left + 12 * mm
     col_qty = left + 118 * mm
@@ -386,7 +389,16 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     price = float(invoice.get("price_chf") or 0)
     duration = int(invoice.get("duration_min") or 0)
     lesson_date = _fmt_dmy(invoice.get("lesson_date"))
-    description = f"Fahrstunde ({duration} min) am {lesson_date}"
+    # Titel bevorzugen. „(0 min)" ist irreführend bei Kursen, deshalb
+    # Dauer nur anzeigen wenn > 0 und kein individueller Titel gesetzt.
+    if _item_title:
+        description = (
+            f"{_item_title} am {lesson_date}" if lesson_date else _item_title
+        )
+    elif duration > 0:
+        description = f"Fahrstunde ({duration} min) am {lesson_date}"
+    else:
+        description = f"Fahrstunde am {lesson_date}"
     note = invoice.get("note") or ""
 
     row_y = table_top - 11 * mm

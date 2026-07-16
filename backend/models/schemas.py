@@ -361,6 +361,7 @@ class StudentInvoiceCreate(BaseModel):
     lesson_date: str = Field(default="", max_length=40)     # ISO date the lesson was held
     duration_min: int = Field(default=45, ge=0, le=600)     # duration in minutes
     price_chf: float = Field(default=0.0, ge=0, le=1_000_000)
+    item_title: str = Field(default="", max_length=200)     # Custom line-item title (z. B. „Kurs «Fahren mit Blinden»"). Leer = Standard "Fahrstunde".
     note: str = Field(default="", max_length=2000)
     payment_method: str = Field(default="bar", max_length=20)
     status: str = Field(default="open", max_length=20)
@@ -385,6 +386,7 @@ class StudentInvoicePatch(BaseModel):
     lesson_date: Optional[str] = None
     duration_min: Optional[int] = None
     price_chf: Optional[float] = None
+    item_title: Optional[str] = None
     note: Optional[str] = None
     payment_method: Optional[str] = None
     status: Optional[str] = None

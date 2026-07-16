@@ -56,6 +56,7 @@ export default function InvoicesTab({ student }) {
     lesson_date: new Date().toISOString().slice(0, 10),
     duration_min: 45,
     price_chf: "",
+    item_title: "",
     payment_method: "bar",
     status: "open",
     note: "",
@@ -106,6 +107,7 @@ export default function InvoicesTab({ student }) {
         lesson_date: new Date().toISOString().slice(0, 10),
         duration_min: 45,
         price_chf: "",
+        item_title: "",
         payment_method: "bar",
         status: "open",
         note: "",
@@ -307,14 +309,15 @@ export default function InvoicesTab({ student }) {
           </FieldGroup>
         </div>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-3 items-end">
-          <FieldGroup label="Bemerkungen (optional)">
-            <textarea
-              rows={2}
-              value={draft.note}
-              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-              placeholder="z. B. Zusatzkilometer, Autobahnaufschlag"
-              data-testid="invoice-new-note"
-              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-none"
+          <FieldGroup label="Titel (optional — z. B. Kurs «Fahren mit Blinden»)">
+            <input
+              type="text"
+              value={draft.item_title}
+              onChange={(e) => setDraft({ ...draft, item_title: e.target.value })}
+              placeholder="Leer lassen → Fahrstunde"
+              data-testid="invoice-new-item-title"
+              maxLength={200}
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
             />
           </FieldGroup>
           <FieldGroup label="Status">
@@ -339,6 +342,18 @@ export default function InvoicesTab({ student }) {
             {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             Anlegen
           </button>
+        </div>
+        <div className="mt-3">
+          <FieldGroup label="Bemerkungen (optional)">
+            <textarea
+              rows={2}
+              value={draft.note}
+              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+              placeholder="z. B. Sehr geehrte Damen und Herren, gerne sende ich Ihnen… (bis 5 Zeilen sichtbar auf dem PDF)"
+              data-testid="invoice-new-note"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-none"
+            />
+          </FieldGroup>
         </div>
       </div>
 
@@ -493,6 +508,15 @@ export default function InvoicesTab({ student }) {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <input
+                  type="text"
+                  defaultValue={inv.item_title || ""}
+                  onBlur={(e) => (e.target.value || "") !== (inv.item_title || "") && patch(inv.id, "item_title", e.target.value)}
+                  data-testid={`invoice-item-title-${inv.id}`}
+                  placeholder="Titel (leer = Fahrstunde)"
+                  maxLength={200}
+                  className="w-[220px] max-w-[220px] text-sm text-[#334155] border-0 bg-[#fafaf9] rounded-lg px-3 py-1.5 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#ff5a36]"
+                />
                 <input
                   type="text"
                   defaultValue={inv.note}
