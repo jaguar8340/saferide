@@ -165,6 +165,20 @@ export default function CalendarManager() {
     }
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshExternal = async () => {
+    setRefreshing(true);
+    try {
+      const r = await api.post("/calendar/external-feeds/refresh");
+      toast.success(`Externe Kalender aktualisiert (${r.data?.events_found ?? 0} Termine)`);
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleSlotClick = (date, hour, quarter) => {
     const start = new Date(date);
     start.setHours(hour, quarter * SLOT_MIN, 0, 0);
@@ -257,12 +271,41 @@ export default function CalendarManager() {
           </p>
         </div>
         <button
+          onClick={refreshExternal}
+          disabled={refreshing}
+          data-testid="calendar-refresh-external"
+          title="Externe iCal-Feeds jetzt neu abrufen"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+          <span className="hidden sm:inline">Aktualisieren</span>
+        </button>
+        <button
           onClick={openIcal}
           data-testid="calendar-ical-btn"
           className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#0f172a] text-[#0f172a] px-4 py-2 rounded-full hover:bg-[#0f172a] hover:text-white transition-colors"
         >
           <LinkIcon size={12} /> iPhone-Sync
         </button>
+      </div>
+
+      {/* Farb-Legende — was bedeutet welche Farbe im Kalender */}
+      <div
+        data-testid="calendar-legend"
+        className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 px-3 py-2 bg-white border border-[#e7e5e4] rounded-full text-[10px] font-semibold tracking-widest uppercase text-[#475569] w-fit"
+      >
+        <LegendChip color="bg-[#ff5a36]/70 border-[#ff5a36]" label="Termin" />
+        <LegendChip color="bg-[#fef3c7] border-[#fde68a]" label="Offen" />
+        <LegendChip color="bg-[#334155] border-[#1e293b]" label="Blockzeit" />
+        <LegendChip
+          label="Extern belegt"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, #e2e8f0 0 4px, #f1f5f9 4px 8px)",
+            border: "1px solid #cbd5e1",
+          }}
+        />
+        <LegendChip color="bg-[#f1f5f9] border-[#e2e8f0] line-through text-[#94a3b8]" label="Storniert" />
       </div>
 
       {/* Toolbar */}
@@ -414,6 +457,19 @@ export default function CalendarManager() {
         />
       )}
     </div>
+  );
+}
+
+function LegendChip({ color, label, style }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={`w-3 h-3 rounded-sm border ${color || ""}`}
+        style={style}
+        aria-hidden
+      />
+      {label}
+    </span>
   );
 }
 

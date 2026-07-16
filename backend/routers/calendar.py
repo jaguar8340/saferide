@@ -398,6 +398,18 @@ async def remove_external_feed(index: int, admin=Depends(get_current_admin)):
     return {"urls": urls}
 
 
+@router.post("/calendar/external-feeds/refresh")
+async def refresh_external_feeds(admin=Depends(get_current_admin)):
+    """Manueller Refresh — Cache invalidieren und Feeds sofort neu abrufen."""
+    _EXT_CACHE["ts"] = 0
+    _EXT_CACHE["events"] = []
+    _EXT_CACHE["urls"] = []
+    # Neu laden über einen weiten Zeitraum → alle relevanten Events werden gecacht
+    now = datetime.now(timezone.utc)
+    events = await _load_external_events(now - timedelta(days=30), now + timedelta(days=365))
+    return {"ok": True, "events_found": len(events)}
+
+
 # ---------------------------------------------------------------------------
 #  Public iCal feed (protected by random token in BusinessSettings)
 # ---------------------------------------------------------------------------
