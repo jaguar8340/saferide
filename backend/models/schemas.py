@@ -107,7 +107,7 @@ class BookingCreate(BaseModel):
 class AdminAppointmentCreate(BaseModel):
     """Admin creates an appointment directly on the calendar (bypasses package flow)."""
     model_config = ConfigDict(extra="ignore")
-    customer_name: str = Field(min_length=1, max_length=200)     # displayed on calendar
+    customer_name: str = Field(default="", max_length=200)     # displayed on calendar (or the block title)
     student_id: Optional[str] = Field(default=None, max_length=64)   # link to /students entity
     start_datetime: str = Field(min_length=10, max_length=40)    # ISO 8601 e.g. 2026-02-15T14:30
     duration_min: int = Field(default=60, ge=15, le=600)
@@ -115,6 +115,7 @@ class AdminAppointmentCreate(BaseModel):
     notes: str = Field(default="", max_length=2000)
     phone: str = Field(default="", max_length=40)
     email: str = Field(default="", max_length=200)
+    entry_type: str = Field(default="appointment", max_length=20)   # "appointment" | "block"
 
 
 class AdminAppointmentPatch(BaseModel):
@@ -129,6 +130,7 @@ class AdminAppointmentPatch(BaseModel):
     email: Optional[str] = None
     status: Optional[str] = None
     admin_note: Optional[str] = None
+    entry_type: Optional[str] = None
 
 
 # ---------- Certificates / Diplomas ----------
@@ -508,6 +510,9 @@ class BusinessSettings(BaseModel):
     )
     # iCal-Sync – zufälliges Token, generiert bei get_or_create_settings falls leer
     calendar_token: str = ""
+    # External iCal feeds abonnieren (z. B. iPhone-Kalender). Belegte Slots
+    # dieser Feeds werden im Kalender als „belegt" angezeigt und blockieren Doppelbuchungen.
+    external_ical_urls: List[str] = Field(default_factory=list)
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_by: str = ""
 
@@ -538,6 +543,7 @@ class BusinessSettingsPatch(BaseModel):
     smtp_password: Optional[str] = None
     smtp_from_email: Optional[str] = None
     smtp_from_name: Optional[str] = None
+    external_ical_urls: Optional[List[str]] = None
     smtp_use_tls: Optional[bool] = None
     imap_host: Optional[str] = None
     imap_port: Optional[int] = None

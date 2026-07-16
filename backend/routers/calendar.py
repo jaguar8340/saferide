@@ -6,10 +6,16 @@ Adds three admin endpoints on top of the existing bookings collection:
   PATCH  /api/appointments/{id}    edit slot / move / add notes
   DELETE /api/appointments/{id}    delete
   GET    /api/appointments         list within a date range (start/end params)
+  GET    /api/appointments/upcoming  next N future appointments (sorted asc)
 
 Plus a public iCal feed protected by a random token stored in BusinessSettings:
 
   GET    /api/calendar/{token}.ics  → subscribe from iPhone / Google
+
+And external iCal-Feed import (iPhone/Google → block admin slots):
+  GET    /api/calendar/external-feeds
+  POST   /api/calendar/external-feeds       {url}
+  DELETE /api/calendar/external-feeds/{index}
 
 And an aggregation used by the student dashboard cards:
 
@@ -18,17 +24,25 @@ And an aggregation used by the student dashboard cards:
 from __future__ import annotations
 
 import re
+import time
 import uuid
+import httpx
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
+from pydantic import BaseModel, Field
 
 from core.activity import log_activity
 from core.db import db
 from core.security import get_current_admin
 from models.schemas import AdminAppointmentCreate, AdminAppointmentPatch
 from routers.business_settings import get_or_create_settings
+
+try:
+    from icalendar import Calendar as ICalendar
+except Exception:      # pragma: no cover
+    ICalendar = None
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +138,10 @@ async def list_appointments(
         if end_dt and s_dt >= end_dt:
             continue
         within.append(_serialize(d))
-    return {"appointments": within, "unscheduled": unscheduled}
+
+    # Externe iCal-Feeds mergen — read-only als „belegt"
+    external = await _load_external_events(start_dt, end_dt)
+    return {"appointments": within, "unscheduled": unscheduled, "external": external}
 
 
 @router.post("/appointments")
@@ -139,9 +156,16 @@ async def create_appointment(
     doc["status"] = "confirmed"          # admin-created = automatically confirmed
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["end_datetime"] = _compute_end(doc["start_datetime"], doc["duration_min"])
+    doc.setdefault("entry_type", "appointment")
+    # Sanity: Blockzeit ohne customer_name → Standard-Titel
+    if doc.get("entry_type") == "block" and not (doc.get("customer_name") or "").strip():
+        doc["customer_name"] = "Blockzeit"
+    elif not (doc.get("customer_name") or "").strip():
+        raise HTTPException(status_code=400, detail="Kunde muss ausgefüllt sein")
     # Keep legacy fields populated so the existing /bookings list still works
-    doc["first_name"] = doc["customer_name"].split(" ", 1)[0] if doc["customer_name"] else ""
-    doc["last_name"] = doc["customer_name"].split(" ", 1)[1] if " " in doc["customer_name"] else ""
+    parts = (doc["customer_name"] or "").split(" ", 1)
+    doc["first_name"] = parts[0] if parts else ""
+    doc["last_name"] = parts[1] if len(parts) > 1 else ""
     doc["preferred_date"] = doc["start_datetime"][:10]
     doc["preferred_time"] = doc["start_datetime"][11:16]
     await db.bookings.insert_one(doc)
@@ -195,6 +219,183 @@ async def delete_appointment(appt_id: str, admin=Depends(get_current_admin)):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Termin nicht gefunden")
     return {"ok": True}
+
+
+@router.get("/appointments/upcoming")
+async def upcoming_appointments(
+    limit: int = Query(default=200, ge=1, le=1000),
+    admin=Depends(get_current_admin),
+):
+    """Return every future appointment (own + external merged), sorted ASC.
+    Used by the calendar's list view („Terminübersicht")."""
+    now = datetime.now(timezone.utc)
+    own = await db.bookings.find({}, {"_id": 0}).sort("start_datetime", 1).to_list(2000)
+    own = [_resolve_public_bookings(d) for d in own]
+    future_own = []
+    for d in own:
+        s = _parse_iso(d.get("start_datetime") or "")
+        if s and s >= now - timedelta(minutes=15):     # 15 min Toleranz
+            future_own.append(_serialize(d))
+
+    external = await _load_external_events(now, now + timedelta(days=365))
+    future_ext = [e for e in external if _parse_iso(e["start_datetime"]) >= now - timedelta(minutes=15)]
+
+    merged = future_own + future_ext
+    merged.sort(key=lambda a: a.get("start_datetime") or "")
+    return {"appointments": merged[:limit]}
+
+
+# ---------------------------------------------------------------------------
+#  External iCal feed importer (iPhone / Google → block slots)
+# ---------------------------------------------------------------------------
+_EXT_CACHE: dict = {"ts": 0.0, "events": [], "urls": []}
+_EXT_TTL_SECONDS = 300      # 5 Minuten
+
+
+async def _fetch_ical_events(url: str) -> List[dict]:
+    """Download & parse an iCal feed. Returns a list of dicts with
+    keys: start_datetime, end_datetime, summary. Silently skips
+    unreachable / malformed feeds — the calendar keeps working."""
+    if not ICalendar or not (url or "").strip():
+        return []
+    # `webcal://` ist ein Convenience-Prefix — auf https umschreiben
+    fetch_url = url.strip()
+    if fetch_url.startswith("webcal://"):
+        fetch_url = "https://" + fetch_url[len("webcal://"):]
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            r = await client.get(fetch_url)
+            if r.status_code != 200:
+                return []
+            raw = r.content
+    except Exception:
+        return []
+
+    try:
+        cal = ICalendar.from_ical(raw)
+    except Exception:
+        return []
+
+    events: List[dict] = []
+    for comp in cal.walk():
+        if comp.name != "VEVENT":
+            continue
+        dtstart = comp.get("dtstart")
+        dtend = comp.get("dtend")
+        if not dtstart:
+            continue
+        start = dtstart.dt
+        end = dtend.dt if dtend else None
+        # icalendar liefert entweder datetime oder date
+        if not isinstance(start, datetime):
+            # Ganztägig → 00:00–23:59
+            start = datetime(start.year, start.month, start.day, 0, 0, tzinfo=timezone.utc)
+            if end is None or not isinstance(end, datetime):
+                end = start + timedelta(days=1)
+            elif not isinstance(end, datetime):
+                end = datetime(end.year, end.month, end.day, 0, 0, tzinfo=timezone.utc)
+        else:
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            if end is None:
+                end = start + timedelta(hours=1)
+            elif isinstance(end, datetime) and end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+
+        summary = str(comp.get("summary") or "Extern belegt")
+        events.append({
+            "id": f"ext-{comp.get('uid') or uuid.uuid4()}",
+            "start_datetime": start.isoformat(),
+            "end_datetime": end.isoformat(),
+            "duration_min": int((end - start).total_seconds() / 60),
+            "customer_name": summary,
+            "notes": "",
+            "pickup_location": "",
+            "status": "confirmed",
+            "entry_type": "external",
+            "source": "external_ical",
+            "is_readonly": True,
+        })
+    return events
+
+
+async def _load_external_events(
+    start_dt: Optional[datetime], end_dt: Optional[datetime]
+) -> List[dict]:
+    """Return events from all configured external iCal feeds, filtered to the
+    given range. Uses a 5-minute in-memory cache to keep the calendar fast."""
+    settings = await get_or_create_settings()
+    urls: List[str] = list(settings.get("external_ical_urls") or [])
+    if not urls:
+        return []
+
+    now_ts = time.time()
+    if (
+        _EXT_CACHE["urls"] == urls
+        and now_ts - _EXT_CACHE["ts"] < _EXT_TTL_SECONDS
+    ):
+        events = list(_EXT_CACHE["events"])
+    else:
+        events = []
+        for u in urls:
+            events.extend(await _fetch_ical_events(u))
+        _EXT_CACHE["urls"] = urls
+        _EXT_CACHE["events"] = events
+        _EXT_CACHE["ts"] = now_ts
+
+    # Range filtern
+    out: List[dict] = []
+    for e in events:
+        s = _parse_iso(e["start_datetime"])
+        if not s:
+            continue
+        if start_dt and s < start_dt:
+            continue
+        if end_dt and s >= end_dt:
+            continue
+        out.append(e)
+    return out
+
+
+class ExternalFeedIn(BaseModel):
+    url: str = Field(min_length=4, max_length=1000)
+
+
+@router.get("/calendar/external-feeds")
+async def list_external_feeds(admin=Depends(get_current_admin)):
+    settings = await get_or_create_settings()
+    return {"urls": list(settings.get("external_ical_urls") or [])}
+
+
+@router.post("/calendar/external-feeds")
+async def add_external_feed(payload: ExternalFeedIn, admin=Depends(get_current_admin)):
+    url = payload.url.strip()
+    settings = await get_or_create_settings()
+    urls: List[str] = list(settings.get("external_ical_urls") or [])
+    if url in urls:
+        raise HTTPException(status_code=400, detail="Feed bereits abonniert")
+    urls.append(url)
+    await db.business_settings.update_one(
+        {"id": "default"}, {"$set": {"external_ical_urls": urls}}
+    )
+    _EXT_CACHE["ts"] = 0     # Cache invalidieren
+    # Kurzer Fetch-Check gibt Feedback ob URL überhaupt funktioniert
+    events = await _fetch_ical_events(url)
+    return {"urls": urls, "events_found": len(events)}
+
+
+@router.delete("/calendar/external-feeds/{index}")
+async def remove_external_feed(index: int, admin=Depends(get_current_admin)):
+    settings = await get_or_create_settings()
+    urls: List[str] = list(settings.get("external_ical_urls") or [])
+    if index < 0 or index >= len(urls):
+        raise HTTPException(status_code=404, detail="Feed-Index ungültig")
+    urls.pop(index)
+    await db.business_settings.update_one(
+        {"id": "default"}, {"$set": {"external_ical_urls": urls}}
+    )
+    _EXT_CACHE["ts"] = 0
+    return {"urls": urls}
 
 
 # ---------------------------------------------------------------------------
