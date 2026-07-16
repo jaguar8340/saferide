@@ -8,7 +8,7 @@
  * on top. A "PDF" button per row streams a formatted invoice PDF.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive, ChevronDown } from "lucide-react";
+import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive, ChevronDown, Ban, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -137,11 +137,34 @@ export default function InvoicesTab({ student }) {
     await patch(invoice.id, "status", next);
   };
 
-  const removeInvoice = async (id) => {
-    if (!window.confirm("Rechnung wirklich löschen?")) return;
+  const cancelInvoice = async (inv) => {
+    const reason = window.prompt(
+      `Rechnung ${inv.number} stornieren?\n\nBitte kurze Storno-Notiz eintragen (optional):`,
+      inv.storno_note || "",
+    );
+    if (reason === null) return;                 // Nutzer hat abgebrochen
     try {
-      await api.delete(`/students/${student.id}/invoices/${id}`);
-      toast.success("Gelöscht");
+      await api.patch(
+        `/students/${student.id}/invoices/${inv.id}`,
+        { status: "cancelled", storno_note: reason.trim() },
+      );
+      toast.success("Rechnung storniert");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  const reactivateInvoice = async (inv) => {
+    if (!window.confirm(
+      `Storno der Rechnung ${inv.number} rückgängig machen?\nStatus wird auf „Offen" gesetzt.`
+    )) return;
+    try {
+      await api.patch(
+        `/students/${student.id}/invoices/${inv.id}`,
+        { status: "open", storno_note: "" },
+      );
+      toast.success("Storno rückgängig gemacht");
       load();
     } catch (e) {
       toast.error(formatApiError(e));
@@ -367,11 +390,18 @@ export default function InvoicesTab({ student }) {
       <div className="space-y-2.5">
         {invoices.map((inv) => {
           const st = STATUS_META[inv.status] || STATUS_META.open;
+          const isCancelled = inv.status === "cancelled";
           return (
             <div
               key={inv.id}
               data-testid={`invoice-row-${inv.id}`}
-              className="bg-white border border-[#e7e5e4] rounded-2xl p-4"
+              data-status={inv.status}
+              className={
+                "border rounded-2xl p-4 transition-colors " +
+                (isCancelled
+                  ? "bg-[#fef2f2] border-[#fecaca] text-[#991b1b] [&_input]:!text-[#991b1b] [&_input]:line-through [&_.font-semibold]:line-through [&_[data-testid^='invoice-number-']]:line-through"
+                  : "bg-white border-[#e7e5e4]")
+              }
             >
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-start">
                 <div>
@@ -525,6 +555,18 @@ export default function InvoicesTab({ student }) {
                   placeholder="Bemerkungen (optional)"
                   className="flex-1 min-w-[120px] text-sm text-[#334155] border-0 bg-[#fafaf9] rounded-lg px-3 py-1.5 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#ff5a36]"
                 />
+                {isCancelled && (
+                  <input
+                    type="text"
+                    defaultValue={inv.storno_note || ""}
+                    onBlur={(e) => (e.target.value || "") !== (inv.storno_note || "") && patch(inv.id, "storno_note", e.target.value)}
+                    data-testid={`invoice-storno-note-${inv.id}`}
+                    placeholder="Storno-Notiz (Grund)"
+                    maxLength={500}
+                    className="w-[220px] max-w-[220px] text-sm text-[#991b1b] no-underline border border-[#fecaca] bg-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626] placeholder-[#dc262699]"
+                    style={{ textDecoration: "none" }}
+                  />
+                )}
                 <div className="flex items-center gap-1 shrink-0 ml-auto">
                   <button
                     onClick={() => downloadPdf(inv)}
@@ -565,13 +607,26 @@ export default function InvoicesTab({ student }) {
                     )}
                     E-Mail
                   </button>
-                  <button
-                    onClick={() => removeInvoice(inv.id)}
-                    data-testid={`invoice-delete-${inv.id}`}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {inv.status === "cancelled" ? (
+                    <button
+                      onClick={() => reactivateInvoice(inv)}
+                      data-testid={`invoice-reactivate-${inv.id}`}
+                      title='Storno rückgängig — Status auf „Offen" setzen'
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-2.5 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a]"
+                    >
+                      <RotateCcw size={11} />
+                      Reaktivieren
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => cancelInvoice(inv)}
+                      data-testid={`invoice-cancel-${inv.id}`}
+                      title="Rechnung stornieren (kann nicht mehr gelöscht werden)"
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
+                    >
+                      <Ban size={13} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

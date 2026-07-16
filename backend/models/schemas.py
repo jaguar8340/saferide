@@ -369,6 +369,7 @@ class StudentInvoiceCreate(BaseModel):
     payment_method: str = Field(default="bar", max_length=20)
     status: str = Field(default="open", max_length=20)
     is_direct: bool = False                                 # DIREKT-Rechnung: nicht in Standard-Buchhaltung/Erfolgsrechnung
+    storno_note: str = Field(default="", max_length=500)    # Optionale Notiz, warum die Rechnung storniert wurde
 
 
 class StudentInvoice(StudentInvoiceCreate):
@@ -394,6 +395,7 @@ class StudentInvoicePatch(BaseModel):
     payment_method: Optional[str] = None
     status: Optional[str] = None
     is_direct: Optional[bool] = None
+    storno_note: Optional[str] = None
     date: Optional[str] = None                              # invoice date (rarely edited)
 
 

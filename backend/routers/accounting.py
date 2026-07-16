@@ -339,6 +339,9 @@ async def monthly_journal(year: int, month: int, admin=Depends(get_current_admin
             revenue_open += amount
         elif inv.get("status") == "cancelled":
             revenue_cancelled += amount
+            # Storniert: taucht nicht in der Erfolgsrechnung als Zeile auf,
+            # bleibt aber im separaten `revenue_cancelled`-Zähler für den Audit.
+            continue
         rows.append({
             "date": inv.get("date"),
             "kind": "income",
