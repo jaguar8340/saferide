@@ -494,3 +494,23 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
     - Neu `frontend/public/manifest.json` mit `start_url=/admin?tab=students`, `display=standalone`, `theme_color=#0f172a`, `background_color=#fbf9f6`, Icons 192×192 + 512×512.
     - `index.html` Meta-Tags: `apple-mobile-web-app-capable=yes`, `apple-mobile-web-app-title=SafeRide`, `apple-mobile-web-app-status-bar-style=default`, `mobile-web-app-capable=yes`, `format-detection=telephone=no`, `<link rel="manifest">`.
     - iPhone: „Zum Home-Bildschirm hinzufügen" öffnet CMS direkt in der Schülerliste im Vollbildmodus mit Safe-Ride-Logo.
+
+
+## Iteration 56 – 2026-02-16 (Firma, Volljährigkeit, Fahrstunden-Karten, Verknüpfte Notizen mit Bild)
+- **Backend**
+  - `models/schemas.py`: `StudentCreate` + `StudentPatch` erhalten `company: str` (Firma für Firmen-Rechnungen).
+  - `routers/fahrkontrolle.py`: `FkNoteIn` / `FkNotePatch` / `FkNote` erhalten `image_url: str` (leerer String = kein Bild). POST + PATCH persistieren + `''` löscht das Bild.
+  - Regression: 5 neue pytest in `tests/test_iteration56_company_notes_images.py` + 18 bestehende (it26 + it55) unverändert grün.
+- **Frontend**
+  - `pages/AdminStudentDetail.jsx`:
+    - Neuer `ageFromBirthdate(iso)` Helper – berücksichtigt Geburtstag im Kalenderjahr korrekt.
+    - Header zeigt roten **`student-minor-badge`** ("Unter 18 · {n}J") bei Alter < 18.
+    - Neues Feld **Firma** (`overview-field-firma`) in der Übersicht — landet auch in der Header-Meta-Zeile.
+  - `components/admin/students/LessonsTab.jsx`: Komplett neu strukturierte **`LessonCard`**:
+    - Dunkler Header mit `L{n}` Badge + inline editierbarem Datum + Dauer (Chip-Style).
+    - 3-Spalten-Body: **Strecken** (Anzahl + Chip-Liste), **Bewertungen** (Anzahl + Kommentar-Marker), **Notiz zur Lektion** (autosave textarea).
+    - **Verknüpfte Diverse Notizen**: `notesByDate` groupiert `fk_notes` per Datum; Karten zeigen passende Notizen als Footer (`lesson-card-linked-notes-{n}` → `lesson-linked-note-{noteId}` inkl. Bild-Thumbnail).
+  - `components/admin/students/FahrkontrolleTab.jsx`: **DiverseNotesSection** unterstützt jetzt Bild-Upload via `/api/upload` (Hetzner S3):
+    - Neuer Bild-Button (`fk-note-new-image-btn` / `fk-note-edit-image-btn-{id}`), Vorschau (`fk-note-new-image-preview`), Entfernen (`fk-note-new-image-remove`), Anzeige in Liste (`fk-note-image-{id}`).
+    - Bilder werden per `resolveUrl()` (aus `lib/api.js`) korrekt mit dem Backend-Host aufgelöst.
+- **Testing**: `testing_agent_v3_fork` → Backend 5/5 + Regression 18/18 + Frontend 12/12 E2E grün, keine Bugs.
