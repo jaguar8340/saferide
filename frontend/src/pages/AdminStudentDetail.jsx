@@ -54,6 +54,14 @@ function ageFromBirthdate(iso) {
   return age;
 }
 
+/** Format an ISO timestamp (or date) to `DD.MM.YYYY` for German UI display.
+ *  Returns "—" for null/invalid input. */
+function formatDateDMY(iso) {
+  if (!iso || typeof iso !== "string") return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : "—";
+}
+
 const SUB_TABS = [
   { id: "overview",     icon: LayoutDashboard, label: "Übersicht" },
   { id: "fahrkontrolle",icon: ClipboardList,   label: "Schülerblatt" },
@@ -317,16 +325,45 @@ function OverviewTab({ student, onSave, onRefresh }) {
 
       {/* Portal-Zugang — separater Block mit klar sichtbarem Abstand unter der AGB */}
       <div className="mt-8">
-        <PortalAccessCard student={student} />
+        <PortalAccessCard student={student} onRefresh={onRefresh} />
       </div>
     </div>
   );
 }
 
 /** Standalone card that lets the admin send/regenerate the student’s
- *  portal-setup link. Uses the same underlying <InviteStudentButton />
- *  component that used to sit in the page header. */
-function PortalAccessCard({ student }) {
+ *  portal-setup link. Shows current activation status so the admin can
+ *  see at a glance whether the student has already redeemed their link. */
+function PortalAccessCard({ student, onRefresh }) {
+  const activatedAt = student?.portal_activated_at;
+  const invitedAt = student?.portal_invited_at;
+
+  const status = activatedAt
+    ? {
+        testid: "portal-status-activated",
+        tone: "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]",
+        icon: <ShieldCheck size={12} strokeWidth={2.4} />,
+        label: "Portal aktiviert",
+        detail: `am ${formatDateDMY(activatedAt)}`,
+      }
+    : invitedAt
+    ? {
+        testid: "portal-status-invited",
+        tone: "bg-[#fff7ed] border-[#fed7aa] text-[#c2410c]",
+        icon: <Clock size={12} strokeWidth={2.4} />,
+        label: "Eingeladen – wartet auf Aktivierung",
+        detail: `am ${formatDateDMY(invitedAt)} verschickt`,
+      }
+    : {
+        testid: "portal-status-not-invited",
+        tone: "bg-[#fafaf9] border-[#e7e5e4] text-[#78716c]",
+        icon: <AlertCircle size={12} strokeWidth={2.4} />,
+        label: "Noch nicht eingeladen",
+        detail: student?.email
+          ? "Klick auf «Portal-Zugang», um einen Setup-Link zu senden"
+          : "Zuerst E-Mail hinterlegen",
+      };
+
   return (
     <div
       data-testid="student-portal-access-card"
@@ -338,14 +375,26 @@ function PortalAccessCard({ student }) {
             <Send size={16} className="text-[#ff5a36]" />
             <h3 className="font-display text-lg">Portal-Zugang</h3>
           </div>
-          <p className="text-xs text-[#78716c] leading-relaxed">
+          <p className="text-xs text-[#78716c] leading-relaxed mb-3">
             Schickt der Schüler:in einen einmaligen Setup-Link per E-Mail.
             Damit kann sie sich im Schüler-Portal ein Passwort setzen und
             danach jederzeit ihre Fahrstunden, Rechnungen und Termine
             einsehen.
           </p>
+          <div
+            data-testid={status.testid}
+            className={`inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase border rounded-full px-2.5 py-1 ${status.tone}`}
+          >
+            {status.icon}
+            <span>{status.label}</span>
+            {status.detail && (
+              <span className="opacity-70 normal-case tracking-normal font-normal ml-1">
+                · {status.detail}
+              </span>
+            )}
+          </div>
         </div>
-        <InviteStudentButton student={student} />
+        <InviteStudentButton student={student} onRefresh={onRefresh} />
       </div>
     </div>
   );
@@ -515,7 +564,7 @@ function EditField({ label, value, onSave, type = "text" }) {
 /*  triggers an SMTP invitation e-mail (if SMTP is configured) and lets   */
 /*  the admin copy the link as fallback.                                  */
 /* ---------------------------------------------------------------------- */
-function InviteStudentButton({ student }) {
+function InviteStudentButton({ student, onRefresh }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -536,6 +585,8 @@ function InviteStudentButton({ student }) {
           description: r.data.detail || "SMTP nicht konfiguriert — Link unten kopieren.",
         });
       }
+      // Refresh the parent so the invited/activated status pill updates
+      onRefresh?.();
     } catch (e) {
       toast.error(formatApiError(e));
     } finally {

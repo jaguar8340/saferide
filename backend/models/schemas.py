@@ -225,6 +225,9 @@ class Student(StudentCreate):
     agb_guardian_sent_at: Optional[str] = None
     agb_guardian_confirmed_at: Optional[str] = None
     agb_guardian_confirmed_version: Optional[str] = None
+    # Portal-Zugang – gesetzt beim Einladen bzw. Aktivieren durch den Schüler
+    portal_invited_at: Optional[str] = None
+    portal_activated_at: Optional[str] = None
 
 
 class StudentPatch(BaseModel):
