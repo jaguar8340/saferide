@@ -1,11 +1,11 @@
 /**
  * AdminStudentDetail — full-page view for one student. Six sub-tabs:
- *   1. Übersicht          – headline info + editable master data
- *   2. Fahrstunden        – flat list of lessons with autosave
- *   3. Rechnungen         – invoice CRUD with status pills
- *   4. Aktivitäten        – auto-logged read-only audit trail
- *   5. Dokumente          – file uploads scoped to the student
- *   6. Fahrkontrolle      – the main matrix module
+ *   1. Übersicht          – headline info + editable master data + Portal-Zugang
+ *   2. Schülerblatt       – the main Fahrkontrolle matrix module
+ *   3. Fahrstunden        – flat list of lessons with autosave
+ *   4. Rechnungen         – invoice CRUD with status pills
+ *   5. Aktivitäten        – auto-logged read-only audit trail
+ *   6. Dokumente          – file uploads scoped to the student
  */
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -56,11 +56,11 @@ function ageFromBirthdate(iso) {
 
 const SUB_TABS = [
   { id: "overview",     icon: LayoutDashboard, label: "Übersicht" },
+  { id: "fahrkontrolle",icon: ClipboardList,   label: "Schülerblatt" },
   { id: "lessons",      icon: CalendarIcon,    label: "Fahrstunden" },
   { id: "invoices",     icon: Receipt,         label: "Rechnungen" },
   { id: "activities",   icon: Activity,        label: "Aktivitäten" },
   { id: "documents",    icon: FolderOpen,      label: "Dokumente" },
-  { id: "fahrkontrolle",icon: ClipboardList,   label: "Fahrkontrolle" },
 ];
 
 export default function AdminStudentDetail() {
@@ -177,7 +177,6 @@ export default function AdminStudentDetail() {
               <Save size={11} className="inline mr-1" /> Speichere …
             </span>
           )}
-          <InviteStudentButton student={student} />
           <Link
             to="/admin?tab=students"
             className="text-xs font-semibold tracking-widest uppercase text-[#475569] px-3 py-2 hover:text-[#0f172a]"
@@ -315,6 +314,39 @@ function OverviewTab({ student, onSave, onRefresh }) {
       </div>
 
       <AgbSection student={student} onRefresh={onRefresh} />
+
+      {/* Portal-Zugang — separater Block mit klar sichtbarem Abstand unter der AGB */}
+      <div className="mt-8">
+        <PortalAccessCard student={student} />
+      </div>
+    </div>
+  );
+}
+
+/** Standalone card that lets the admin send/regenerate the student’s
+ *  portal-setup link. Uses the same underlying <InviteStudentButton />
+ *  component that used to sit in the page header. */
+function PortalAccessCard({ student }) {
+  return (
+    <div
+      data-testid="student-portal-access-card"
+      className="bg-white border border-[#e7e5e4] rounded-2xl p-5 md:p-6"
+    >
+      <div className="flex items-start gap-4 flex-wrap">
+        <div className="flex-1 min-w-[220px]">
+          <div className="flex items-center gap-2 mb-1">
+            <Send size={16} className="text-[#ff5a36]" />
+            <h3 className="font-display text-lg">Portal-Zugang</h3>
+          </div>
+          <p className="text-xs text-[#78716c] leading-relaxed">
+            Schickt der Schüler:in einen einmaligen Setup-Link per E-Mail.
+            Damit kann sie sich im Schüler-Portal ein Passwort setzen und
+            danach jederzeit ihre Fahrstunden, Rechnungen und Termine
+            einsehen.
+          </p>
+        </div>
+        <InviteStudentButton student={student} />
+      </div>
     </div>
   );
 }
