@@ -145,6 +145,8 @@ export default function Gallery({ items }) {
               <img
                 src={resolveUrl(g.image_url)}
                 alt={pick(g.caption_de, g.caption_en) || "gallery"}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {!editMode && (g.caption_de || g.caption_en) && (

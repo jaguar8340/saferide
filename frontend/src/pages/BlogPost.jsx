@@ -148,45 +148,48 @@ export default function BlogPost() {
         type="article"
         image={post.hero_image_url ? resolveUrl(post.hero_image_url) : undefined}
         imageAlt={lang === "de" ? post.title_de : (post.title_en || post.title_de)}
-        jsonLd={[
-          {
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: lang === "de" ? post.title_de : (post.title_en || post.title_de),
-            description: lang === "de" ? (post.excerpt_de || "") : (post.excerpt_en || post.excerpt_de || ""),
-            image: post.hero_image_url ? resolveUrl(post.hero_image_url) : undefined,
-            datePublished: post.published_at || post.created_at,
-            dateModified: post.updated_at || post.published_at || post.created_at,
-            author: {
-              "@type": "Person",
-              name: post.author_name || "Nadine Stäubli",
-              jobTitle: lang === "de" ? (post.author_role_de || "Fahrlehrerin") : (post.author_role_en || "Driving instructor"),
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Fahrschule Safe Ride",
-              logo: {
-                "@type": "ImageObject",
-                url: "https://customer-assets.emergentagent.com/job_driving-school-cms/artifacts/0v9hxuzi_saferide%20logo.jpg",
+        jsonLd={(() => {
+          const origin = typeof window !== "undefined" ? window.location.origin : "https://saferide.ch";
+          const title = lang === "de" ? post.title_de : (post.title_en || post.title_de);
+          const heroAbs = post.hero_image_url ? resolveUrl(post.hero_image_url) : undefined;
+          const logoAbs = `${origin}/og-image.jpg`;
+          return [
+            {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              headline: title,
+              description: lang === "de" ? (post.excerpt_de || "") : (post.excerpt_en || post.excerpt_de || ""),
+              image: heroAbs,
+              datePublished: post.published_at || post.created_at,
+              dateModified: post.updated_at || post.published_at || post.created_at,
+              inLanguage: lang === "en" ? "en" : "de-CH",
+              author: {
+                "@type": "Person",
+                name: post.author_name || "Nadine Stäubli",
+                jobTitle: lang === "de" ? (post.author_role_de || "Fahrlehrerin") : (post.author_role_en || "Driving instructor"),
+                url: `${origin}/`,
               },
+              publisher: {
+                "@type": "Organization",
+                "@id": `${origin}/#organization`,
+                name: "Fahrschule Safe Ride",
+                logo: { "@type": "ImageObject", url: logoAbs },
+              },
+              keywords: (post.tags || []).join(", "),
+              articleSection: (post.categories || []).join(", "),
+              mainEntityOfPage: { "@type": "WebPage", "@id": `${origin}/blog/${slug}` },
             },
-            keywords: (post.tags || []).join(", "),
-            articleSection: (post.categories || []).join(", "),
-            mainEntityOfPage: {
-              "@type": "WebPage",
-              "@id": `https://www.fahrschule-saferide.ch/blog/${slug}`,
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Startseite", item: `${origin}/` },
+                { "@type": "ListItem", position: 2, name: "Blog", item: `${origin}/blog` },
+                { "@type": "ListItem", position: 3, name: title, item: `${origin}/blog/${slug}` },
+              ],
             },
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Startseite", item: "https://www.fahrschule-saferide.ch/" },
-              { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.fahrschule-saferide.ch/blog" },
-              { "@type": "ListItem", position: 3, name: lang === "de" ? post.title_de : (post.title_en || post.title_de), item: `https://www.fahrschule-saferide.ch/blog/${slug}` },
-            ],
-          },
-        ]}
+          ];
+        })()}
       />
       <Header />
 

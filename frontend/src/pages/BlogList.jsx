@@ -10,6 +10,7 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import Seo from "@/components/site/Seo";
+import { buildBreadcrumb, seoOrigin } from "@/lib/seo";
 
 function formatDate(iso, lang) {
   if (!iso) return "";
@@ -121,20 +122,26 @@ export default function BlogList() {
         path="/blog"
         lang={lang}
         type="website"
-        jsonLd={(posts || []).length ? {
-          "@context": "https://schema.org",
-          "@type": "Blog",
-          name: "Safe Ride Blog",
-          url: "https://www.fahrschule-saferide.ch/blog",
-          publisher: { "@type": "Organization", name: "Fahrschule Safe Ride" },
-          blogPost: (posts || []).slice(0, 10).map((p) => ({
-            "@type": "BlogPosting",
-            headline: lang === "de" ? p.title_de : (p.title_en || p.title_de),
-            url: `https://www.fahrschule-saferide.ch/blog/${p.slug}`,
-            datePublished: p.published_at || p.created_at,
-            image: p.hero_image_url ? resolveUrl(p.hero_image_url) : undefined,
-          })),
-        } : null}
+        jsonLd={[
+          buildBreadcrumb([
+            { name: lang === "de" ? "Startseite" : "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+          ]),
+          (posts || []).length ? {
+            "@context": "https://schema.org",
+            "@type": "Blog",
+            name: "Safe Ride Blog",
+            url: `${seoOrigin()}/blog`,
+            publisher: { "@type": "Organization", "@id": `${seoOrigin()}/#organization`, name: "Fahrschule Safe Ride" },
+            blogPost: (posts || []).slice(0, 10).map((p) => ({
+              "@type": "BlogPosting",
+              headline: lang === "de" ? p.title_de : (p.title_en || p.title_de),
+              url: `${seoOrigin()}/blog/${p.slug}`,
+              datePublished: p.published_at || p.created_at,
+              image: p.hero_image_url ? resolveUrl(p.hero_image_url) : undefined,
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 
@@ -224,6 +231,8 @@ export default function BlogList() {
                     <img
                       src={resolveUrl(featured.hero_image_url)}
                       alt={pick(featured.title_de, featured.title_en)}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   )}

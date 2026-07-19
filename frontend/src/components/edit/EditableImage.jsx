@@ -25,6 +25,8 @@ export default function EditableImage({
   onUpdate,
   forceEditMode,
   broadcast,
+  loading = "lazy",           // "eager" for above-the-fold (hero) images
+  fetchPriority,              // "high" for the LCP hero
 }) {
   const ctx = useEdit();
   const editMode = forceEditMode !== undefined ? forceEditMode : ctx.editMode;
@@ -84,12 +86,28 @@ export default function EditableImage({
   };
 
   if (!editMode) {
-    return <img src={resolveUrl(src)} alt={alt} className={`${className} ${imgClassName}`} />;
+    return (
+      <img
+        src={resolveUrl(src)}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        {...(fetchPriority ? { fetchPriority } : {})}
+        className={`${className} ${imgClassName}`}
+      />
+    );
   }
 
   return (
     <span className={`relative group inline-block ${className}`} style={{ lineHeight: 0 }}>
-      <img src={resolveUrl(src)} alt={alt} className={imgClassName} />
+      <img
+        src={resolveUrl(src)}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        {...(fetchPriority ? { fetchPriority } : {})}
+        className={imgClassName}
+      />
       <span className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 group-hover:bg-black/45 transition-colors opacity-0 group-hover:opacity-100 rounded-[inherit]">
         <button
           type="button"

@@ -21,7 +21,6 @@ import Seo from "@/components/site/Seo";
 export default function Home() {
   const { content, testimonials, gallery } = useEdit();
   const { lang } = useLang();
-
   useEffect(() => {
     // Smoothly scroll to the section indicated by location.hash on mount/change
     const hash = window.location.hash?.replace("#", "");
@@ -130,6 +129,19 @@ export default function Home() {
       ratingCount: content.rating_count ?? 27,
       reviewCount: content.rating_count ?? 27,
     },
+    review: (testimonials || []).slice(0, 6).map((r) => ({
+      "@type": "Review",
+      author: { "@type": "Person", name: r.name },
+      datePublished: r.date,
+      reviewBody: lang === "de" ? (r.text_de || r.text_en) : (r.text_en || r.text_de),
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: String(r.rating || 5),
+        bestRating: "5",
+        worstRating: "1",
+      },
+      itemReviewed: { "@type": "DrivingSchool", name: "Fahrschule Safe Ride" },
+    })),
     founder: {
       "@type": "Person",
       name: "Nadine Stäubli",

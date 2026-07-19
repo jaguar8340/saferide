@@ -10,6 +10,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Seo from "@/components/site/Seo";
+import { buildBreadcrumb, seoOrigin } from "@/lib/seo";
 
 function PartnerCard({ partner, onPatch, onRemove }) {
   const { lang, pick } = useLang();
@@ -57,6 +58,8 @@ function PartnerCard({ partner, onPatch, onRemove }) {
           <img
             src={resolveUrl(partner.logo_url)}
             alt={partner.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -259,18 +262,25 @@ export default function PartnerPage() {
         path="/partner"
         lang={lang}
         type="website"
-        jsonLd={(partners || []).length ? {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "Fahrschule Safe Ride",
-          url: "https://www.fahrschule-saferide.ch/",
-          subOrganization: (partners || []).map((p) => ({
+        jsonLd={[
+          buildBreadcrumb([
+            { name: lang === "de" ? "Startseite" : "Home", path: "/" },
+            { name: lang === "de" ? "Partner" : "Partners", path: "/partner" },
+          ]),
+          (partners || []).length ? {
+            "@context": "https://schema.org",
             "@type": "Organization",
-            name: p.name,
-            url: p.website_url || undefined,
-            description: lang === "de" ? p.description_de : (p.description_en || p.description_de),
-          })),
-        } : null}
+            "@id": `${seoOrigin()}/#organization`,
+            name: "Fahrschule Safe Ride",
+            url: `${seoOrigin()}/`,
+            subOrganization: (partners || []).map((p) => ({
+              "@type": "Organization",
+              name: p.name,
+              url: p.website_url || undefined,
+              description: lang === "de" ? p.description_de : (p.description_en || p.description_de),
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 

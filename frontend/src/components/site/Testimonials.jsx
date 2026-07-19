@@ -165,18 +165,8 @@ export default function Testimonials({ items }) {
           </details>
         )}
 
-        {/* Content: embed widget OR manual review cards */}
-        {hasEmbed ? (
-          <div>
-            {editMode && (
-              <div className="mb-6 rounded-2xl border-2 border-dashed border-[#ff5a36]/30 bg-[#fff6ef] p-4 text-center text-xs text-[#e74123]">
-                <div className="font-semibold mb-1">Live-Widget aktiv</div>
-                <div className="text-[#475569]">Der eingebettete Google-Reviews-Feed wird unten angezeigt. Zum Testen: Live-Modus wechseln.</div>
-              </div>
-            )}
-            <WidgetEmbed html={embedHtml} testid="reviews-embed-html" minHeight={400} />
-          </div>
-        ) : (
+        {/* Content: static cards (SEO/crawler visible) + optionally Elfsight widget below */}
+        {items?.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {items.map((r, i) => (
             <motion.div
@@ -271,6 +261,19 @@ export default function Testimonials({ items }) {
               </div>
             </motion.div>
           ))}
+          </div>
+        )}
+
+        {/* Elfsight widget (live Google feed) — additionally, when configured */}
+        {hasEmbed && (
+          <div className="mt-10">
+            {editMode && (
+              <div className="mb-6 rounded-2xl border-2 border-dashed border-[#ff5a36]/30 bg-[#fff6ef] p-4 text-center text-xs text-[#e74123]">
+                <div className="font-semibold mb-1">Live-Widget aktiv (unter den obigen Karten)</div>
+                <div className="text-[#475569]">Der eingebettete Google-Reviews-Feed wird zusätzlich angezeigt. Wichtig für SEO: die Karten oben sind für Google sichtbar (Rich-Snippet-fähig), Elfsight nicht.</div>
+              </div>
+            )}
+            <WidgetEmbed html={embedHtml} testid="reviews-embed-html" minHeight={400} />
           </div>
         )}
       </div>

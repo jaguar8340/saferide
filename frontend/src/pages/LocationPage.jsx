@@ -10,6 +10,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import OtherLocationsSection from "@/components/site/OtherLocationsSection";
 import Seo from "@/components/site/Seo";
+import { seoOrigin } from "@/lib/seo";
 
 import LocHero from "@/components/location/LocHero";
 import LocWhyIdeal from "@/components/location/LocWhyIdeal";
@@ -101,12 +102,12 @@ export default function LocationPage() {
         {
           "@context": "https://schema.org",
           "@type": "LocalBusiness",
-          "@id": `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}#business`,
+          "@id": `${seoOrigin()}/fahrschule-${loc.slug}#business`,
           name: `Fahrschule Safe Ride · ${loc.name}`,
           image: heroImg,
           telephone: content?.contact?.phone || "+41795850085",
           email: content?.contact?.email || "info@fahrschule-saferide.ch",
-          url: `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}`,
+          url: `${seoOrigin()}/fahrschule-${loc.slug}`,
           address: {
             "@type": "PostalAddress",
             addressLocality: loc.name,
@@ -120,8 +121,8 @@ export default function LocationPage() {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: lang === "de" ? "Startseite" : "Home", item: "https://www.fahrschule-saferide.ch/" },
-            { "@type": "ListItem", position: 2, name: loc.name, item: `https://www.fahrschule-saferide.ch/fahrschule-${loc.slug}` },
+            { "@type": "ListItem", position: 1, name: lang === "de" ? "Startseite" : "Home", item: `${seoOrigin()}/` },
+            { "@type": "ListItem", position: 2, name: loc.name, item: `${seoOrigin()}/fahrschule-${loc.slug}` },
           ],
         },
         (loc.faqs || []).length

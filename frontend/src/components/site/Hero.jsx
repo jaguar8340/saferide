@@ -117,6 +117,8 @@ export default function Hero({ data }) {
               path="hero.image_url"
               src={data.image_url}
               alt="Safe Ride"
+              loading="eager"
+              fetchPriority="high"
               className="block rounded-3xl overflow-hidden border border-[#e2e8f0]"
               imgClassName="w-full h-[440px] md:h-[540px] object-cover"
             />

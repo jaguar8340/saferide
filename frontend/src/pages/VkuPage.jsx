@@ -11,6 +11,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Seo from "@/components/site/Seo";
+import { buildBreadcrumb, seoOrigin } from "@/lib/seo";
 import VkuRegistrationForm from "@/components/site/VkuRegistrationForm";
 
 export default function VkuPage() {
@@ -41,27 +42,34 @@ export default function VkuPage() {
         type="website"
         image={data.hero_image_url}
         imageAlt="VKU Verkehrskundeunterricht"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "Course",
-          name: "VKU – Verkehrskundeunterricht",
-          description: pick(data.subtitle_de, data.subtitle_en),
-          provider: {
-            "@type": "Organization",
-            name: "Fahrschule Safe Ride",
-            url: "https://www.fahrschule-saferide.ch/",
+        jsonLd={[
+          buildBreadcrumb([
+            { name: lang === "de" ? "Startseite" : "Home", path: "/" },
+            { name: "VKU", path: "/vku-unterricht" },
+          ]),
+          {
+            "@context": "https://schema.org",
+            "@type": "Course",
+            name: "VKU – Verkehrskundeunterricht",
+            description: pick(data.subtitle_de, data.subtitle_en),
+            provider: {
+              "@type": "Organization",
+              "@id": `${seoOrigin()}/#organization`,
+              name: "Fahrschule Safe Ride",
+              url: `${seoOrigin()}/`,
+            },
+            courseCode: "VKU",
+            inLanguage: "de-CH",
+            educationalLevel: "Beginner",
+            timeRequired: "PT8H",
+            offers: {
+              "@type": "Offer",
+              priceCurrency: "CHF",
+              price: "200",
+              availability: "https://schema.org/InStock",
+            },
           },
-          courseCode: "VKU",
-          inLanguage: "de-CH",
-          educationalLevel: "Beginner",
-          timeRequired: "PT8H",
-          offers: {
-            "@type": "Offer",
-            priceCurrency: "CHF",
-            price: "200",
-            availability: "https://schema.org/InStock",
-          },
-        }}
+        ]}
       />
       <SubPageHeader />
 

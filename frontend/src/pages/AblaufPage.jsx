@@ -11,6 +11,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Seo from "@/components/site/Seo";
+import { buildBreadcrumb } from "@/lib/seo";
 
 export default function AblaufPage() {
   const { lang, pick } = useLang();
@@ -40,18 +41,24 @@ export default function AblaufPage() {
         type="article"
         image={data.hero_image_url}
         imageAlt="Ablauf zum Führerausweis"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "HowTo",
-          name: lang === "de" ? "Ablauf zum Schweizer Führerausweis" : "Process to the Swiss driving licence",
-          description: pick(data.subtitle_de, data.subtitle_en),
-          step: steps.map((s, i) => ({
-            "@type": "HowToStep",
-            position: i + 1,
-            name: lang === "de" ? s.title_de : (s.title_en || s.title_de),
-            text: lang === "de" ? s.body_de : (s.body_en || s.body_de),
-          })),
-        }}
+        jsonLd={[
+          buildBreadcrumb([
+            { name: lang === "de" ? "Startseite" : "Home", path: "/" },
+            { name: lang === "de" ? "Ablauf" : "Process", path: "/ablauf-zum-fuehrerschein" },
+          ]),
+          {
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: lang === "de" ? "Ablauf zum Schweizer Führerausweis" : "Process to the Swiss driving licence",
+            description: pick(data.subtitle_de, data.subtitle_en),
+            step: steps.map((s, i) => ({
+              "@type": "HowToStep",
+              position: i + 1,
+              name: lang === "de" ? s.title_de : (s.title_en || s.title_de),
+              text: lang === "de" ? s.body_de : (s.body_en || s.body_de),
+            })),
+          },
+        ]}
       />
       <SubPageHeader />
 

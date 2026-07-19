@@ -96,6 +96,8 @@ export default function LocGallery({ loc, updateField }) {
               <img
                 src={resolveUrl(g.image_url)}
                 alt={pick(g.caption_de, g.caption_en) || loc.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-[220px] md:h-[280px] object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {editMode && (

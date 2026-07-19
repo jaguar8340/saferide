@@ -10,6 +10,7 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import CanonicalLink from "@/components/site/CanonicalLink";
 import Seo from "@/components/site/Seo";
+import { buildBreadcrumb, seoOrigin } from "@/lib/seo";
 import Editable from "@/components/edit/Editable";
 import EditablePackageCard from "@/components/site/EditablePackageCard";
 import {
@@ -157,27 +158,33 @@ export default function BuchungPage() {
         path="/buchung"
         lang={lang}
         type="website"
-        jsonLd={(packages || []).length ? {
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: lang === "de" ? "Safe Ride Pakete" : "Safe Ride packages",
-          itemListElement: (packages || []).map((p, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            item: {
-              "@type": "Product",
-              name: lang === "de" ? p.title_de : (p.title_en || p.title_de),
-              description: lang === "de" ? (p.subtitle_de || "") : (p.subtitle_en || p.subtitle_de || ""),
-              offers: {
-                "@type": "Offer",
-                priceCurrency: "CHF",
-                price: String(p.price_chf || 0),
-                availability: "https://schema.org/InStock",
-                url: `https://www.fahrschule-saferide.ch/buchung#${p.slug}`,
+        jsonLd={[
+          buildBreadcrumb([
+            { name: lang === "de" ? "Startseite" : "Home", path: "/" },
+            { name: lang === "de" ? "Buchung" : "Booking", path: "/buchung" },
+          ]),
+          (packages || []).length ? {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: lang === "de" ? "Safe Ride Pakete" : "Safe Ride packages",
+            itemListElement: (packages || []).map((p, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Product",
+                name: lang === "de" ? p.title_de : (p.title_en || p.title_de),
+                description: lang === "de" ? (p.subtitle_de || "") : (p.subtitle_en || p.subtitle_de || ""),
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "CHF",
+                  price: String(p.price_chf || 0),
+                  availability: "https://schema.org/InStock",
+                  url: `${seoOrigin()}/buchung#${p.slug}`,
+                },
               },
-            },
-          })),
-        } : null}
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 
