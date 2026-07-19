@@ -66,6 +66,118 @@ export default function Home() {
       }
     : null;
 
+  // DrivingSchool structured data — feeds Google Rich Results (map card,
+  // stars, hours) and Google Business Profile enhancement.
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://saferide.ch";
+  const absLogo = (() => {
+    const l = content.logo_url || "";
+    if (!l) return `${origin}/favicon.jpg`;
+    return l.startsWith("http") ? l : `${origin}${l.startsWith("/") ? l : `/${l}`}`;
+  })();
+  const absHeroImg = (() => {
+    const h = content.hero?.image_url || content.logo_url || "";
+    if (!h) return absLogo;
+    return h.startsWith("http") ? h : `${origin}${h.startsWith("/") ? h : `/${h}`}`;
+  })();
+  const socialSameAs = [
+    content.contact?.instagram,
+    content.contact?.tiktok,
+    content.contact?.facebook,
+    "https://www.google.com/search?q=Fahrschule+Safe+Ride+Nadine+St%C3%A4ubli",
+  ].filter(Boolean);
+
+  const drivingSchoolJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "DrivingSchool",
+    "@id": `${origin}/#organization`,
+    name: "Fahrschule Safe Ride",
+    alternateName: "Safe Ride",
+    url: `${origin}/`,
+    logo: absLogo,
+    image: absHeroImg,
+    description:
+      "Persönliche Fahrschule in ZH, SZ, SG und GR mit Mental Coaching und Spezialisierung auf ADHS & Autismus.",
+    telephone: content.contact?.phone || "+41 79 585 00 85",
+    email: content.contact?.email || "info@fahrschule-saferide.ch",
+    priceRange: "CHF 90 – CHF 120",
+    currenciesAccepted: "CHF",
+    paymentAccepted: "Bar, Bank, TWINT, Kreditkarte",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "CH",
+      addressRegion: "ZH",
+    },
+    areaServed: [
+      { "@type": "AdministrativeArea", name: "Zürich" },
+      { "@type": "AdministrativeArea", name: "Schwyz" },
+      { "@type": "AdministrativeArea", name: "St. Gallen" },
+      { "@type": "AdministrativeArea", name: "Graubünden" },
+    ],
+    // Mo–Fr 07:00–20:00 (Sa nach Absprache = kein festes Fenster → weglassen)
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        opens: "07:00",
+        closes: "20:00",
+      },
+    ],
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: content.rating_avg ?? "5.0",
+      bestRating: "5",
+      worstRating: "1",
+      ratingCount: content.rating_count ?? 27,
+      reviewCount: content.rating_count ?? 27,
+    },
+    founder: {
+      "@type": "Person",
+      name: "Nadine Stäubli",
+      jobTitle: "Fahrlehrerin FMB",
+    },
+    sameAs: socialSameAs,
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Fahrstunden & Kurse",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "Fahrstunde PKW · 45 Min." },
+          price: "90",
+          priceCurrency: "CHF",
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "Fahrstunde PKW · 60 Min." },
+          price: "120",
+          priceCurrency: "CHF",
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "Anhänger · 45 Min." },
+          price: "120",
+          priceCurrency: "CHF",
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "Verkehrskundeunterricht (VKU)" },
+        },
+      ],
+    },
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${origin}/#website`,
+    url: `${origin}/`,
+    name: "Fahrschule Safe Ride",
+    inLanguage: lang === "en" ? "en" : "de-CH",
+    publisher: { "@id": `${origin}/#organization` },
+  };
+
+  const jsonLd = [drivingSchoolJsonLd, websiteJsonLd, faqJsonLd].filter(Boolean);
+
   return (
     <main
       data-testid="home-page"
@@ -82,7 +194,7 @@ export default function Home() {
         keywords={lang === "de"
           ? "Fahrschule, Führerschein, Fahrlehrerin, Zürich, Schwyz, St. Gallen, Graubünden, VKU, ADHS, Mental Coaching, Audi S3"
           : "driving school, driver license, instructor, Zurich, Schwyz, St. Gallen, Graubünden, theory, ADHD, mental coaching"}
-        jsonLd={faqJsonLd}
+        jsonLd={jsonLd}
       />
       <Header />
       <Hero data={content.hero} />

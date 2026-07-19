@@ -122,8 +122,8 @@ DEFAULT_CONTENT: Dict[str, Any] = {
             "id": "hf3",
             "question_de": "Was kostet eine Fahrstunde?",
             "question_en": "What does a driving lesson cost?",
-            "answer_de": "Eine Lektion à 50 Minuten kostet CHF 110.–. Es gibt keine versteckten Anfahrtspauschalen und keine Aufpreise für Wochenend-Lektionen.",
-            "answer_en": "A 50-minute lesson costs CHF 110.–. There are no hidden travel surcharges and no markups for weekend lessons."
+            "answer_de": "Eine 45-Minuten-Lektion kostet CHF 90.– (ZH/SZ/SG), eine 60-Minuten-Lektion CHF 120.–. Anhänger-Fahrstunden (45 Min.) kosten CHF 120.–. Keine versteckten Anfahrtspauschalen, keine Aufpreise für Wochenend-Lektionen. Für Neukund:innen fällt eine einmalige Versicherungspauschale von CHF 120.– an (zahlbar bei der zweiten Lektion).",
+            "answer_en": "A 45-minute lesson costs CHF 90 (ZH/SZ/SG), a 60-minute lesson CHF 120. Trailer lessons (45 min.) cost CHF 120. No hidden travel surcharges, no markups for weekend lessons. New clients pay a one-time insurance flat rate of CHF 120 (due with the second lesson)."
         },
         {
             "id": "hf4",

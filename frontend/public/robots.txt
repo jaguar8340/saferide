@@ -22,5 +22,5 @@ User-agent: Google-Extended
 Allow: /
 
 # Dynamic sitemap (lists homepage, ablauf, vku, blog, buchung, partner and
-# all 11 location landing pages). Served by the FastAPI backend.
-Sitemap: https://www.fahrschule-saferide.ch/api/sitemap.xml
+# all 17 location landing pages). Served by the FastAPI backend.
+Sitemap: https://saferide.ch/api/sitemap.xml
