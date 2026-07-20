@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 56.8 – Verified Google Rich Results fix on homepage JSON-LD. Homepage now emits DrivingSchool block with @type as array ['LocalBusiness','DrivingSchool'] and complete PostalAddress (streetAddress, postalCode, addressLocality, addressRegion, addressCountry). All 6 reviews retain ISO YYYY-MM-DD datePublished with no itemReviewed. Exactly one combined LocalBusiness+DrivingSchool block – no duplicates. WebSite + FAQPage JSON-LD still present. Regression on VKU, Buchung, Partner, Ablauf, Blog list, Blog post and LocationPage – all load successfully and emit their expected JSON-LD types (BreadcrumbList/Course/ItemList/Organization/HowTo/Blog/BlogPosting).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "None – JSON-LD structure is correct per Google Rich Results whitelist. Nadine can now redeploy to saferide.ch and re-run Google Rich Results Test.",
+    "Optional follow-up: If Google still flags reviews after redeploy, verify that the production build (not just the preview) actually ships the updated Home.jsx by inspecting the deployed page source for `\"@type\":[\"LocalBusiness\",\"DrivingSchool\"]`."
+  ],
+  "critical_code_review_comments": [
+    "Home.jsx line 100: `const origin = typeof window !== 'undefined' ? window.location.origin : 'https://saferide.ch'` – in the preview environment origin becomes the emergentagent preview URL, so @id/URL fields contain the preview host. Not a bug, but worth remembering: the final production JSON-LD @id will only be `https://saferide.ch/#organization` once deployed on the real domain.",
+    "Home.jsx line 167-168: `ratingCount` and `reviewCount` fall back to `Math.max(testimonials.length, 6)`. If content.rating_count is nullish AND testimonials.length is e.g. 8, both counts will be 8 while `review` array only has 6 (sliced). Google prefers `reviewCount` == number of reviews actually provided. Consider `reviewCount: Math.min(reviews.length, 6)` and keep aggregate ratingCount separate.",
+    "Reviews slice(0,6) means only the first 6 testimonials are surfaced to Google. If the CMS reorders testimonials, snippet content can shift. Consider exposing an `include_in_seo` flag in the CMS.",
+    "parseGermanMonth returns YYYY-MM-01 – always the 1st of the month. Google accepts this, but if precise date is available from CMS it should be used verbatim."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "n/a – public homepage",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The DrivingSchool JSON-LD block on homepage now uses @type as array ['LocalBusiness','DrivingSchool'] with full PostalAddress. LocationPage (/standorte/*) also emits the same combined type. When adding new schema types, remember Google's Review-Rich-Snippet whitelist only accepts specific types like LocalBusiness, so keep LocalBusiness in the @type array whenever reviews/aggregateRating are attached.",
+  "rca of the issue": "Google Rich Results Test previously reported 'Invalid object type for field <parent_node>' on 9 Review snippets. Root cause was two-fold: (1) parent @type was Single-String 'DrivingSchool' which is NOT on Google's whitelist for Review-Rich-Snippets, only LocalBusiness (and sub-types) are; (2) the LocalBusiness PostalAddress was incomplete – Google requires streetAddress + postalCode + addressLocality for full LocalBusiness qualification. Fix (verified in Home.jsx lines 118-145): (a) @type is now array ['LocalBusiness','DrivingSchool'] so LocalBusiness legitimises the reviews while DrivingSchool preserves specialisation; (b) PostalAddress now has streetAddress='Bahnhofstrasse 1', postalCode='8853', addressLocality='Lachen', addressRegion='SZ', addressCountry='CH' (from official Impressum). Verified live JSON-LD on preview URL parses cleanly and matches all 6 review entries with ISO datePublished."
+}

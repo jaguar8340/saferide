@@ -117,7 +117,11 @@ export default function Home() {
 
   const drivingSchoolJsonLd = {
     "@context": "https://schema.org",
-    "@type": "DrivingSchool",
+    // Google erlaubt Rezensions-Rich-Snippets nur für einen kleinen Kreis
+    // von Typen (LocalBusiness ist dabei, DrivingSchool nicht). Wir deklarieren
+    // beide Typen gleichzeitig, damit LocalBusiness die Review-Snippets legitimiert
+    // und DrivingSchool die Spezialisierung erhält.
+    "@type": ["LocalBusiness", "DrivingSchool"],
     "@id": `${origin}/#organization`,
     name: "Fahrschule Safe Ride",
     alternateName: "Safe Ride",
@@ -133,9 +137,13 @@ export default function Home() {
     paymentAccepted: "Bar, Bank, TWINT, Kreditkarte",
     address: {
       "@type": "PostalAddress",
+      streetAddress: "Bahnhofstrasse 1",
+      postalCode: "8853",
+      addressLocality: "Lachen",
+      addressRegion: "SZ",
       addressCountry: "CH",
-      addressRegion: "ZH",
     },
+    // Zusätzlich zur registrierten Adresse werden Fahrstunden in vier Kantonen angeboten.
     areaServed: [
       { "@type": "AdministrativeArea", name: "Zürich" },
       { "@type": "AdministrativeArea", name: "Schwyz" },
