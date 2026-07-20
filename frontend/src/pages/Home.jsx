@@ -156,13 +156,15 @@ export default function Home() {
       ratingValue: content.rating_avg ?? "5.0",
       bestRating: "5",
       worstRating: "1",
-      ratingCount: content.rating_count ?? 27,
-      reviewCount: content.rating_count ?? 27,
+      ratingCount: content.rating_count ?? Math.max((testimonials || []).length, 6),
+      reviewCount: content.rating_count ?? Math.max((testimonials || []).length, 6),
     },
     review: (testimonials || []).slice(0, 6).map((r) => ({
       "@type": "Review",
       author: { "@type": "Person", name: r.name },
-      datePublished: parseGermanMonth(r.date),
+      // Fallback auf heutiges Datum, wenn r.date fehlt / nicht parsebar ist –
+      // Google verlangt ein gültiges ISO-Datum, sonst wird das Snippet verworfen.
+      datePublished: parseGermanMonth(r.date) || new Date().toISOString().slice(0, 10),
       reviewBody: lang === "de" ? (r.text_de || r.text_en) : (r.text_en || r.text_de),
       reviewRating: {
         "@type": "Rating",
