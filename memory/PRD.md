@@ -544,3 +544,15 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - `Home.jsx` scrollt automatisch zum Anchor (bestehendes `useEffect` mit `document.getElementById(hash).scrollIntoView`).
   - Bereits vorhandene Direkt-Routen (`/ablauf`, `/vku`, `/blog`, `/buchung`, `/partner`, `/impressum`, `/datenschutz`) unverändert.
 - **Testing**: Curl `/api/sitemap.xml` (17 Location-URLs mit gestaffelten Prioritäten), Curl `/api/content` (seo_description_* + hf5.link_* + google_write_review_url alle vorhanden), Screenshots von `/uebermich`, `/übermich`, `/preise`, `/angebot`, `/kontakt`, `/#faq` alle erfolgreich, Playwright verifiziert `theme-color=#000000` und Meta-Description-Länge = 155.
+
+
+## Iteration 60 – 2026-02-20 (Vanity-URL SEO-Boost: Sitemap + SiteNavigation JSON-LD)
+- **Sitemap** (`backend/routers/sitemap.py`)
+  - Neue Einträge für Vanity-URLs `/uebermich`, `/preise`, `/angebot`, `/kontakt` mit `priority=0.6`, `changefreq=monthly`.
+  - Zweck: Google discovert die Kurz-URLs als valide Entry-Points, was Sitelinks unterhalb des Haupttreffers begünstigt.
+- **SiteNavigationElement JSON-LD** (`pages/Home.jsx`)
+  - Neues `ItemList`-JSON-LD `@id={origin}/#navigation` mit 7 `SiteNavigationElement`-Items (Über mich, Angebot, Preise, VKU, Ablauf, Blog, Kontakt).
+  - Jedes Item nutzt die Vanity-URL (nicht Anchor) als kanonische URL → sagt Google: "Das ist die Kurzform meiner Kernbereiche".
+  - Bilingual (DE/EN) mit Beschreibungen (`description`-Property) für zusätzliche Kontext-Signale.
+  - Bing indexiert `SiteNavigationElement` weiterhin explizit; Google parst es als Struktur-Signal.
+- **Testing**: Playwright JSON-LD-Extraktion zeigt jetzt 4 Struct-Data-Objekte (`LocalBusiness/DrivingSchool`, `WebSite`, `ItemList#navigation`, `FAQPage`), Sitemap-Curl zeigt die 4 neuen Vanity-URLs.

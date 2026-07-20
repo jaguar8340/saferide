@@ -44,6 +44,14 @@ async def sitemap_xml(request: Request):
         (f"{base}/", "1.0", "weekly"),
         (f"{base}/ablauf-zum-fuehrerschein", "0.9", "monthly"),
         (f"{base}/vku-unterricht", "0.9", "weekly"),
+        # Vanity URLs – memorable short aliases that redirect (client-side) to
+        # the corresponding homepage anchor. Included so Google discovers them
+        # as valid entry points for the "Sitelinks" section under the main
+        # search result. Priority 0.6 signals they are secondary to /.
+        (f"{base}/uebermich", "0.6", "monthly"),
+        (f"{base}/preise", "0.6", "monthly"),
+        (f"{base}/angebot", "0.6", "monthly"),
+        (f"{base}/kontakt", "0.6", "monthly"),
         (f"{base}/impressum", "0.3", "yearly"),
         (f"{base}/datenschutz", "0.3", "yearly"),
     ]

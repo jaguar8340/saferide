@@ -230,7 +230,45 @@ export default function Home() {
     publisher: { "@id": `${origin}/#organization` },
   };
 
-  const jsonLd = [drivingSchoolJsonLd, websiteJsonLd, faqJsonLd].filter(Boolean);
+  // SiteNavigationElement JSON-LD → helps Google generate Sitelinks under the
+  // main search result. Lists the primary sections + their memorable vanity
+  // URLs so search engines understand `/preise` is the canonical short URL
+  // for the Pricing section. Bing still uses SiteNavigationElement, and
+  // Google parses it as a signal for site structure.
+  const navItems = lang === "de"
+    ? [
+        { name: "Über mich",   url: `${origin}/uebermich`, desc: "Nadine Stäubli – Fahrlehrerin FMB" },
+        { name: "Angebot",     url: `${origin}/angebot`,   desc: "Fahrstunden, Anhänger, VKU" },
+        { name: "Preise",      url: `${origin}/preise`,    desc: "Transparente Preise ab CHF 90" },
+        { name: "VKU",         url: `${origin}/vku`,       desc: "Verkehrskundeunterricht" },
+        { name: "Ablauf",      url: `${origin}/ablauf`,    desc: "Ablauf zum Führerschein" },
+        { name: "Blog",        url: `${origin}/blog`,      desc: "News & Ratgeber" },
+        { name: "Kontakt",     url: `${origin}/kontakt`,   desc: "Kontaktformular & Standort" },
+      ]
+    : [
+        { name: "About",       url: `${origin}/uebermich`, desc: "Nadine Stäubli – certified driving instructor" },
+        { name: "Services",    url: `${origin}/angebot`,   desc: "Driving lessons, trailer, theory" },
+        { name: "Pricing",     url: `${origin}/preise`,    desc: "Transparent pricing from CHF 90" },
+        { name: "VKU",         url: `${origin}/vku`,       desc: "Theory course" },
+        { name: "Process",     url: `${origin}/ablauf`,    desc: "How to get your driver license" },
+        { name: "Blog",        url: `${origin}/blog`,      desc: "News & guides" },
+        { name: "Contact",     url: `${origin}/kontakt`,   desc: "Contact form & location" },
+      ];
+  const siteNavJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${origin}/#navigation`,
+    name: lang === "de" ? "Hauptnavigation" : "Main navigation",
+    itemListElement: navItems.map((it, i) => ({
+      "@type": "SiteNavigationElement",
+      position: i + 1,
+      name: it.name,
+      description: it.desc,
+      url: it.url,
+    })),
+  };
+
+  const jsonLd = [drivingSchoolJsonLd, websiteJsonLd, siteNavJsonLd, faqJsonLd].filter(Boolean);
 
   return (
     <main
