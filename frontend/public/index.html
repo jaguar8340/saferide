@@ -169,49 +169,9 @@
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
 
-        <!-- Organization JSON-LD (static baseline; per-page <Seo /> may add more) -->
-        <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "@id": "https://saferide.ch/#business",
-  "name": "Fahrschule Safe Ride",
-  "alternateName": "Safe Ride",
-  "image": "https://saferide.ch/og-image.jpg",
-  "url": "https://saferide.ch/",
-  "telephone": "+41795850085",
-  "email": "info@fahrschule-saferide.ch",
-  "areaServed": [
-    {"@type": "AdministrativeArea", "name": "Kanton Zürich"},
-    {"@type": "AdministrativeArea", "name": "Kanton Schwyz"},
-    {"@type": "AdministrativeArea", "name": "Kanton St. Gallen"},
-    {"@type": "AdministrativeArea", "name": "Kanton Graubünden"}
-  ],
-  "address": {
-    "@type": "PostalAddress",
-    "addressCountry": "CH",
-    "addressRegion": "Zürich · Schwyz · St. Gallen · Graubünden"
-  },
-  "openingHoursSpecification": [{
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    "opens": "07:00",
-    "closes": "20:00"
-  }],
-  "priceRange": "CHF 90 – CHF 120",
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "5.0",
-    "reviewCount": "60",
-    "bestRating": "5",
-    "worstRating": "1"
-  },
-  "sameAs": [
-    "https://www.instagram.com/",
-    "https://www.tiktok.com/@nadine_staeubli"
-  ]
-}
-        </script>
+        <!-- Organization JSON-LD is provided dynamically by <Seo /> on each
+             page (Home.jsx renders DrivingSchool + WebSite + FAQPage + reviews
+             so search engines always get the fresh values from the CMS). -->
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>

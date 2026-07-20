@@ -18,6 +18,36 @@ import Footer from "@/components/site/Footer";
 import AdminToolbar from "@/components/edit/AdminToolbar";
 import Seo from "@/components/site/Seo";
 
+/** Convert "Juni 2026" or "März 2026" → "2026-06-01" ISO date.
+ *  Also handles English months + returns undefined if nothing parseable. */
+function parseGermanMonth(str) {
+  if (!str || typeof str !== "string") return undefined;
+  const s = str.trim();
+  const map = {
+    januar: 1, jan: 1, january: 1,
+    februar: 2, feb: 2, february: 2,
+    märz: 3, marz: 3, mar: 3, march: 3,
+    april: 4, apr: 4,
+    mai: 5, may: 5,
+    juni: 6, jun: 6, june: 6,
+    juli: 7, jul: 7, july: 7,
+    august: 8, aug: 8,
+    september: 9, sep: 9, sept: 9,
+    oktober: 10, okt: 10, oct: 10, october: 10,
+    november: 11, nov: 11,
+    dezember: 12, dez: 12, dec: 12, december: 12,
+  };
+  const m = s.toLowerCase().match(/([a-zäöü]+)[.\s]+(\d{4})/);
+  if (!m) {
+    // Also accept an already ISO string
+    const iso = /^\d{4}-\d{2}(-\d{2})?$/.exec(s);
+    return iso ? (iso[1] ? s : `${s}-01`) : undefined;
+  }
+  const monthNum = map[m[1]];
+  if (!monthNum) return undefined;
+  return `${m[2]}-${String(monthNum).padStart(2, "0")}-01`;
+}
+
 export default function Home() {
   const { content, testimonials, gallery } = useEdit();
   const { lang } = useLang();
@@ -132,7 +162,7 @@ export default function Home() {
     review: (testimonials || []).slice(0, 6).map((r) => ({
       "@type": "Review",
       author: { "@type": "Person", name: r.name },
-      datePublished: r.date,
+      datePublished: parseGermanMonth(r.date),
       reviewBody: lang === "de" ? (r.text_de || r.text_en) : (r.text_en || r.text_de),
       reviewRating: {
         "@type": "Rating",
@@ -140,7 +170,6 @@ export default function Home() {
         bestRating: "5",
         worstRating: "1",
       },
-      itemReviewed: { "@type": "DrivingSchool", name: "Fahrschule Safe Ride" },
     })),
     founder: {
       "@type": "Person",

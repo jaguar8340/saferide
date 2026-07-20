@@ -1,0 +1,23 @@
+{
+  "summary": "Frontend-only regression for SEO JSON-LD fix (iteration 56.7). Homepage on / (DE) now emits exactly 3 JSON-LD blocks: DrivingSchool + WebSite + FAQPage. Duplicate LocalBusiness (previously injected statically from index.html) is gone. All 6 review entries inside DrivingSchool.review[] are free of itemReviewed (circular-ref fix) and have datePublished in ISO YYYY-MM-DD format via parseGermanMonth(). aggregateRating consistent: ratingValue=5.0, ratingCount=27, reviewCount=27. Reviews section + all 6 review-card-0..5 visible in DOM.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "parseGermanMonth() returns undefined when r.date is missing/unparseable which will produce datePublished:undefined and be dropped from JSON serialization — this is safe today (all 6 reviews resolve), but consider defaulting to a valid ISO fallback (or omit the review entry) to avoid future silent data loss if a review is added with an unrecognised date string.",
+    "aggregateRating.ratingCount and reviewCount both fall back to 27 hard-coded when content.rating_count is null — consider deriving from actual DB testimonial count to keep Google numbers in sync with real reviews shown."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not tested per request)", "frontend": "100%"},
+  "test_credentials": "not needed (public page)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "IMPORTANT: The first run showed 4 JSON-LD blocks including the old LocalBusiness. Root cause: the frontend dev server (webpack-dev-server / react-scripts) was still serving a CACHED in-memory copy of /public/index.html — the file on disk had already been cleaned. A `sudo supervisorctl restart frontend` forced a re-read of index.html and after that the LocalBusiness disappeared. For future SEO/head-tag changes to index.html, main agent should always restart the frontend service (hot-reload does not pick up index.html changes). Live verification: `curl -s <REACT_APP_BACKEND_URL>/ | grep -c LocalBusiness` should return 0.",
+  "rca of the issue": "Initial Google Rich Results errors (10 review snippets invalid + aggregateRating 'Ungültiger Objekttyp für Feld <parent_node>') were caused by (a) circular reference: each Review had itemReviewed pointing back to the DrivingSchool parent, (b) two competing entities describing the same business (static LocalBusiness in index.html with reviewCount=60 vs dynamic DrivingSchool in Home.jsx with reviewCount=27), (c) datePublished used the raw German string 'Juni 2026' instead of ISO. Fix verified: static LocalBusiness block removed from public/index.html (replaced by a comment), review[] entries in Home.jsx no longer include itemReviewed, and parseGermanMonth() correctly converts german month names (januar…dezember + kurzformen jan/feb/märz…dez) into YYYY-MM-01. Only side-effect encountered during test: dev-server needed a restart to drop cached index.html."
+}
