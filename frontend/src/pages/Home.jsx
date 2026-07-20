@@ -164,8 +164,11 @@ export default function Home() {
       ratingValue: content.rating_avg ?? "5.0",
       bestRating: "5",
       worstRating: "1",
+      // ratingCount = alle Bewertungen die die Fahrschule hat.
+      // reviewCount = Anzahl Reviews die WIR auf der Seite ausliefern.
+      // Google bestraft es, wenn reviewCount > number of review-Objekte.
       ratingCount: content.rating_count ?? Math.max((testimonials || []).length, 6),
-      reviewCount: content.rating_count ?? Math.max((testimonials || []).length, 6),
+      reviewCount: Math.min((testimonials || []).length, 6),
     },
     review: (testimonials || []).slice(0, 6).map((r) => ({
       "@type": "Review",
