@@ -76,8 +76,8 @@ export default function Home() {
     ? "Safe Ride · Fahrschule in ZH · SZ · SG · GR – Anders. Besser. Mutiger."
     : "Safe Ride · Driving School in ZH · SZ · SG · GR – Different. Better. Bolder.";
   const description = lang === "de"
-    ? (content.hero?.subtitle_de || "Moderne Fahrschule in den Kantonen Zürich, Schwyz, St. Gallen und Graubünden mit Mental-Coaching und Spezialisierung auf ADHS & Autismus.")
-    : (content.hero?.subtitle_en || "Modern driving school in the cantons of Zurich, Schwyz, St. Gallen and Graubünden with mental coaching and specialisation in ADHD & autism.");
+    ? (content.seo_description_de || content.hero?.subtitle_de || "Fahrschule Safe Ride in ZH · SZ · SG · GR – persönlich, mit Mental-Coaching & ADHS-Spezialisierung. Buche jetzt deine Fahrstunde – ich freue mich auf dich!")
+    : (content.seo_description_en || content.hero?.subtitle_en || "Safe Ride driving school in ZH · SZ · SG · GR – personal, with mental coaching & ADHD specialisation. Book your driving lesson now – I look forward to meeting you!");
   const ogImage = content.hero?.image_url || content.logo_url;
 
   const faqJsonLd = (content.homepage_faqs || []).length

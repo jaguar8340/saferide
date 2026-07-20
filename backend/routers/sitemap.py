@@ -48,7 +48,18 @@ async def sitemap_xml(request: Request):
         (f"{base}/datenschutz", "0.3", "yearly"),
     ]
     loc_docs = await db.locations.find({}, {"slug": 1, "_id": 0}).sort("order", 1).to_list(200)
-    loc_urls = [(f"{base}/fahrschule-{d['slug']}", "0.85", "monthly") for d in loc_docs]
+    # Main hub cities get higher priority (0.9), secondary locations get 0.7.
+    # This helps Google understand which landing pages are the primary
+    # commercial targets vs secondary long-tail SEO pages.
+    MAIN_LOCATION_SLUGS = {"einsiedeln", "lachen", "waedenswil", "chur", "pfaeffikon-sz", "rapperswil"}
+    loc_urls = [
+        (
+            f"{base}/fahrschule-{d['slug']}",
+            "0.9" if d["slug"] in MAIN_LOCATION_SLUGS else "0.7",
+            "monthly",
+        )
+        for d in loc_docs
+    ]
 
     blog_docs = await db.blog_posts.find({}, {"_id": 0}).to_list(500)
     blog_urls = [(f"{base}/blog/{d['slug']}", "0.7", "monthly") for d in blog_docs if is_post_published(d)]

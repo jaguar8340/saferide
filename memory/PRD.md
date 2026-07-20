@@ -514,3 +514,33 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
     - Neuer Bild-Button (`fk-note-new-image-btn` / `fk-note-edit-image-btn-{id}`), Vorschau (`fk-note-new-image-preview`), Entfernen (`fk-note-new-image-remove`), Anzeige in Liste (`fk-note-image-{id}`).
     - Bilder werden per `resolveUrl()` (aus `lib/api.js`) korrekt mit dem Backend-Host aufgelöst.
 - **Testing**: `testing_agent_v3_fork` → Backend 5/5 + Regression 18/18 + Frontend 12/12 E2E grün, keine Bugs.
+
+
+## Iteration 59 – 2026-02-20 (SEO-Audit-Umsetzung 3–7 + Vanity URLs)
+- **Meta-Tags** (`frontend/public/index.html`)
+  - `theme-color` von `#fbf9f6` → **`#000000`** (Corporate-Design).
+  - Statische Fallback-Meta-Description erweitert (~155 Zeichen mit CTA "Buche jetzt deine Fahrstunde – ich freue mich auf dich!").
+- **Runtime-Meta-Description** (`components/site/Seo.jsx` + `pages/Home.jsx`)
+  - Neue CMS-Felder **`seo_description_de` / `seo_description_en`** in `seeds/defaults.py` (155/163 Zeichen, mit CTA).
+  - `Home.jsx` verwendet primär `seo_description_de/en`, fällt auf `hero.subtitle_*` und dann auf Hardcoded-String zurück.
+  - Idempotenter Deep-Merge in `seeds/startup.py` seedet die Felder automatisch in bestehende DBs.
+- **Sitemap-Prioritäten** (`backend/routers/sitemap.py`)
+  - Location-URLs jetzt differenziert: **0.9** für Haupt-Hubs (Einsiedeln, Lachen, Wädenswil, Chur, Pfäffikon-SZ, Rapperswil) vs. **0.7** für Nebenstandorte (Altendorf, Domat-Ems, Horgen, Kaltbrunn, Landquart, Lenzerheide, Reichenburg, Richterswil, Siebnen, Wetzikon, Zizers).
+- **VKU-Link im FAQ** (`seeds/defaults.py` + `seeds/startup.py` + `components/site/HomeFaq.jsx`)
+  - FAQ-Schema erweitert um optionale Felder `link_url`, `link_de`, `link_en`.
+  - `hf5` (VKU-FAQ) hat jetzt "→ Mehr zum VKU erfahren" als interner Link zu `/vku`.
+  - `HomeFaq.jsx` rendert unter der Antwort einen React-Router `<Link>` (kein `dangerouslySetInnerHTML`).
+  - Migration `_migrate_vku_faq_link()` ergänzt die Felder in bestehenden DBs (nur wenn `link_url` fehlt).
+- **Google-Reviews-CTA** (`seeds/defaults.py` + `components/site/Testimonials.jsx`)
+  - Neues CMS-Feld **`google_write_review_url`** (leer per Default – noch keine Place-ID).
+  - CTA-Link priorisiert `google_write_review_url` und zeigt "Bewertung schreiben" / "Write a review" wenn gesetzt, sonst weiterhin `google_reviews_url` mit Text "Auf Google ansehen".
+  - Nadine muss ihre Google-Business-Profile Place-ID einmal ermitteln (siehe Next Action) und dann via Inline-CMS eintragen: `https://search.google.com/local/writereview?placeid=<PLACE_ID>`.
+- **Vanity URLs** (`frontend/src/App.js`)
+  - Neue Kurz-Routen die per `<Navigate to="/#anchor" replace />` auf die Homepage-Anker leiten:
+    - `/uebermich`, `/übermich`, `/%C3%BCbermich` → `/#about`
+    - `/preise` → `/#pricing`
+    - `/angebot` → `/#services`
+    - `/kontakt` → `/#contact`
+  - `Home.jsx` scrollt automatisch zum Anchor (bestehendes `useEffect` mit `document.getElementById(hash).scrollIntoView`).
+  - Bereits vorhandene Direkt-Routen (`/ablauf`, `/vku`, `/blog`, `/buchung`, `/partner`, `/impressum`, `/datenschutz`) unverändert.
+- **Testing**: Curl `/api/sitemap.xml` (17 Location-URLs mit gestaffelten Prioritäten), Curl `/api/content` (seo_description_* + hf5.link_* + google_write_review_url alle vorhanden), Screenshots von `/uebermich`, `/übermich`, `/preise`, `/angebot`, `/kontakt`, `/#faq` alle erfolgreich, Playwright verifiziert `theme-color=#000000` und Meta-Description-Länge = 155.

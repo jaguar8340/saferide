@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useEdit } from "@/contexts/EditContext";
 import Editable from "@/components/edit/Editable";
@@ -144,6 +145,15 @@ export default function HomeFaq({ items = [] }) {
                           multiline
                           className="text-base text-[#475569] leading-relaxed font-medium block"
                         />
+                        {f.link_url && (pick(f.link_de, f.link_en) || f.link_de || f.link_en) && (
+                          <Link
+                            to={f.link_url}
+                            data-testid={`home-faq-link-${i}`}
+                            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#ff5a36] hover:text-[#e74123] transition-colors"
+                          >
+                            {pick(f.link_de, f.link_en) || f.link_de || f.link_en}
+                          </Link>
+                        )}
                       </div>
                     </motion.div>
                     {editMode && (

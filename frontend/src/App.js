@@ -63,6 +63,15 @@ function App() {
               <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Home />} />
+                {/* Vanity URLs – short, memorable slugs that scroll to the
+                    respective homepage section. Both `/uebermich` (ASCII) and
+                    `/übermich` (native umlaut) are supported. */}
+                <Route path="/uebermich" element={<Navigate to="/#about" replace />} />
+                <Route path="/%C3%BCbermich" element={<Navigate to="/#about" replace />} />
+                <Route path="/übermich" element={<Navigate to="/#about" replace />} />
+                <Route path="/preise" element={<Navigate to="/#pricing" replace />} />
+                <Route path="/angebot" element={<Navigate to="/#services" replace />} />
+                <Route path="/kontakt" element={<Navigate to="/#contact" replace />} />
                 <Route path="/ablauf" element={<AblaufPage />} />
                 <Route path="/ablauf-zum-fuehrerschein" element={<AblaufPage />} />
                 <Route path="/vku" element={<VkuPage />} />

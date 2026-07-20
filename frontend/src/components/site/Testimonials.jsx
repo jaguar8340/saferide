@@ -114,13 +114,15 @@ export default function Testimonials({ items }) {
               </span>
             </div>
             <a
-              href={content?.google_reviews_url || "#"}
+              href={content?.google_write_review_url || content?.google_reviews_url || "#"}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="reviews-google-cta"
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f172a] hover:text-[#ff5a36] transition-colors"
             >
-              {lang === "de" ? "Auf Google ansehen" : "View on Google"}
+              {content?.google_write_review_url
+                ? (lang === "de" ? "Bewertung schreiben" : "Write a review")
+                : (lang === "de" ? "Auf Google ansehen" : "View on Google")}
               <ArrowUpRight size={14} />
             </a>
             {editMode && !hasEmbed && (

@@ -137,7 +137,10 @@ DEFAULT_CONTENT: Dict[str, Any] = {
             "question_de": "Bietet Safe Ride auch VKU (Verkehrskundeunterricht)?",
             "question_en": "Does Safe Ride offer VKU (theory course)?",
             "answer_de": "Ja. Der VKU dauert 8 Stunden und ist gesetzlich vorgeschrieben für alle Neulenker:innen. Die Termine findest du auf der VKU-Seite.",
-            "answer_en": "Yes. VKU lasts 8 hours and is legally required for all new drivers. You'll find the dates on the VKU page."
+            "answer_en": "Yes. VKU lasts 8 hours and is legally required for all new drivers. You'll find the dates on the VKU page.",
+            "link_url": "/vku",
+            "link_de": "→ Mehr zum VKU erfahren",
+            "link_en": "→ Learn more about the VKU"
         },
         {
             "id": "hf6",
@@ -368,9 +371,12 @@ DEFAULT_CONTENT: Dict[str, Any] = {
     "nav_cta_de": "Anfragen",
     "nav_cta_en": "Get in touch",
     "google_reviews_url": "https://www.google.com/search?q=Fahrschule+Safe+Ride+Nadine+St%C3%A4ubli+Bewertungen",
+    "google_write_review_url": "",
     "google_reviews_count": "60+",
     "google_reviews_label_de": "Bewertungen mit 5,0 Sternen auf Google",
     "google_reviews_label_en": "Reviews with 5.0 stars on Google",
+    "seo_description_de": "Fahrschule Safe Ride in ZH · SZ · SG · GR – persönlich, mit Mental-Coaching & ADHS-Spezialisierung. Buche jetzt deine Fahrstunde – ich freue mich auf dich!",
+    "seo_description_en": "Safe Ride driving school in ZH · SZ · SG · GR – personal, with mental coaching & ADHD specialisation. Book your driving lesson now – I look forward to meeting you!",
     "logo_url": "https://customer-assets.emergentagent.com/job_driving-school-cms/artifacts/0v9hxuzi_saferide%20logo.jpg",
     "nadine": {
         "intro_title_de": "Ich bin Nadine",

@@ -96,6 +96,9 @@ async def run_startup_seeds() -> None:
     # One-time migration: rename hero CTA from "Probelektion" → "Lektion".
     await _migrate_hero_cta_primary()
 
+    # One-time migration: add link fields to VKU FAQ (hf5) if still on default.
+    await _migrate_vku_faq_link()
+
     # One-time migration: seed real UBS bank details for the QR-Bill.
     # Only fills in fields still on their placeholder value ("folgt" / "").
     await _migrate_business_bank_defaults()
@@ -520,3 +523,31 @@ async def _migrate_hero_cta_primary() -> None:
     if updates:
         await db.site_content.update_one({"id": "main"}, {"$set": updates})
         log.info("Migrated Hero CTA labels: %s", list(updates.keys()))
+
+
+# ---------------------------------------------------------------------------
+# One-time migration: add internal VKU link to FAQ hf5. The Editable widget
+# renders plain text, so we can't inject HTML anchors – instead we extend the
+# FAQ schema with optional `link_url`, `link_de`, `link_en` fields which
+# HomeFaq.jsx renders as a proper <Link>. This migration only fills the
+# fields when they are still missing (never overwrites admin edits).
+# ---------------------------------------------------------------------------
+async def _migrate_vku_faq_link() -> None:
+    doc = await db.site_content.find_one({"id": "main"}, {"homepage_faqs": 1})
+    if not doc:
+        return
+    faqs = doc.get("homepage_faqs") or []
+    if not faqs:
+        return
+    changed = False
+    for f in faqs:
+        if f.get("id") == "hf5" and not f.get("link_url"):
+            f["link_url"] = "/vku"
+            f["link_de"] = "→ Mehr zum VKU erfahren"
+            f["link_en"] = "→ Learn more about the VKU"
+            changed = True
+    if changed:
+        await db.site_content.update_one(
+            {"id": "main"}, {"$set": {"homepage_faqs": faqs}}
+        )
+        log.info("Added VKU link to FAQ hf5")
