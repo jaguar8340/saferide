@@ -23,10 +23,12 @@ async def dashboard(student=Depends(get_current_student)) -> dict:
     sid = student["id"]
     now = datetime.now(timezone.utc)
 
-    # 1. Fahrstunden – count all lessons + practice minutes total
+    # 1. Fahrstunden – count all lessons + practice minutes total.
+    # A student has at most ~100–150 lessons over their entire training period,
+    # so 500 is generous.
     lessons = await db.student_lessons.find(
-        {"student_id": sid}, {"_id": 0}
-    ).sort("date", 1).to_list(5000)
+        {"student_id": sid}, {"_id": 0, "duration_min": 1, "date": 1}
+    ).sort("date", 1).to_list(500)
     total_lessons = len(lessons)
     total_minutes = sum(int(l.get("duration_min") or 0) for l in lessons)
 
@@ -37,10 +39,11 @@ async def dashboard(student=Depends(get_current_student)) -> dict:
         sort=[("start_datetime", 1)],
     )
 
-    # 3. Invoices – total, open, sum open amount
+    # 3. Invoices – total, open, sum open amount (~50-100 per student is realistic;
+    # keep 200 as a hard cap for the portal dashboard).
     invoices = await db.student_invoices.find(
         {"student_id": sid}, {"_id": 0}
-    ).sort("date", -1).to_list(500)
+    ).sort("date", -1).to_list(200)
     open_invoices = [i for i in invoices if i.get("status", "open") != "paid"]
     open_total = sum(float(i.get("price_chf") or i.get("total_incl") or 0) for i in open_invoices)
 
@@ -66,9 +69,11 @@ async def dashboard(student=Depends(get_current_student)) -> dict:
     for s in subs:
         subs_by_cat.setdefault(s["category_id"], []).append(s)
 
+    # A student assessment matrix has ~200 cells → max ~200 assessments per
+    # student even with multiple retries. 2000 is a very safe upper bound.
     assess = await db.student_assessments.find(
-        {"student_id": sid}, {"_id": 0}
-    ).to_list(50000)
+        {"student_id": sid}, {"_id": 0, "subitem_id": 1, "value": 1}
+    ).to_list(2000)
     best_by_sub: dict[str, int] = {}
     for a in assess:
         v = a.get("value")
