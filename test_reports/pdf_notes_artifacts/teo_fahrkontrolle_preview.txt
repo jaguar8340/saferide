@@ -1,0 +1,305 @@
+Fahrkontrolle · Elektronisches Schülerblatt                                                                                                                                         Erstellt 29/07/2026 · 12:48
+
+SCHÜLER:IN                                                  FAHRLEHRER:IN                                                                   AUSBILDUNG SEIT
+Teo Michler-TEST                                            Nadine                                                                          01/01/2026
+KATEGORIE                                                   WOHNORT                                                                         VORPRÜFUNG / PRÜFUNG
+B                                                           Testweg 1 7013 Domat Ems                                                        — · —
+                                             L1               L2               L3                L4            L5           L6                  L7            L8          L9          L10            L11
+ PUNKT                                    10/01/2026       05/02/2026       25/02/2026       15/03/2026    05/04/2026   25/04/2026           15/05/2026   30/05/2026   09/06/2026   18/06/2026    22/07/2026
+
+    1. Vorschulung
+ 1.1      Rundumkontrolle
+ 1.2      Vorbereitung im Stand
+ 1.3      Sitzposition & Spiegel
+ 1.4      Bedienelemente kennen
+ 1.5      Anfahren am Berg
+
+    2. Grundschulung
+ 2.1      Anfahren & Anhalten
+ 2.2      Kupplung dosieren
+ 2.3      Schalten
+ 2.4      Blicktechnik
+ 2.5      Spiegelkontrolle
+ 2.6      Lenken in Kurven
+ 2.7      Tempoanpassung
+
+    3. Hauptschulung
+ 3.1      Vortritt beachten
+ 3.2      Kreisverkehr
+ 3.3      Einspuren & Abbiegen
+ 3.4      Ausserorts fahren
+ 3.5      Autobahn (Auffahren)
+ 3.6      Autobahn (Spurwechsel)
+ 3.7      Autobahn (Abfahren)
+ 3.8      Verhalten Fussgänger
+ 3.9      Tempo-30-Zone
+
+    4. Perfektionsschulung
+ 4.1      Vorausschauendes Fahren
+ 4.2      Öko-Fahrweise
+ 4.3      Dunkelheit / Nacht
+ 4.4      Regen / Nässe
+ 4.5      Passstrasse & Serpentinen
+
+    5. Manöver
+ 5.1      Rückwärts einparken
+ 5.2      Parallel-Parkieren
+ 5.3      Wenden in drei Zügen
+ 5.4      Anhalten am Randstein
+ 5.5      Rückwärts um die Ecke
+
+    6. Vorprüfung
+ 6.1      Selbständigkeit
+ 6.2      Sicherheitsbewusstsein
+ 6.3      Prüfungsroutine
+ 6.4      Umgang mit Stress
+
+    7. TEST_it39_cat
+ 7.1      TEST_it39_sub_0                     3                3                3                 3            3             3                   3            3            3            3             X
+ 7.2      TEST_it39_sub_1                     3                3                3                 3            3             3                   3            3            3            3             3
+    8. TEST_it39_cat
+ 8.1      TEST_it39_sub_0                                                                                                                                                                             3
+ 8.2      TEST_it39_sub_1                                                                                                                                                                             3
+ GEFAHRENE STRECKEN
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                1    erklärt     2   geübt        3   selbständig   4   sicher   X   nochmals üben                                                                 Seite 1
+Ausbildungsjournal · Kommentare chronologisch                                                                                                   Teo Michler-TEST
+
+
+Fortschritt pro Kategorie                                                                                                                      Gesamt: 19 %
+
+1. Vorschulung                                                                                                                                          0%
+
+2. Grundschulung                                                                                                                                        0%
+
+3. Hauptschulung                                                                                                                                        0%
+
+4. Perfektionsschulung                                                                                                                                  0%
+
+5. Manöver                                                                                                                                              0%
+
+6. Vorprüfung                                                                                                                                           0%
+
+7. TEST_it39_cat                                                                                                                                        75 %
+
+8. TEST_it39_cat                                                                                                                                        75 %
+
+
+Kommentare pro Lektion
+Lektion 1                  10/01/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 2                  05/02/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 3                  25/02/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                           1   erklärt   2   geübt   3   selbständig   4   sicher   X   nochmals üben               Seite 2
+Ausbildungsjournal · Kommentare chronologisch                                                                                                  Teo Michler-TEST
+
+
+Lektion 4                  15/03/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 5                  05/04/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 6                  25/04/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 7                  15/05/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 8                  30/05/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 9                  09/06/2026 · 45 min
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                           1   erklärt   2   geübt   3   selbständig   4   sicher   X   nochmals üben              Seite 3
+Ausbildungsjournal · Kommentare chronologisch                                                                                                                                             Teo Michler-TEST
+
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 10                 18/06/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Weiter geuebt und gefestigt. Manoever korrekt umgesetzt.
+
+Lektion 11                 22/07/2026 · 45 min
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Kurzer Kommentar zum Uebungspunkt.
+
+ X     TEST_it39_cat · TEST_it39_sub_0
+       Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt.
+       Die festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen nicht konsequent
+       abrufen.
+       Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine Situation sei mangelhaft gewesen und habe zur
+       Beanstandung gefuehrt.
+
+       Ich nahm das Feedback des Experten dankend entgegen.
+       Massnahmenplan:
+       Routinen unter Pruefungsstress weiter automatisieren.
+       * Filmfahren konsequent anwenden.
+       * Voraussicht und Einspuren weiter festigen.
+       * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren.
+       * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren und konsequent umsetzen.
+
+ 3     TEST_it39_cat · TEST_it39_sub_0
+       Kurzer Kommentar zum Uebungspunkt.
+
+ 3     TEST_it39_cat · TEST_it39_sub_1
+       Kurzer Kommentar zum Uebungspunkt.
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                           1   erklärt   2   geübt   3   selbständig   4   sicher   X   nochmals üben                                                         Seite 4
+Diverse Notizen                                                                                                                                                                     Teo Michler-TEST
+
+11 Einträge · chronologisch, neueste zuerst
+
+
+   25/07/2026          Notiz vom 2026-07-25: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+   22/06/2026          Kurze Notiz vom 2026-06-22: alles ok.
+
+
+
+   18/06/2026          Notiz vom 2026-06-18: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+   05/06/2026          Kurze Notiz vom 2026-06-05: alles ok.
+
+
+
+   20/05/2026          Notiz vom 2026-05-20: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+   01/05/2026          Kurze Notiz vom 2026-05-01: alles ok.
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                           1   erklärt   2   geübt   3   selbständig   4   sicher   X   nochmals üben                                                   Seite 1
+Diverse Notizen                                                                                                                                                                     Teo Michler-TEST
+
+11 Einträge · chronologisch, neueste zuerst
+
+
+   10/04/2026          Notiz vom 2026-04-10: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+   20/03/2026          Kurze Notiz vom 2026-03-20: alles ok.
+
+
+
+   01/03/2026          Notiz vom 2026-03-01: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+   10/02/2026          Kurze Notiz vom 2026-02-10: alles ok.
+
+
+
+   15/01/2026          Notiz vom 2026-01-15: Der Experte teilte mit, dass der Fahrschueler grundsaetzlich eine gute Fahrausbildung zeigt und die Fahrzeugbedienung insgesamt ueberzeugt. Die
+                       festgestellten Fehler seien nach seiner Einschaetzung vor allem unter Pruefungsstress entstanden. In diesen Situationen konnte der Fahrschueler seine eingeuebten Routinen
+                       nicht konsequent abrufen. Thema Einspuren erklaerte der Experte, dass der Fahrschueler dieses waehrend der Pruefung grundsaetzlich korrekt umgesetzt habe. Lediglich eine
+                       Situation sei mangelhaft gewesen und habe zur Beanstandung gefuehrt. Dies bestaetigt, dass die Grundlagen vorhanden sind und nun weiter gefestigt werden muessen. Ich nahm
+                       das Feedback des Experten dankend entgegen. Massnahmenplan: Routinen unter Pruefungsstress weiter automatisieren. * Filmfahren konsequent anwenden. * Voraussicht und
+                       Einspuren weiter festigen. * Verkehrsdynamik und Entscheidungsfindung unter Belastung trainieren. * Rueckmeldungen des Experten gezielt in die weitere Ausbildung integrieren
+                       und konsequent umsetzen.
+
+
+
+
+Fahrschule Safe Ride · Teo Michler-TEST                           1   erklärt   2   geübt   3   selbständig   4   sicher   X   nochmals üben                                                   Seite 2
+

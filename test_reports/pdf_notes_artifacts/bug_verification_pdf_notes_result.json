@@ -1,0 +1,166 @@
+{
+  "base_url": "https://driving-school-cms.preview.emergentagent.com",
+  "student_id": "fd5004d2-ff55-4379-97e6-ee48373e99e1",
+  "checks": {
+    "login_status": 200,
+    "notes_status": 200,
+    "notes_count_api": 11,
+    "notes_dates_api_order": [
+      "2026-07-25",
+      "2026-06-22",
+      "2026-06-18",
+      "2026-06-05",
+      "2026-05-20",
+      "2026-05-01",
+      "2026-04-10",
+      "2026-03-20",
+      "2026-03-01",
+      "2026-02-10",
+      "2026-01-15"
+    ],
+    "notes_have_image_url_count": 0,
+    "pdf_status": 200,
+    "pdf_content_type": "application/pdf",
+    "pdf_page_count": 6,
+    "pdfimages_output_lines": [
+      "page   num  type   width height color comp bpc  enc interp  object ID x-ppi y-ppi size ratio",
+      "--------------------------------------------------------------------------------------------"
+    ],
+    "pdftotext_page_count": 6,
+    "diverse_notizen_pages_1_based": [
+      5,
+      6
+    ],
+    "notes_section_text_chars": 6932,
+    "note_text_positions_in_pdf": [
+      88,
+      1142,
+      1191,
+      2245,
+      2294,
+      3348,
+      3579,
+      4633,
+      4682,
+      5736,
+      5785
+    ],
+    "missing_note_texts": [],
+    "missing_note_dates": [],
+    "last_journal_page_1_based": 4,
+    "bottom_footer_expected_words_last_journal": [
+      {
+        "text": "Fahrschule",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "Safe",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "Ride",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "·",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "Teo",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "Michler-TEST",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "1",
+        "yMin": 573.18,
+        "yMax": 578.27
+      },
+      {
+        "text": "erklärt",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "2",
+        "yMin": 573.18,
+        "yMax": 578.27
+      },
+      {
+        "text": "geübt",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "3",
+        "yMin": 573.18,
+        "yMax": 578.27
+      },
+      {
+        "text": "selbständig",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "4",
+        "yMin": 573.18,
+        "yMax": 578.27
+      },
+      {
+        "text": "sicher",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "X",
+        "yMin": 573.18,
+        "yMax": 578.27
+      },
+      {
+        "text": "nochmals",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "üben",
+        "yMin": 572.83,
+        "yMax": 578.38
+      },
+      {
+        "text": "Seite",
+        "yMin": 573.6,
+        "yMax": 579.61
+      },
+      {
+        "text": "4",
+        "yMin": 573.6,
+        "yMax": 579.61
+      }
+    ],
+    "bottom_suspect_words_last_journal": [],
+    "legend_labels_seen_last_journal": [
+      "erklärt",
+      "geübt",
+      "nochmals",
+      "selbständig",
+      "üben"
+    ]
+  },
+  "failures": [],
+  "artifacts": {
+    "pdf": "/app/test_reports/pdf_notes_artifacts/teo_fahrkontrolle_preview.pdf",
+    "pdftotext": "/app/test_reports/pdf_notes_artifacts/teo_fahrkontrolle_preview.txt",
+    "bbox_html": "/app/test_reports/pdf_notes_artifacts/teo_fahrkontrolle_preview_bbox.html",
+    "render_last_journal": "/app/test_reports/pdf_notes_artifacts/last_journal_page_4-4.png",
+    "render_first_notes": "/app/test_reports/pdf_notes_artifacts/first_notes_page_5-5.png"
+  },
+  "ok": true
+}
