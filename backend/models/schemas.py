@@ -204,6 +204,10 @@ class StudentCreate(BaseModel):
     exam_date: str = Field(default="", max_length=40)         # Datum Prüfung
     notes: str = Field(default="", max_length=4000)
     company: str = Field(default="", max_length=200)          # Firma (z. B. wenn Firmen-Rechnung gewünscht)
+    # Region-Gruppierung für die Schüler-Übersicht (Tabs).
+    # Erlaubte Werte: "gr" (Graubünden), "sz_zh" (Schwyz/Zürich), "other" (Übrige).
+    # Leer ("") = noch nicht zugewiesen → landet unter "Übrige".
+    region: str = Field(default="", max_length=20)
     # Optional: Erziehungsberechtigte:r (empfohlen bei Schüler:innen unter 18)
     guardian_name: str = Field(default="", max_length=200)
     guardian_email: str = Field(default="", max_length=200)
@@ -250,6 +254,7 @@ class StudentPatch(BaseModel):
     exam_date: Optional[str] = None
     notes: Optional[str] = None
     company: Optional[str] = None
+    region: Optional[str] = None
     guardian_name: Optional[str] = None
     guardian_email: Optional[str] = None
     archived: Optional[bool] = None

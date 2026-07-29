@@ -556,3 +556,23 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - Bilingual (DE/EN) mit Beschreibungen (`description`-Property) für zusätzliche Kontext-Signale.
   - Bing indexiert `SiteNavigationElement` weiterhin explizit; Google parst es als Struktur-Signal.
 - **Testing**: Playwright JSON-LD-Extraktion zeigt jetzt 4 Struct-Data-Objekte (`LocalBusiness/DrivingSchool`, `WebSite`, `ItemList#navigation`, `FAQPage`), Sitemap-Curl zeigt die 4 neuen Vanity-URLs.
+
+
+## Iteration 61 – 2026-02-20 (PDF-Fix + Region-Tabs)
+- **PDF-Fix: Paragraph-Overflow auf letzter Seite** (`backend/routers/fahrkontrolle_pdf.py`)
+  - Root Cause: In `_draw_journal` wurde `para_h` (bis 60 mm) NACH dem Zeichnen mit `ensure_space(15mm)` geprüft. Auf der letzten Seite konnte ein langer Massnahmenplan-Kommentar deshalb in den Legend/Footer-Bereich hineinragen.
+  - Fix: Paragraph-Höhe **VOR** dem Zeichnen messen; `item_block_h = max(badge_h, para_h + 5 mm) + 6 mm`, dann `ensure_space(item_block_h)` — bricht sauber auf eine neue Seite um bevor Überlappung entsteht.
+- **Diverse Notizen am Ende des PDFs** (`backend/routers/fahrkontrolle_pdf.py`)
+  - Neue Funktion `_draw_notes()` — startet immer auf einer neuen Seite nach dem Ausbildungsjournal.
+  - Header: **"Diverse Notizen"** + Zähler-Subtitle (z.B. "8 Einträge · chronologisch, neueste zuerst").
+  - Layout: Datum-Pill (orange, links) + Paragraph (rechts). Row-Separator zwischen Notizen.
+  - Sortierung: **Chronologisch, neueste zuerst** (kommt bereits sortiert aus MongoDB: `.sort("date", -1)`).
+  - Bilder werden **NICHT** gedruckt (Wunsch Kunde).
+  - Fließt bei Bedarf auf mehrere Seiten (Pre-Measure vor Draw wie oben).
+- **Region-Tabs in Schüler-Übersicht** (`components/admin/students/StudentsManager.jsx`, `pages/AdminStudentDetail.jsx`, `models/schemas.py`)
+  - Neues Feld `Student.region` (Werte: `""`, `"gr"`, `"sz_zh"`, `"other"`).
+  - **3 Tabs** über der Liste: **Graubünden**, **Schwyz / Zürich**, **Übrige**, jeweils mit Zähler-Pill.
+  - Manuelle Zuweisung: Dropdown "Region (Tab-Zuordnung)" im Overview-Tab des Schüler-Details UND im "Neuer Schüler"-Formular.
+  - Leere/unbekannte Region → automatisch im Tab "Übrige".
+  - Aktive Tab-Auswahl persistiert in `localStorage` (`admin.students.region_tab`).
+- **Testing**: Backend Curl `PATCH /api/students/{id}` mit `{"region":"gr"}` erfolgreich. PDF-Regression mit synthetischem Worst-Case (5 Lektionen × 3 lange Kommentare) generiert 5-seitiges PDF, Seite 4 zeigt sauberen Text-Abschluss ohne Legend-Overlap, Seite 5 = "Diverse Notizen" mit 8 Notizen chronologisch. Frontend Playwright: 3 Tabs mit korrekten Zählern (GR/SZ_ZH/Übrige = 1/0/7), Region-Dropdown im Overview mit 4 Optionen sichtbar.

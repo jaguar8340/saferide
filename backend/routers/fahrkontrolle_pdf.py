@@ -260,6 +260,21 @@ async def export_fahrkontrolle_pdf(
             rating_meta=rating_meta,
         )
 
+    # --------------------------------------------------------------
+    #  Final Page(s) – Diverse Notizen
+    #  Always emitted on a NEW page (after the journal) when the
+    #  student has at least one free-form note. Notes are sorted by
+    #  date DESCENDING (newest first) mirroring the admin UI.
+    # --------------------------------------------------------------
+    fk_notes = (
+        await db.student_fk_notes.find(
+            {"student_id": student_id}, {"_id": 0}
+        ).sort("date", -1).to_list(2000)
+    )
+    if fk_notes:
+        c.showPage()
+        _draw_notes(c, student, fk_notes, left, right, top, bottom, rating_meta=rating_meta)
+
     c.save()
     pdf_bytes = buf.getvalue()
     buf.close()
@@ -875,26 +890,38 @@ def _draw_journal(
             style = RATING_STYLES.get(it["value"], {"bg": colors.HexColor("#e2e8f0"), "fg": colors.HexColor("#0f172a")})
             badge_w = 5 * mm
             badge_h = 5 * mm
+
+            # Title + comment (paragraph for wrapping)
+            text_x = left + badge_w + 3 * mm
+            avail_w = right - text_x
+
+            # Pre-measure the paragraph so we can page-break BEFORE
+            # drawing. Previously the paragraph was drawn first and only
+            # the NEXT item's space checked, causing long comments on
+            # the last page to overflow into the footer legend.
+            para = Paragraph(
+                (it["comment"] or "").replace("\n", "<br/>").replace("&", "&amp;"),
+                style_body,
+            )
+            _, para_h = para.wrap(avail_w, 60 * mm)
+
+            # Additional space we need on the SAME page for the whole
+            # item block: badge/title area (~7 mm) + wrapped paragraph +
+            # trailing gap. Photos are handled separately below.
+            item_block_h = max(badge_h, para_h + 5 * mm) + 6 * mm
+            ensure_space(item_block_h)
+
             c.setFillColor(style["bg"])
             c.roundRect(left, y - badge_h + 0.6 * mm, badge_w, badge_h, 0.8 * mm, fill=1, stroke=0)
             c.setFillColor(style["fg"])
             c.setFont("Helvetica-Bold", 8)
             c.drawCentredString(left + badge_w / 2, y - 3 * mm, it["value"] or "?")
 
-            # Title + comment (paragraph for wrapping)
-            text_x = left + badge_w + 3 * mm
-            avail_w = right - text_x
             c.setFillColor(colors.HexColor("#0f172a"))
             c.setFont("Helvetica-Bold", 8.5)
             title = f"{it['cat_title']} · {it['sub_title']}"
             c.drawString(text_x, y - 2 * mm, title[:140])
 
-            # Comment via Paragraph so it wraps naturally
-            para = Paragraph(
-                (it["comment"] or "").replace("\n", "<br/>").replace("&", "&amp;"),
-                style_body,
-            )
-            _, para_h = para.wrap(avail_w, 60 * mm)
             para.drawOn(c, text_x, y - 4 * mm - para_h)
             block_h = max(badge_h, para_h + 5 * mm) + 3 * mm
 
@@ -957,5 +984,96 @@ def _draw_journal(
             ensure_space(15 * mm)
 
         y -= 3 * mm
+
+    _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)
+
+
+def _draw_notes(
+    c: canvas.Canvas,
+    student: dict,
+    notes: list[dict],
+    left: float,
+    right: float,
+    top: float,
+    bottom: float,
+    rating_meta: dict[str, dict] | None = None,
+) -> None:
+    """Diverse Notizen am Ende des PDFs (nach dem Ausbildungsjournal).
+
+    Startet IMMER auf einer neuen Seite (Aufrufer ruft `showPage()` bevor
+    diese Funktion). Notizen sind chronologisch, neueste zuerst (Sortierung
+    kommt bereits aus MongoDB). Fließt bei Bedarf über mehrere Seiten.
+    Bilder werden bewusst NICHT gedruckt (Wunsch Kunde).
+    """
+    def draw_header(page_num: int) -> float:
+        c.setFillColor(colors.HexColor("#0f172a"))
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(left, top, "Diverse Notizen")
+        c.setFillColor(colors.HexColor("#64748b"))
+        c.setFont("Helvetica", 8)
+        name = f"{student.get('first_name', '')} {student.get('last_name', '')}".strip()
+        c.drawRightString(right, top, name)
+        c.setStrokeColor(colors.HexColor("#e2e8f0"))
+        c.setLineWidth(0.4)
+        c.line(left, top - 2.5 * mm, right, top - 2.5 * mm)
+        c.setFillColor(colors.HexColor("#64748b"))
+        c.setFont("Helvetica", 7.5)
+        c.drawString(
+            left,
+            top - 6 * mm,
+            f"{len(notes)} Eintr{'ag' if len(notes) == 1 else 'äge'} · chronologisch, neueste zuerst",
+        )
+        return top - 12 * mm
+
+    page_num = 1  # local page counter for the notes section
+    y = draw_header(page_num)
+
+    style_body = ParagraphStyle(
+        name="notes_body",
+        fontName="Helvetica",
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor("#0f172a"),
+    )
+
+    for note in notes:
+        text = (note.get("text") or "").replace("\n", "<br/>").replace("&", "&amp;")
+        if not text.strip():
+            continue
+        date_col_w = 26 * mm
+        avail_w = right - left - date_col_w
+        para = Paragraph(text, style_body)
+        # Grow up to 150 mm; even single long notes fit on A4 landscape
+        # after subtracting header + footer.
+        _, para_h = para.wrap(avail_w, 150 * mm)
+
+        needed = max(8 * mm, para_h) + 8 * mm
+
+        # Page-break BEFORE drawing. 12 mm reserved for footer/legend.
+        if y - needed < bottom + 12 * mm:
+            _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)
+            c.showPage()
+            page_num += 1
+            y = draw_header(page_num)
+
+        # Date pill
+        date_text = _fmt_dmy(note.get("date"))
+        c.setFillColor(colors.HexColor("#fff7ed"))
+        c.setStrokeColor(colors.HexColor("#ffedd5"))
+        c.setLineWidth(0.4)
+        c.roundRect(left, y - 6 * mm, date_col_w - 4 * mm, 6 * mm, 3 * mm,
+                    fill=1, stroke=1)
+        c.setFillColor(colors.HexColor("#ff5a36"))
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(left + (date_col_w - 4 * mm) / 2, y - 4 * mm, date_text)
+
+        # Paragraph
+        para.drawOn(c, left + date_col_w, y - para_h)
+
+        y -= max(8 * mm, para_h) + 3 * mm
+        c.setStrokeColor(colors.HexColor("#f1f5f9"))
+        c.setLineWidth(0.3)
+        c.line(left, y, right, y)
+        y -= 4 * mm
 
     _draw_footer(c, student, left, right, bottom, page_num, rating_meta=rating_meta)

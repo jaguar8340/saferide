@@ -308,6 +308,22 @@ function OverviewTab({ student, onSave, onRefresh }) {
         <EditField label="Firma"             value={student.company}       onSave={(v) => onSave("company", v)} />
         <EditField label="Kategorie"         value={student.category}      onSave={(v) => onSave("category", v)} />
         <EditField label="Fahrlehrer"        value={student.instructor}    onSave={(v) => onSave("instructor", v)} />
+        <div>
+          <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+            Region (Tab-Zuordnung)
+          </label>
+          <select
+            value={student.region || ""}
+            onChange={(e) => onSave("region", e.target.value)}
+            data-testid="overview-field-region"
+            className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+          >
+            <option value="">— nicht zugewiesen (Übrige)</option>
+            <option value="gr">Graubünden (GR)</option>
+            <option value="sz_zh">Schwyz / Zürich (SZ · ZH)</option>
+            <option value="other">Übrige</option>
+          </select>
+        </div>
         <EditField label="Beginn Ausbildung" value={student.start_date}    type="date" onSave={(v) => onSave("start_date", v)} />
         <EditField label="Geburtsdatum"      value={student.birthdate}     type="date" onSave={(v) => onSave("birthdate", v)} />
         <EditField label="Datum Vorprüfung"  value={student.prep_exam_date} type="date" onSave={(v) => onSave("prep_exam_date", v)} />

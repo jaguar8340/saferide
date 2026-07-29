@@ -36,8 +36,23 @@ const EMPTY_FORM = {
   exam_date: "",
   guardian_name: "",
   guardian_email: "",
+  region: "",
   notes: "",
 };
+
+/** Kanton-Gruppierung für die Tab-Navigation. */
+const REGION_TABS = [
+  { key: "gr",     label: "Graubünden",     match: "gr" },
+  { key: "sz_zh",  label: "Schwyz / Zürich", match: "sz_zh" },
+  { key: "other",  label: "Übrige",          match: "other" },
+];
+
+const REGION_OPTIONS = [
+  { value: "",       label: "— nicht zugewiesen" },
+  { value: "gr",     label: "Graubünden (GR)" },
+  { value: "sz_zh",  label: "Schwyz / Zürich (SZ · ZH)" },
+  { value: "other",  label: "Übrige" },
+];
 
 export default function StudentsManager() {
   const [items, setItems] = useState(null);
@@ -45,6 +60,16 @@ export default function StudentsManager() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "gr";
+    return window.localStorage.getItem("admin.students.region_tab") || "gr";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("admin.students.region_tab", activeTab);
+    }
+  }, [activeTab]);
 
   const load = async () => {
     try {
@@ -134,6 +159,20 @@ export default function StudentsManager() {
       )
     : items;
 
+  // Region-Bucket-Berechnung für jeden Schüler:
+  //  – wenn `region` explizit gesetzt ist ("gr" / "sz_zh" / "other") wird der Wert respektiert.
+  //  – leerer / unbekannter Wert => landet unter "Übrige" (other).
+  const bucketOf = (s) => {
+    const r = (s.region || "").trim().toLowerCase();
+    if (r === "gr" || r === "sz_zh" || r === "other") return r;
+    return "other";
+  };
+  const countsPerTab = REGION_TABS.reduce((acc, t) => {
+    acc[t.key] = filtered.filter((s) => bucketOf(s) === t.match).length;
+    return acc;
+  }, {});
+  const tabFiltered = filtered.filter((s) => bucketOf(s) === activeTab);
+
   return (
     <div className="max-w-6xl">
       <div className="mb-7 flex items-start justify-between gap-4 flex-wrap">
@@ -221,6 +260,21 @@ export default function StudentsManager() {
             onChange={(v) => setForm((f) => ({ ...f, instructor: v }))}
             testid="admin-student-instructor"
           />
+          <div>
+            <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+              Region (Tab-Zuordnung)
+            </label>
+            <select
+              value={form.region}
+              onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+              data-testid="admin-student-region"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#ff5a36]"
+            >
+              {REGION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
           <FormField
             label="Beginn Ausbildung"
             type="date"
@@ -299,18 +353,55 @@ export default function StudentsManager() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {/* Region tabs – filter students by their assigned region */}
+      <div
+        className="mb-5 flex items-center gap-1 border-b border-[#e7e5e4]"
+        data-testid="admin-students-region-tabs"
+      >
+        {REGION_TABS.map((t) => {
+          const active = activeTab === t.key;
+          const count = countsPerTab[t.key] || 0;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              data-testid={`admin-students-region-tab-${t.key}`}
+              className={`relative -mb-px px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors ${
+                active
+                  ? "text-[#0f172a] border-b-2 border-[#ff5a36]"
+                  : "text-[#78716c] hover:text-[#0f172a]"
+              }`}
+            >
+              {t.label}
+              <span
+                className={`ml-2 inline-flex items-center justify-center min-w-[20px] h-[18px] px-1 rounded-full text-[10px] tracking-normal ${
+                  active
+                    ? "bg-[#ff5a36] text-white"
+                    : "bg-[#f1f5f9] text-[#64748b]"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {tabFiltered.length === 0 ? (
         <div
           className="py-16 text-center bg-white border border-dashed border-[#e7e5e4] rounded-2xl text-[#78716c] text-sm"
           data-testid="admin-students-empty"
         >
           {items.length === 0
             ? "Noch keine Schüler:innen angelegt."
-            : "Kein Treffer für die Suche."}
+            : query
+              ? "Kein Treffer für die Suche in diesem Tab."
+              : `Keine Schüler:innen in dieser Region. Zuweisung im Schülerprofil unter „Region".`}
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((s) => (
+          {tabFiltered.map((s) => (
             <div
               key={s.id}
               data-testid={`admin-student-row-${s.id}`}
