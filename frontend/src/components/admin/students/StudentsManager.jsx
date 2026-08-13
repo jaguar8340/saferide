@@ -45,6 +45,7 @@ const REGION_TABS = [
   { key: "gr",     label: "Graubünden",     match: "gr" },
   { key: "sz_zh",  label: "Schwyz / Zürich", match: "sz_zh" },
   { key: "other",  label: "Übrige",          match: "other" },
+  { key: "done",   label: "Fertige",         match: "done" },
 ];
 
 const REGION_OPTIONS = [
@@ -160,9 +161,11 @@ export default function StudentsManager() {
     : items;
 
   // Region-Bucket-Berechnung für jeden Schüler:
-  //  – wenn `region` explizit gesetzt ist ("gr" / "sz_zh" / "other") wird der Wert respektiert.
-  //  – leerer / unbekannter Wert => landet unter "Übrige" (other).
+  //  – archived === true  → landet IMMER im "Fertige"-Tab (unabhängig von Region)
+  //  – wenn `region` gesetzt ist ("gr" / "sz_zh" / "other")  → respektieren
+  //  – leerer / unbekannter Wert                             → "Übrige"
   const bucketOf = (s) => {
+    if (s.archived === true) return "done";
     const r = (s.region || "").trim().toLowerCase();
     if (r === "gr" || r === "sz_zh" || r === "other") return r;
     return "other";
@@ -397,7 +400,9 @@ export default function StudentsManager() {
             ? "Noch keine Schüler:innen angelegt."
             : query
               ? "Kein Treffer für die Suche in diesem Tab."
-              : `Keine Schüler:innen in dieser Region. Zuweisung im Schülerprofil unter „Region".`}
+              : activeTab === "done"
+                ? `Noch keine Schüler:innen archiviert. Wenn jemand die Prüfung bestanden hat, klick im Schülerdetail oben rechts auf "Archivieren".`
+                : `Keine Schüler:innen in dieser Region. Zuweisung im Schülerprofil unter „Region".`}
         </div>
       ) : (
         <div className="space-y-2">
@@ -405,14 +410,26 @@ export default function StudentsManager() {
             <div
               key={s.id}
               data-testid={`admin-student-row-${s.id}`}
-              className="bg-white border border-[#e7e5e4] rounded-2xl p-4 flex items-center gap-4 hover:border-[#ff5a36] transition-colors"
+              className={`bg-white border rounded-2xl p-4 flex items-center gap-4 hover:border-[#ff5a36] transition-colors ${
+                s.archived ? "border-[#166534]/30 bg-[#f0fdf4]" : "border-[#e7e5e4]"
+              }`}
             >
-              <div className="w-10 h-10 rounded-full bg-[#ff5a36]/10 text-[#ff5a36] flex items-center justify-center shrink-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                s.archived ? "bg-[#166534]/10 text-[#166534]" : "bg-[#ff5a36]/10 text-[#ff5a36]"
+              }`}>
                 <UserRound size={17} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-display text-lg leading-tight truncate">
                   {s.first_name} {s.last_name}
+                  {s.archived && (
+                    <span
+                      className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#166534] text-white px-2 py-0.5 rounded-full align-middle"
+                      data-testid={`admin-student-passed-badge-${s.id}`}
+                    >
+                      ✓ Bestanden{s.passed_date ? ` · ${s.passed_date.split("-").reverse().join(".")}` : ""}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-[#78716c] mt-0.5 truncate">
                   {[s.city, s.category && `Kat. ${s.category}`, s.instructor]

@@ -208,6 +208,11 @@ class StudentCreate(BaseModel):
     # Erlaubte Werte: "gr" (Graubünden), "sz_zh" (Schwyz/Zürich), "other" (Übrige).
     # Leer ("") = noch nicht zugewiesen → landet unter "Übrige".
     region: str = Field(default="", max_length=20)
+    # Archiv-Flag: TRUE = Schüler:in hat die Prüfung bestanden und wurde
+    # ins "Fertige Schüler"-Archiv verschoben. Bleibt komplett erhalten
+    # (KEIN Löschen) und ist rückgängig machbar (Button "Reaktivieren").
+    archived: bool = Field(default=False)
+    passed_date: str = Field(default="", max_length=40)       # ISO-Datum (YYYY-MM-DD) der bestandenen Prüfung
     # Optional: Erziehungsberechtigte:r (empfohlen bei Schüler:innen unter 18)
     guardian_name: str = Field(default="", max_length=200)
     guardian_email: str = Field(default="", max_length=200)
@@ -255,6 +260,8 @@ class StudentPatch(BaseModel):
     notes: Optional[str] = None
     company: Optional[str] = None
     region: Optional[str] = None
+    archived: Optional[bool] = None
+    passed_date: Optional[str] = None
     guardian_name: Optional[str] = None
     guardian_email: Optional[str] = None
     archived: Optional[bool] = None
@@ -449,7 +456,10 @@ class ExpenseCreate(BaseModel):
     amount_chf: float = Field(default=0.0, ge=0, le=10_000_000)
     description: str = Field(default="", max_length=500)
     account_id: str = Field(default="", max_length=64)    # FK → Account.id (Aufwand)
-    receipt_url: str = Field(default="", max_length=500)  # /api/files/... (JPG/PDF)
+    receipt_url: str = Field(default="", max_length=500)  # DEPRECATED: legacy single-file field – kept for backwards compat, never removed
+    # NEW: multiple receipts per expense (up to 10). First entry mirrors
+    # `receipt_url` for old clients; new UI writes all attachments here.
+    receipt_urls: list[str] = Field(default_factory=list, max_length=10)
 
 
 class Expense(ExpenseCreate):
@@ -465,6 +475,7 @@ class ExpensePatch(BaseModel):
     description: Optional[str] = None
     account_id: Optional[str] = None
     receipt_url: Optional[str] = None
+    receipt_urls: Optional[list[str]] = None
 
     uploaded_by: str = ""
 

@@ -576,3 +576,28 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - Leere/unbekannte Region → automatisch im Tab "Übrige".
   - Aktive Tab-Auswahl persistiert in `localStorage` (`admin.students.region_tab`).
 - **Testing**: Backend Curl `PATCH /api/students/{id}` mit `{"region":"gr"}` erfolgreich. PDF-Regression mit synthetischem Worst-Case (5 Lektionen × 3 lange Kommentare) generiert 5-seitiges PDF, Seite 4 zeigt sauberen Text-Abschluss ohne Legend-Overlap, Seite 5 = "Diverse Notizen" mit 8 Notizen chronologisch. Frontend Playwright: 3 Tabs mit korrekten Zählern (GR/SZ_ZH/Übrige = 1/0/7), Region-Dropdown im Overview mit 4 Optionen sichtbar.
+
+
+## Iteration 62 – 2026-02-20 (Multi-Beleg + Fertige-Archiv + Neuer-Lektion-Modal)
+- **Ausgaben Multi-Beleg-Upload** (`models/schemas.py`, `pages/AccountingPage.jsx`)
+  - Neues Feld `Expense.receipt_urls: list[str]` (max 10 Belege). Bestehendes `receipt_url` bleibt als DEPRECATED Legacy-Feld erhalten und wird bei neuen Uploads mit `receipt_urls[0]` befüllt (Backwards-Compat).
+  - `<input type="file" multiple>` erlaubt mehrere JPG/PDF gleichzeitig hochzuladen.
+  - Neue `<ReceiptThumb>` Komponente: 36×36 Miniaturen mit Image-Preview für JPG/PNG/WebP und FileText-Icon für PDF. Hover zeigt roten X-Button zum Entfernen.
+  - Existierende Ausgaben (nur `receipt_url`) werden dank `attachmentsOf()`-Fallback korrekt angezeigt (keine Datenmigration nötig).
+  - Grid `md:grid-cols-[110px_130px_1fr_180px_170px_44px]` vergrössert damit Thumbnails nebeneinander Platz haben.
+- **„Fertige Schüler"-Archiv** (`models/schemas.py`, `components/admin/students/StudentsManager.jsx`, `pages/AdminStudentDetail.jsx`)
+  - Neue Student-Felder `archived: bool` + `passed_date: str`.
+  - 4. Tab **„Fertige"** in `StudentsManager` neben GR / SZ·ZH / Übrige.
+  - Grüner **„Archivieren"**-Button oben im Schülerdetail neben dem Namen. Öffnet Prompt für Prüfungsdatum (default heute), setzt `archived=true` + `passed_date=YYYY-MM-DD`.
+  - Bei archivierten Schülern zeigt der Button **„Reaktivieren"** und der Nachfrage-Dialog erlaubt es die Archivierung rückgängig zu machen (setzt `archived=false`, `passed_date=""`).
+  - Grüne „✓ Bestanden · DD.MM.YYYY"-Badge neben dem Namen im Detail-Header UND in der Schülerliste.
+  - Archivierter Schüler landet IMMER im Tab „Fertige" – unabhängig von seiner `region`. Bei Reaktivierung fällt er zurück auf seinen `region`-Tab.
+  - Row-Styling im „Fertige"-Tab mit grünem Akzent (`border-[#166534]/30 bg-[#f0fdf4]`).
+- **Mobile-Redesign „Neue Lektion" Modal** (`components/admin/students/NewLessonModal.jsx`, `FahrkontrolleTab.jsx`)
+  - Neue Komponente `NewLessonModal.jsx`. Öffnet als Full-Screen-Modal auf Mobile / Zentriertes 3xl-Dialog auf Desktop.
+  - Sticky Header (Datum-Input + „Letzte Bewertungen übernehmen"-Button) und Sticky Footer („X Bewertungen · Abbrechen · Lektion speichern").
+  - Scrollbarer Body mit Kapitel-Karten – Klick öffnet den expandierbaren Bereich mit 1–5-Bewertungsbuttons + MessageSquare-Icon pro Subitem (analog Bild 5).
+  - „Letzte Bewertungen übernehmen": Liest die neueste Bewertung pro Subitem über alle Vorlektionen und setzt sie als Ausgangspunkt (rückgängig durch erneutes Tippen).
+  - Save-Flow: `POST /fahrkontrolle/students/{id}/lessons` → dann `PUT /assessments` für jede bewertete Subitem parallel via Promise.all. `onCreated` liefert die neue Lektion + Assessments zurück und `FahrkontrolleTab` merged sie in seinen State — Matrix-Ansicht darunter aktualisiert automatisch.
+  - **Keine bestehende Logik verändert**: Der alte Matrix-View bleibt komplett unverändert, Zellen im Popup weiterhin editierbar wie bisher, Diverse Notizen, KI-Analyse etc. alle unverändert.
+- **Testing**: Playwright Screenshots aller drei Features. Backend: PATCH archived/passed_date verifiziert, POST expense mit receipt_urls verifiziert (3 URLs im Response). Frontend: Modal → 8 Kategorien geladen, Subitems mit `title_de` korrekt gerendert, Rating-Button-Click aktualisiert Drafts, Save schliesst Modal und Matrix zeigt neue L1-Spalte mit 3 Werten (2,3,4). Toast "Lektion 1 angelegt (3 Bewertungen)" bestätigt End-to-End-Flow.

@@ -19,7 +19,7 @@ import {
   Plus,
   Trash2,
   Upload,
-  Paperclip,
+  FileText,
   ChevronLeft,
   ChevronRight,
   FileDown,
@@ -703,7 +703,19 @@ function ExpensesSubtab({ year }) {
     description: "",
     account_id: "",
     receipt_url: "",
+    receipt_urls: [],
   });
+
+  const MAX_RECEIPTS = 10;
+
+  // Normalise legacy expenses: some documents only have `receipt_url` (single),
+  // newer ones have `receipt_urls` (list). This helper returns the effective
+  // list for rendering + upload counting.
+  const attachmentsOf = (e) => {
+    const list = Array.isArray(e.receipt_urls) ? e.receipt_urls.filter(Boolean) : [];
+    if (list.length > 0) return list;
+    return e.receipt_url ? [e.receipt_url] : [];
+  };
 
   const load = async () => {
     try {
@@ -740,20 +752,94 @@ function ExpensesSubtab({ year }) {
     return g;
   }, [expenses]);
 
-  const uploadReceipt = async (file) => {
+  const uploadReceipt = async (files) => {
+    const arr = Array.from(files || []).filter(Boolean);
+    if (arr.length === 0) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await api.post("/accounting/expenses/upload-receipt", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // Sequentially upload so we don't overwhelm the server with 10× parallel POSTs.
+      const newUrls = [];
+      for (const file of arr) {
+        if (draft.receipt_urls.length + newUrls.length >= MAX_RECEIPTS) {
+          toast.error(`Maximal ${MAX_RECEIPTS} Belege pro Ausgabe`);
+          break;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        const r = await api.post("/accounting/expenses/upload-receipt", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        newUrls.push(r.data.url);
+      }
+      setDraft((d) => {
+        const merged = [...d.receipt_urls, ...newUrls].slice(0, MAX_RECEIPTS);
+        return {
+          ...d,
+          receipt_urls: merged,
+          receipt_url: merged[0] || "",  // keep legacy field in sync
+        };
       });
-      setDraft((d) => ({ ...d, receipt_url: r.data.url }));
-      toast.success("Beleg hochgeladen");
+      if (newUrls.length) toast.success(`${newUrls.length} Beleg${newUrls.length === 1 ? "" : "e"} hochgeladen`);
     } catch (e) {
       toast.error(formatApiError(e));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const removeDraftAttachment = (idx) => {
+    setDraft((d) => {
+      const next = d.receipt_urls.filter((_, i) => i !== idx);
+      return { ...d, receipt_urls: next, receipt_url: next[0] || "" };
+    });
+  };
+
+  const uploadReceiptToExisting = async (expenseId, files) => {
+    const arr = Array.from(files || []).filter(Boolean);
+    if (arr.length === 0) return;
+    const existing = expenses.find((x) => x.id === expenseId);
+    if (!existing) return;
+    const current = attachmentsOf(existing);
+    if (current.length >= MAX_RECEIPTS) {
+      toast.error(`Maximal ${MAX_RECEIPTS} Belege pro Ausgabe`);
+      return;
+    }
+    try {
+      const newUrls = [];
+      for (const file of arr) {
+        if (current.length + newUrls.length >= MAX_RECEIPTS) break;
+        const fd = new FormData();
+        fd.append("file", file);
+        const r = await api.post("/accounting/expenses/upload-receipt", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        newUrls.push(r.data.url);
+      }
+      const merged = [...current, ...newUrls].slice(0, MAX_RECEIPTS);
+      await api.patch(`/accounting/expenses/${expenseId}`, {
+        receipt_urls: merged,
+        receipt_url: merged[0] || "",
+      });
+      if (newUrls.length) toast.success(`${newUrls.length} Beleg${newUrls.length === 1 ? "" : "e"} hinzugefügt`);
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  const removeExistingAttachment = async (expenseId, idx) => {
+    if (!window.confirm("Diesen Beleg entfernen?")) return;
+    const existing = expenses.find((x) => x.id === expenseId);
+    if (!existing) return;
+    const merged = attachmentsOf(existing).filter((_, i) => i !== idx);
+    try {
+      await api.patch(`/accounting/expenses/${expenseId}`, {
+        receipt_urls: merged,
+        receipt_url: merged[0] || "",
+      });
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
     }
   };
 
@@ -778,6 +864,7 @@ function ExpensesSubtab({ year }) {
         description: "",
         account_id: "",
         receipt_url: "",
+        receipt_urls: [],
       });
       load();
     } catch (e) {
@@ -882,24 +969,40 @@ function ExpensesSubtab({ year }) {
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#475569] block mb-1">Beleg (JPG/PDF)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#475569] block mb-1">
+              Belege (JPG/PDF, max. {MAX_RECEIPTS})
+            </label>
             <label
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-widest bg-white border border-[#e2e8f0] text-[#334155] px-3 py-2 rounded-lg cursor-pointer hover:border-[#ff5a36]"
+              className={`w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-widest bg-white border text-[#334155] px-3 py-2 rounded-lg cursor-pointer hover:border-[#ff5a36] ${
+                draft.receipt_urls.length >= MAX_RECEIPTS
+                  ? "border-[#e2e8f0] opacity-40 cursor-not-allowed"
+                  : "border-[#e2e8f0]"
+              }`}
               data-testid="expense-new-receipt"
             >
               {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-              {draft.receipt_url ? "Ersetzen" : "Hochladen"}
+              {draft.receipt_urls.length > 0
+                ? `+ Beleg (${draft.receipt_urls.length}/${MAX_RECEIPTS})`
+                : "Hochladen"}
               <input
                 type="file"
                 accept="application/pdf,image/*"
-                onChange={(e) => e.target.files?.[0] && uploadReceipt(e.target.files[0])}
-                disabled={uploading}
+                multiple
+                onChange={(e) => e.target.files?.length && uploadReceipt(e.target.files)}
+                disabled={uploading || draft.receipt_urls.length >= MAX_RECEIPTS}
                 className="hidden"
               />
             </label>
-            {draft.receipt_url && (
-              <div className="text-[10px] text-[#166534] mt-1 flex items-center gap-1">
-                <Paperclip size={9} /> hochgeladen
+            {draft.receipt_urls.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5" data-testid="expense-new-thumbs">
+                {draft.receipt_urls.map((u, i) => (
+                  <ReceiptThumb
+                    key={`${u}-${i}`}
+                    url={u}
+                    index={i}
+                    onRemove={() => removeDraftAttachment(i)}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -947,7 +1050,7 @@ function ExpensesSubtab({ year }) {
                   <div
                     key={e.id}
                     data-testid={`expense-row-${e.id}`}
-                    className="p-3 md:grid md:grid-cols-[110px_130px_1fr_180px_80px_44px] gap-3 md:items-center"
+                    className="p-3 md:grid md:grid-cols-[110px_130px_1fr_180px_170px_44px] gap-3 md:items-center"
                   >
                     {/* Mobile: header row = date + amount + delete */}
                     <div className="flex items-center justify-between gap-3 md:contents mb-2 md:mb-0">
@@ -990,19 +1093,55 @@ function ExpensesSubtab({ year }) {
                       ))}
                     </select>
                     <div className="flex items-center justify-between md:contents">
-                      <div>
-                        {e.receipt_url ? (
-                          <a
-                            href={e.receipt_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[#0f172a] hover:text-[#ff5a36]"
-                          >
-                            <Paperclip size={10} /> Beleg
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-[#a8a29e]">Kein Beleg</span>
-                        )}
+                      <div className="flex-1 min-w-0">
+                        {(() => {
+                          const atts = attachmentsOf(e);
+                          if (atts.length === 0) {
+                            return (
+                              <label
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e] hover:text-[#ff5a36] cursor-pointer"
+                                data-testid={`expense-add-first-receipt-${e.id}`}
+                              >
+                                <Upload size={10} /> Beleg
+                                <input
+                                  type="file"
+                                  accept="application/pdf,image/*"
+                                  multiple
+                                  onChange={(ev) => ev.target.files?.length && uploadReceiptToExisting(e.id, ev.target.files)}
+                                  className="hidden"
+                                />
+                              </label>
+                            );
+                          }
+                          return (
+                            <div className="flex flex-wrap items-center gap-1" data-testid={`expense-thumbs-${e.id}`}>
+                              {atts.map((u, i) => (
+                                <ReceiptThumb
+                                  key={`${u}-${i}`}
+                                  url={u}
+                                  index={i}
+                                  onRemove={() => removeExistingAttachment(e.id, i)}
+                                />
+                              ))}
+                              {atts.length < MAX_RECEIPTS && (
+                                <label
+                                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-dashed border-[#e2e8f0] text-[#78716c] hover:text-[#ff5a36] hover:border-[#ff5a36] cursor-pointer"
+                                  title="Weitere Belege hinzufügen"
+                                  data-testid={`expense-add-more-${e.id}`}
+                                >
+                                  <Plus size={13} />
+                                  <input
+                                    type="file"
+                                    accept="application/pdf,image/*"
+                                    multiple
+                                    onChange={(ev) => ev.target.files?.length && uploadReceiptToExisting(e.id, ev.target.files)}
+                                    className="hidden"
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <button
                         onClick={() => removeExpense(e.id)}
@@ -1553,3 +1692,47 @@ function MonthlyJournalSubtab({ year }) {
   );
 }
 
+
+/**
+ * Small square thumbnail for one uploaded receipt. Renders:
+ *  – <img> preview when the URL points to a JPG/PNG/WebP
+ *  – FileText icon when the URL is a PDF (or any non-image extension)
+ * Clicking opens the file in a new tab; the tiny X button (only visible on
+ * hover) triggers the parent's `onRemove` callback.
+ */
+function ReceiptThumb({ url, index, onRemove }) {
+  const isImage = /\.(jpe?g|png|webp|gif|avif)($|\?)/i.test(url);
+  return (
+    <div className="relative group w-9 h-9 shrink-0" data-testid={`receipt-thumb-${index}`}>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="block w-full h-full rounded-lg overflow-hidden border border-[#e2e8f0] bg-[#fafaf9] hover:border-[#ff5a36] transition-colors flex items-center justify-center"
+        title={isImage ? "Bild anzeigen" : "PDF öffnen"}
+      >
+        {isImage ? (
+          <img
+            src={url}
+            alt={`Beleg ${index + 1}`}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <FileText size={14} className="text-[#dc2626]" />
+        )}
+      </a>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); onRemove(); }}
+          data-testid={`receipt-thumb-remove-${index}`}
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#dc2626] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+          title="Beleg entfernen"
+        >
+          <X size={9} strokeWidth={3} />
+        </button>
+      )}
+    </div>
+  );
+}

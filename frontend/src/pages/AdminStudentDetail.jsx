@@ -27,6 +27,8 @@ import {
   Clock,
   AlertCircle,
   ShieldAlert,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -121,6 +123,55 @@ export default function AdminStudentDetail() {
     }
   };
 
+  const toggleArchive = async () => {
+    if (!student) return;
+    const willArchive = !student.archived;
+    if (willArchive) {
+      // Ask for exam date (default = today) when archiving.
+      const today = new Date().toISOString().slice(0, 10);
+      const isoDate = window.prompt(
+        `Prüfungsdatum von ${student.first_name} ${student.last_name} (YYYY-MM-DD)?\n\nDer Schüler wird ins Archiv "Fertige" verschoben. Alle Daten und Unterlagen bleiben erhalten.`,
+        today,
+      );
+      if (!isoDate) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate.trim())) {
+        toast.error("Bitte Datum im Format YYYY-MM-DD eingeben");
+        return;
+      }
+      setSaving(true);
+      try {
+        const r = await api.patch(`/students/${studentId}`, {
+          archived: true,
+          passed_date: isoDate.trim(),
+        });
+        setStudent(r.data);
+        toast.success(`✓ ${student.first_name} ins Archiv verschoben`);
+      } catch (e) {
+        toast.error(formatApiError(e));
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      // Un-archive – ask for confirmation.
+      if (!window.confirm(
+        `Möchtest du ${student.first_name} ${student.last_name} wieder reaktivieren? Der Schüler landet zurück in seinem regulären Region-Tab.`,
+      )) return;
+      setSaving(true);
+      try {
+        const r = await api.patch(`/students/${studentId}`, {
+          archived: false,
+          passed_date: "",
+        });
+        setStudent(r.data);
+        toast.success(`↩ ${student.first_name} reaktiviert`);
+      } catch (e) {
+        toast.error(formatApiError(e));
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
   if (!student) {
     return (
       <div className="min-h-screen bg-[#fafaf9] flex items-center justify-center">
@@ -150,6 +201,16 @@ export default function AdminStudentDetail() {
           <div className="min-w-0">
             <div className="font-display text-xl leading-tight truncate flex items-center gap-2">
               <span className="truncate">{student.first_name} {student.last_name}</span>
+              {student.archived && (
+                <span
+                  data-testid="student-passed-badge"
+                  title={student.passed_date ? `Bestanden am ${student.passed_date.split("-").reverse().join(".")}` : "Bestanden"}
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#166534] text-white px-2 py-0.5 rounded-full whitespace-nowrap"
+                >
+                  <CheckCircle2 size={10} strokeWidth={2.4} />
+                  Bestanden{student.passed_date ? ` · ${student.passed_date.split("-").reverse().join(".")}` : ""}
+                </span>
+              )}
               {(() => {
                 const age = ageFromBirthdate(student.birthdate);
                 if (age == null) return null;
@@ -185,6 +246,25 @@ export default function AdminStudentDetail() {
               <Save size={11} className="inline mr-1" /> Speichere …
             </span>
           )}
+          <button
+            type="button"
+            onClick={toggleArchive}
+            data-testid="admin-student-archive-toggle"
+            title={student.archived
+              ? "Reaktivieren – Schüler zurück in den regulären Region-Tab verschieben"
+              : `Als bestanden archivieren – ins „Fertige Schüler"-Archiv verschieben`}
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase px-3.5 py-2 rounded-full transition-colors ${
+              student.archived
+                ? "bg-white border border-[#166534] text-[#166534] hover:bg-[#f0fdf4]"
+                : "bg-[#166534] text-white hover:bg-[#14532d]"
+            }`}
+          >
+            {student.archived ? (
+              <><RotateCcw size={12} /> Reaktivieren</>
+            ) : (
+              <><CheckCircle2 size={12} /> Archivieren</>
+            )}
+          </button>
           <Link
             to="/admin?tab=students"
             className="text-xs font-semibold tracking-widest uppercase text-[#475569] px-3 py-2 hover:text-[#0f172a]"

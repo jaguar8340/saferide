@@ -37,6 +37,7 @@ import { api, formatApiError, resolveUrl } from "@/lib/api";
 import RatingPopup, {
   RATING_META,
 } from "@/components/admin/students/RatingPopup";
+import NewLessonModal from "@/components/admin/students/NewLessonModal";
 import useRatingScale from "@/hooks/useRatingScale";
 import FahrkontrolleAiPanel from "@/components/admin/students/FahrkontrolleAiPanel";
 import {
@@ -67,6 +68,7 @@ export default function FahrkontrolleTab({ student }) {
   const [loading, setLoading] = useState(true);
   const [popupCell, setPopupCell] = useState(null);
   const [addingLesson, setAddingLesson] = useState(false);
+  const [showNewLessonModal, setShowNewLessonModal] = useState(false);
   const [openRoutesForLesson, setOpenRoutesForLesson] = useState(null);
   const [notes, setNotes] = useState("");
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -388,16 +390,11 @@ export default function FahrkontrolleTab({ student }) {
           </button>
           <button
             type="button"
-            onClick={addLesson}
-            disabled={addingLesson}
+            onClick={() => setShowNewLessonModal(true)}
             data-testid="fahrkontrolle-add-lesson"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90"
           >
-            {addingLesson ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Plus size={12} />
-            )}
+            <Plus size={12} />
             Neue Lektion
           </button>
         </div>
@@ -748,6 +745,27 @@ export default function FahrkontrolleTab({ student }) {
         onPhotoUpload={uploadPhoto}
         onPhotoDelete={deletePhoto}
         onClose={() => setPopupCell(null)}
+      />
+
+      {/* New Lesson modal (Bild 5) */}
+      <NewLessonModal
+        open={showNewLessonModal}
+        onClose={() => setShowNewLessonModal(false)}
+        studentId={student.id}
+        categories={categories}
+        subitems={subitems}
+        assessments={assessments}
+        lessons={lessons}
+        onCreated={(newLesson, newAssessments) => {
+          setLessons((cur) => [...cur, newLesson]);
+          setAssessments((cur) => {
+            const next = { ...cur };
+            for (const a of newAssessments) {
+              next[`${a.subitem_id}:${a.lesson_id}`] = a;
+            }
+            return next;
+          });
+        }}
       />
 
       <FahrkontrolleAiPanel
