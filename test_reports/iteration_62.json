@@ -1,0 +1,42 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "Da ist noch was falsch. schau dir das nochmals an bei den Stammdaten habe ich nur 1-3 drinn. Die darstellung soll wie in den stammdaten sein nicht mehr und nicht weniger punkte bitte.",
+  "summary": "No relevant testing skill found. Focused preview UI verification passed: Neue Lektion now renders exactly the rating buttons from /api/settings/rating-scale, highlights selected values with configured colours, updates the subtitle range dynamically, and saves a rated lesson end-to-end. No MOCKED APIs used.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/students/{id}/fahrkontrolle/ai",
+        "issue": "Unrelated Schülerblatt AI panel request returned 404 in browser console during page load; it did not affect the Neue Lektion/rating-scale flow."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/bug_new_lesson_rating_scale_playwright.py"
+  ],
+  "action_items": [
+    "Optional/unrelated: investigate the /api/students/{id}/fahrkontrolle/ai 404 seen when Schülerblatt loads."
+  ],
+  "critical_code_review_comments": [
+    "Inspected /app/frontend/src/components/admin/students/NewLessonModal.jsx: the visible rating buttons now come from dynOrder.map() via useRatingScale(), and the subtitle range is derived from positive configured levels."
+  ],
+  "updated_files": [
+    "/app/tests/bug_new_lesson_rating_scale_playwright.py",
+    "/app/test_reports/bug_verification_62.json",
+    "/app/test_reports/iteration_62.json"
+  ],
+  "success_rate": {
+    "backend": "100% for affected endpoints",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "Created one Fahrkontrolle lesson with one assessment through the UI and deleted it via API cleanup. Temporarily patched the real rating scale to 1,2,3,X for dynamic verification and restored the original 1,2,3,4,X scale.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Preview URL only. Verified admin login, selected student TEST_it39 Doc, Schülerblatt > Neue Lektion. Original API scale was [1,2,3,4,X]; modal displayed exactly [1,2,3,4,X], subtitle 1–4, selected '3' became rgb(132, 204, 22) with ring styling, save toast appeared, modal closed, API returned the assessment, and matrix cell showed '3'. Then temporarily changed scale to [1,2,3,X], reloaded, and modal displayed exactly [1,2,3,X] with subtitle 1–3; restored original scale afterward.",
+  "rca_of_the_issue": "The reported symptom was the new modal not matching admin Stammdaten/Bewertungsskala. Runtime evidence confirms the modal now follows the backend rating-scale order/count rather than hardcoded 1-5 buttons."
+}

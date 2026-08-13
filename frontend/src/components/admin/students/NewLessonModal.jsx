@@ -28,15 +28,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { api, formatApiError } from "@/lib/api";
-
-/** Colour map for the 5 rating levels – matches RATING_META in RatingPopup. */
-const RATING_COLORS = {
-  "1": { bg: "#fee2e2", fg: "#991b1b", label: "erklärt" },
-  "2": { bg: "#fed7aa", fg: "#9a3412", label: "geübt" },
-  "3": { bg: "#fef08a", fg: "#854d0e", label: "selbständig" },
-  "4": { bg: "#bbf7d0", fg: "#166534", label: "sicher" },
-  "5": { bg: "#86efac", fg: "#14532d", label: "geprüft" },
-};
+import useRatingScale from "@/hooks/useRatingScale";
+import { RATING_META } from "@/components/admin/students/RatingPopup";
 
 export default function NewLessonModal({
   open,
@@ -54,6 +47,20 @@ export default function NewLessonModal({
   const [commentEditFor, setCommentEditFor] = useState(null); // subitem_id
   const [saving, setSaving] = useState(false);
   const [carryOverDone, setCarryOverDone] = useState(false);
+
+  // Rating scale is admin-configurable via CMS → Fahrschul-Daten →
+  // Bewertungsskala. `dynOrder` = ["1", "2", …, "N", retry] following the
+  // exact order and count the admin has set. `dynMeta[v]` provides colour
+  // + label. This mirrors the RatingPopup logic 1:1 so both editors stay
+  // visually consistent.
+  const { meta: dynMeta = RATING_META, order: dynOrder = ["1", "2", "3", "4", "X"] } = useRatingScale();
+  // Human-readable range for the header subtitle. Filters out the "retry"
+  // level (typically "X") so the copy reads "1–4" instead of "1–4,X".
+  const rangeLabel = useMemo(() => {
+    const positives = dynOrder.filter((v) => v !== "X");
+    if (positives.length === 0) return "1–4";
+    return `1–${positives[positives.length - 1]}`;
+  }, [dynOrder]);
 
   const catsSorted = useMemo(
     () => [...categories].sort((a, b) => a.order - b.order),
@@ -200,7 +207,7 @@ export default function NewLessonModal({
           <div>
             <h3 className="font-display text-xl md:text-2xl leading-none">Neue Lektion</h3>
             <p className="text-[11px] text-[#78716c] mt-1">
-              Tippe auf ein Kapitel und bewerte die Punkte mit 1–5.
+              Tippe auf ein Kapitel und bewerte die Punkte mit {rangeLabel}.
             </p>
           </div>
           <button
@@ -299,9 +306,9 @@ export default function NewLessonModal({
                               {sub.title_de || sub.title || "—"}
                             </div>
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              {["1", "2", "3", "4", "5"].map((v) => {
+                              {dynOrder.map((v) => {
                                 const active = d.value === v;
-                                const c = RATING_COLORS[v];
+                                const c = dynMeta[v] || RATING_META[v] || { bg: "#e2e8f0", fg: "#0f172a", desc_de: "" };
                                 return (
                                   <button
                                     key={v}
@@ -310,11 +317,11 @@ export default function NewLessonModal({
                                     data-testid={`new-lesson-rate-${sub.id}-${v}`}
                                     className={`w-11 h-11 rounded-full font-display text-lg tabular-nums transition-all ${
                                       active
-                                        ? "shadow-md scale-110 border-0"
+                                        ? "shadow-md scale-110 border-0 ring-2 ring-offset-1 ring-[#0f172a]"
                                         : "border-2 bg-white text-[#78716c] border-[#e2e8f0] hover:border-[#94a3b8]"
                                     }`}
                                     style={active ? { background: c.bg, color: c.fg } : {}}
-                                    title={c.label}
+                                    title={c.desc_de || ""}
                                   >
                                     {v}
                                   </button>
