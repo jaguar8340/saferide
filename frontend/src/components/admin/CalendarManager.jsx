@@ -265,44 +265,52 @@ export default function CalendarManager() {
         <BookingSettings onClose={() => setSettingsOpen(false)} />
       ) : (
       <>
-      <div className="flex items-start gap-3 mb-6 flex-wrap">
-        <div className="w-11 h-11 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center">
-          <CalendarIcon size={18} />
+      <div className="mb-6">
+        <div className="flex items-start gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center shrink-0">
+            <CalendarIcon size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-display text-3xl md:text-4xl leading-none tracking-tight">
+              Kalender
+            </h2>
+            <p className="text-xs text-[#78716c] mt-1 leading-snug">
+              Termine planen und verwalten.
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display text-3xl md:text-4xl leading-none tracking-tight">
-            Kalender
-          </h2>
-          <p className="text-xs text-[#78716c] mt-1">
-            Termine planen. Klicke auf einen freien Slot oder nutze die Buttons oben rechts.
-          </p>
+        <div className="mt-3 flex items-center gap-2 flex-wrap justify-end">
+          <button
+            onClick={refreshExternal}
+            disabled={refreshing}
+            data-testid="calendar-refresh-external"
+            title="Externe iCal-Feeds jetzt neu abrufen"
+            aria-label="Aktualisieren"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+            <span className="hidden sm:inline">Aktualisieren</span>
+          </button>
+          <button
+            onClick={openIcal}
+            data-testid="calendar-ical-btn"
+            aria-label="iPhone-Sync"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#0f172a] text-[#0f172a] px-3 sm:px-4 py-2 rounded-full hover:bg-[#0f172a] hover:text-white transition-colors"
+          >
+            <LinkIcon size={12} />
+            <span className="hidden sm:inline">iPhone-Sync</span>
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            data-testid="calendar-settings-btn"
+            title="Kalender-Einstellungen (Öffnungszeiten, Fahrzeuge, Abholorte)"
+            aria-label="Einstellungen"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors"
+          >
+            <Settings size={12} />
+            <span className="hidden sm:inline">Einstellungen</span>
+          </button>
         </div>
-        <button
-          onClick={refreshExternal}
-          disabled={refreshing}
-          data-testid="calendar-refresh-external"
-          title="Externe iCal-Feeds jetzt neu abrufen"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors disabled:opacity-50"
-        >
-          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-          <span className="hidden sm:inline">Aktualisieren</span>
-        </button>
-        <button
-          onClick={openIcal}
-          data-testid="calendar-ical-btn"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#0f172a] text-[#0f172a] px-4 py-2 rounded-full hover:bg-[#0f172a] hover:text-white transition-colors"
-        >
-          <LinkIcon size={12} /> iPhone-Sync
-        </button>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          data-testid="calendar-settings-btn"
-          title="Kalender-Einstellungen (Öffnungszeiten, Fahrzeuge, Abholorte)"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors"
-        >
-          <Settings size={12} />
-          <span className="hidden sm:inline">Einstellungen</span>
-        </button>
       </div>
 
       {/* Farb-Legende — was bedeutet welche Farbe im Kalender */}
