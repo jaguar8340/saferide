@@ -13,6 +13,7 @@ import Seo from "@/components/site/Seo";
 import { buildBreadcrumb, seoOrigin } from "@/lib/seo";
 import Editable from "@/components/edit/Editable";
 import EditablePackageCard from "@/components/site/EditablePackageCard";
+import BookingWizard from "@/components/site/BookingWizard";
 import {
   Select,
   SelectContent,
@@ -228,6 +229,33 @@ export default function BuchungPage() {
             multiline
             className="mt-6 max-w-2xl text-lg text-[#475569] leading-relaxed font-medium block"
           />
+        </div>
+      </section>
+
+      {/* Online Booking Wizard */}
+      <section id="termin-buchen" className="pb-16 md:pb-20">
+        <div className="container-x px-5 md:px-8 lg:px-12">
+          <div className="mb-8 max-w-3xl mx-auto text-center">
+            <div className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#ff5a36] mb-3">
+              {lang === "de" ? "Online-Buchung · Einzeltermin" : "Online booking · single lesson"}
+            </div>
+            <h2 className="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight mb-4">
+              {lang === "de"
+                ? "Direkt einen Termin anfragen."
+                : "Request an appointment directly."}
+            </h2>
+            <p className="text-[#475569] leading-relaxed">
+              {lang === "de"
+                ? "Wähle Datum, Fahrzeug und Abholort — ich zeige dir sofort die verfügbaren Zeiten. Innerhalb von 24 Stunden erhältst du meine Bestätigung."
+                : "Choose date, vehicle and pick-up point — you'll see the free time slots instantly. I'll confirm within 24 hours."}
+            </p>
+          </div>
+          <BookingWizard />
+          <div className="mt-14 flex items-center gap-4 max-w-2xl mx-auto text-[10px] font-semibold tracking-[0.18em] uppercase text-[#94a3b8]">
+            <span className="flex-1 h-px bg-[#e7e5e4]" />
+            {lang === "de" ? "Oder ein Paket kaufen" : "Or purchase a package"}
+            <span className="flex-1 h-px bg-[#e7e5e4]" />
+          </div>
         </div>
       </section>
 

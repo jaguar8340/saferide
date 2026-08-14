@@ -99,6 +99,15 @@ async def run_startup_seeds() -> None:
     # One-time migration: add link fields to VKU FAQ (hf5) if still on default.
     await _migrate_vku_faq_link()
 
+    # ----- Booking Settings (Phase 1) -----
+    #   • pickup locations   – 3 default Swiss stations
+    #   • pickup distances   – manual matrix (Pfäffikon↔Lachen 15min, both↔Chur ≈2h)
+    #   • vehicles           – 3 default cars (Audi Automat, Opel Handschaltung, Range Rover Anhänger)
+    #   • email templates    – 4 fixed kinds with default HTML/text
+    # All seeds run ONCE per collection (guarded by _seed_state) so an admin
+    # can safely delete rows without them re-appearing on next boot.
+    await _seed_booking_defaults()
+
     # One-time migration: seed real UBS bank details for the QR-Bill.
     # Only fills in fields still on their placeholder value ("folgt" / "").
     await _migrate_business_bank_defaults()
@@ -551,3 +560,195 @@ async def _migrate_vku_faq_link() -> None:
             {"id": "main"}, {"$set": {"homepage_faqs": faqs}}
         )
         log.info("Added VKU link to FAQ hf5")
+
+
+# ---------------------------------------------------------------------------
+#  Booking Settings seeds (Phase 1)
+# ---------------------------------------------------------------------------
+_DEFAULT_PICKUP_LOCATIONS = [
+    {"name": "Pfäffikon SZ Bahnhof", "address": "Bahnhofstrasse, 8808 Pfäffikon SZ", "order": 0},
+    {"name": "Lachen SZ Bahnhof",    "address": "Bahnhof Lachen, 8853 Lachen SZ",    "order": 1},
+    {"name": "Chur GR Bahnhof",      "address": "Bahnhof Chur, 7000 Chur GR",        "order": 2},
+]
+
+# Distance matrix in minutes for the 3 default stations (unordered pairs).
+# Pfäffikon SZ ↔ Lachen SZ ≈ 15 min  (short A3 hop)
+# Pfäffikon SZ ↔ Chur GR   ≈ 120 min (A3 → A13, ~130 km)
+# Lachen SZ    ↔ Chur GR   ≈ 115 min
+_DEFAULT_DISTANCE_MATRIX = [
+    ("Pfäffikon SZ Bahnhof", "Lachen SZ Bahnhof", 15),
+    ("Pfäffikon SZ Bahnhof", "Chur GR Bahnhof",   120),
+    ("Lachen SZ Bahnhof",    "Chur GR Bahnhof",   115),
+]
+
+_DEFAULT_VEHICLES = [
+    {
+        "name": "Audi S3",
+        "transmission": "Automat",
+        "category": "B",
+        "allowed_durations": [45, 90, 135],
+        "order": 0,
+    },
+    {
+        "name": "Opel OPC",
+        "transmission": "Handschaltung",
+        "category": "B",
+        "allowed_durations": [45, 90, 135],
+        "order": 1,
+    },
+    {
+        "name": "Range Rover Sport",
+        "transmission": "Anhänger",
+        "category": "BE",
+        "allowed_durations": [90, 135],   # Anhänger-Stunde min. 90 min
+        "order": 2,
+    },
+]
+
+_DEFAULT_TEMPLATES = [
+    {
+        "kind": "requested",
+        "label_de": "Anfrage erhalten",
+        "subject": "Buchungsanfrage erhalten – Fahrschule Safe Ride",
+        "body_html": (
+            "<p>Hallo {name},</p>"
+            "<p>vielen Dank für Deine Buchungsanfrage bei <strong>Fahrschule Safe Ride</strong>!</p>"
+            "<p>Dein Wunschtermin:<br>"
+            "<strong>{datum}</strong> um <strong>{uhrzeit}</strong> ({dauer} Min)<br>"
+            "Fahrzeug: {fahrzeug}<br>"
+            "Abholort: {abholort}</p>"
+            "<p>Ich melde mich zeitnah mit einer Bestätigung.</p>"
+            "<p>Liebe Grüsse<br>{fahrlehrerin}</p>"
+        ),
+        "body_text": (
+            "Hallo {name},\n\n"
+            "vielen Dank für Deine Buchungsanfrage bei Fahrschule Safe Ride!\n\n"
+            "Dein Wunschtermin: {datum} um {uhrzeit} ({dauer} Min)\n"
+            "Fahrzeug: {fahrzeug}\n"
+            "Abholort: {abholort}\n\n"
+            "Ich melde mich zeitnah mit einer Bestätigung.\n\n"
+            "Liebe Grüsse\n{fahrlehrerin}"
+        ),
+    },
+    {
+        "kind": "confirmed",
+        "label_de": "Buchung bestätigt",
+        "subject": "Deine Fahrstunde ist bestätigt ✓",
+        "body_html": (
+            "<p>Hallo {name},</p>"
+            "<p>Deine Buchung wurde <strong>bestätigt</strong>. Ich freue mich auf Dich!</p>"
+            "<p><strong>{datum}</strong> um <strong>{uhrzeit}</strong> ({dauer} Min)<br>"
+            "Fahrzeug: {fahrzeug}<br>"
+            "Abholort: {abholort}</p>"
+            "<p>Bitte sei 5 Minuten vor Beginn am Abholort. Bei Verhinderung melde Dich mindestens "
+            "24 Stunden im Voraus.</p>"
+            "<p>Liebe Grüsse<br>{fahrlehrerin}</p>"
+        ),
+        "body_text": (
+            "Hallo {name},\n\n"
+            "Deine Buchung wurde bestätigt. Ich freue mich auf Dich!\n\n"
+            "{datum} um {uhrzeit} ({dauer} Min)\n"
+            "Fahrzeug: {fahrzeug}\n"
+            "Abholort: {abholort}\n\n"
+            "Bitte sei 5 Minuten vor Beginn am Abholort. Bei Verhinderung melde Dich mindestens 24 "
+            "Stunden im Voraus.\n\n"
+            "Liebe Grüsse\n{fahrlehrerin}"
+        ),
+    },
+    {
+        "kind": "rescheduled",
+        "label_de": "Buchung verschoben",
+        "subject": "Deine Fahrstunde wurde verschoben",
+        "body_html": (
+            "<p>Hallo {name},</p>"
+            "<p>Deine Fahrstunde wurde auf einen neuen Termin <strong>verschoben</strong>:</p>"
+            "<p><strong>{datum}</strong> um <strong>{uhrzeit}</strong> ({dauer} Min)<br>"
+            "Fahrzeug: {fahrzeug}<br>"
+            "Abholort: {abholort}</p>"
+            "<p>Falls der neue Termin nicht passt, melde Dich bitte kurz.</p>"
+            "<p>Liebe Grüsse<br>{fahrlehrerin}</p>"
+        ),
+        "body_text": (
+            "Hallo {name},\n\n"
+            "Deine Fahrstunde wurde auf einen neuen Termin verschoben:\n\n"
+            "{datum} um {uhrzeit} ({dauer} Min)\n"
+            "Fahrzeug: {fahrzeug}\n"
+            "Abholort: {abholort}\n\n"
+            "Falls der neue Termin nicht passt, melde Dich bitte kurz.\n\n"
+            "Liebe Grüsse\n{fahrlehrerin}"
+        ),
+    },
+    {
+        "kind": "cancelled",
+        "label_de": "Buchung storniert",
+        "subject": "Deine Fahrstunde wurde storniert",
+        "body_html": (
+            "<p>Hallo {name},</p>"
+            "<p>Deine Buchung wurde <strong>storniert</strong>:</p>"
+            "<p>{datum} um {uhrzeit}<br>"
+            "Fahrzeug: {fahrzeug}<br>"
+            "Abholort: {abholort}</p>"
+            "<p>Melde Dich gerne für einen neuen Termin.</p>"
+            "<p>Liebe Grüsse<br>{fahrlehrerin}</p>"
+        ),
+        "body_text": (
+            "Hallo {name},\n\n"
+            "Deine Buchung wurde storniert:\n\n"
+            "{datum} um {uhrzeit}\n"
+            "Fahrzeug: {fahrzeug}\n"
+            "Abholort: {abholort}\n\n"
+            "Melde Dich gerne für einen neuen Termin.\n\n"
+            "Liebe Grüsse\n{fahrlehrerin}"
+        ),
+    },
+]
+
+
+async def _seed_booking_defaults() -> None:
+    now = datetime.now(timezone.utc).isoformat()
+
+    # 1) Pickup locations
+    if not await _has_been_seeded("pickup_locations"):
+        for loc in _DEFAULT_PICKUP_LOCATIONS:
+            await db.pickup_locations.insert_one({"id": str(uuid.uuid4()), **loc})
+        await _mark_seeded("pickup_locations", [l["name"] for l in _DEFAULT_PICKUP_LOCATIONS])
+        log.info("Seeded pickup_locations: %s", [l["name"] for l in _DEFAULT_PICKUP_LOCATIONS])
+
+    # 2) Distance matrix (linked by NAME → resolved to IDs now that locations exist).
+    if not await _has_been_seeded("pickup_distances"):
+        locs = await db.pickup_locations.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(50)
+        id_by_name = {l["name"]: l["id"] for l in locs}
+        for a_name, b_name, travel in _DEFAULT_DISTANCE_MATRIX:
+            a_id = id_by_name.get(a_name)
+            b_id = id_by_name.get(b_name)
+            if not a_id or not b_id:
+                continue
+            a_id, b_id = (a_id, b_id) if a_id <= b_id else (b_id, a_id)
+            await db.pickup_distances.insert_one({
+                "id": str(uuid.uuid4()),
+                "from_id": a_id,
+                "to_id": b_id,
+                "travel_min": travel,
+            })
+        await _mark_seeded("pickup_distances", ["seeded"])
+        log.info("Seeded pickup_distances (%d entries)", len(_DEFAULT_DISTANCE_MATRIX))
+
+    # 3) Vehicles
+    if not await _has_been_seeded("vehicles"):
+        for veh in _DEFAULT_VEHICLES:
+            await db.vehicles.insert_one({"id": str(uuid.uuid4()), "active": True, **veh})
+        await _mark_seeded("vehicles", [v["name"] for v in _DEFAULT_VEHICLES])
+        log.info("Seeded vehicles: %s", [v["name"] for v in _DEFAULT_VEHICLES])
+
+    # 4) Email templates (one doc per kind; each seeded independently so an
+    #    admin can safely edit any template without the others resetting).
+    for t in _DEFAULT_TEMPLATES:
+        existing = await db.booking_email_templates.find_one({"kind": t["kind"]}, {"_id": 0})
+        if existing:
+            continue
+        await db.booking_email_templates.insert_one({
+            "id": t["kind"],
+            "updated_at": now,
+            **t,
+        })
+        log.info("Seeded email template: %s", t["kind"])

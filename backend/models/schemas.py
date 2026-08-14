@@ -582,3 +582,105 @@ class StudentActivity(BaseModel):
     meta: dict = Field(default_factory=dict)            # opaque details (e.g., field, from, to)
     actor: str = ""                                     # email of the admin who did it
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# ---------- Booking Settings (Phase 1 – admin-configurable) ----------
+class WeekdayHours(BaseModel):
+    """Working hours for a single weekday (Monday = 0 … Sunday = 6)."""
+    model_config = ConfigDict(extra="ignore")
+    weekday: int = Field(ge=0, le=6)
+    open: bool = True
+    start_time: str = Field(default="08:00", max_length=5)   # "HH:MM"
+    end_time: str = Field(default="18:00", max_length=5)     # "HH:MM"
+
+
+class CalendarAvailability(BaseModel):
+    """Singleton document (id='default') defining the online-booking window
+    per weekday and the default buffer minutes applied after every lesson.
+
+    The `location_default_buffer_min` matrix override is stored separately
+    in `PickupDistance` docs.
+    """
+    model_config = ConfigDict(extra="ignore")
+    id: str = "default"
+    weekdays: List[WeekdayHours] = Field(default_factory=list)
+    default_buffer_min: int = Field(default=15, ge=0, le=240)  # min gap after every appointment
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class PickupLocationCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str = Field(min_length=1, max_length=120)
+    address: str = Field(default="", max_length=300)
+    order: int = 0
+
+
+class PickupLocation(PickupLocationCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class PickupLocationPatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: Optional[str] = None
+    address: Optional[str] = None
+    order: Optional[int] = None
+
+
+class PickupDistanceUpsert(BaseModel):
+    """Client sends this to store the estimated travel time between two
+    pickup locations. Stored per unordered pair; identity is derived by
+    sorting `(from_id, to_id)` before write."""
+    model_config = ConfigDict(extra="ignore")
+    from_id: str
+    to_id: str
+    travel_min: int = Field(ge=0, le=1440)
+
+
+class PickupDistance(PickupDistanceUpsert):
+    """Persisted travel-time between two pickup locations."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class VehicleCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str = Field(min_length=1, max_length=120)
+    transmission: str = Field(default="", max_length=40)  # "Automat" | "Handschaltung" | "Anhänger"
+    category: str = Field(default="B", max_length=10)     # driving license category
+    allowed_durations: List[int] = Field(default_factory=lambda: [45, 90, 135])  # in minutes
+    order: int = 0
+    active: bool = True
+
+
+class Vehicle(VehicleCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class VehiclePatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: Optional[str] = None
+    transmission: Optional[str] = None
+    category: Optional[str] = None
+    allowed_durations: Optional[List[int]] = None
+    order: Optional[int] = None
+    active: Optional[bool] = None
+
+
+class EmailTemplate(BaseModel):
+    """Editable email template. `kind` is the fixed identifier used by the
+    booking flow (requested / confirmed / rescheduled / cancelled)."""
+    model_config = ConfigDict(extra="ignore")
+    id: str = "default"                                        # kept as document id
+    kind: str = Field(min_length=1, max_length=40)            # requested|confirmed|rescheduled|cancelled
+    label_de: str = Field(default="", max_length=200)
+    subject: str = Field(default="", max_length=300)
+    body_html: str = Field(default="", max_length=20_000)    # sanitized before send
+    body_text: str = Field(default="", max_length=20_000)    # plain-text fallback for clients
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class EmailTemplatePatch(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    label_de: Optional[str] = None
+    subject: Optional[str] = None
+    body_html: Optional[str] = None
+    body_text: Optional[str] = None

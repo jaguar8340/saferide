@@ -1,0 +1,25 @@
+{
+  "summary": "PHASE 1 + PHASE 2 Kalender/Buchungs-Feature vollständig getestet. Backend 14/14 grün (12 test_public_booking + 2 neue intelligence tests). Öffentlicher BookingWizard 6-Schritt-Flow (Datum → Fahrzeug → Dauer → Abholort → Slot → Kontakt) läuft end-to-end, Success-Screen 'Anfrage eingegangen!' erscheint. Slot-Algorithmus respektiert bookings, buffer & travel-matrix zwischen Abholorten. Admin BookingSettings (Zahnrad-Icon) öffnet 4-Sektionen-Ansicht (Öffnungszeiten & Puffer, Fahrzeuge, Abholorte & Reisezeit-Matrix, E-Mail-Vorlagen). Seeded-Daten (Audi/Opel/Range Rover, Pfäffikon/Lachen/Chur) und Reisezeit-Matrix (15/120/115 min) korrekt gerendert. Regression /buchung Paket-Auswahl mit Canton-Filter funktioniert weiterhin unterhalb des Wizards.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_public_booking.py",
+    "/app/backend/tests/test_public_booking_intelligence.py",
+    "/app/test_reports/pytest/pytest_public_booking.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "public_booking.py `_bookings_on_day` mutiert das b-dict (setzt start_datetime für legacy bookings via {**b, ...}) — sauber, aber gap-Berechnung berücksichtigt nicht cancelled/no-show im slot-consumer path. Aktuell wird `status in {cancelled, storniert}` gefiltert — ok. Sollte evt. auch `rejected` filtern.",
+    "PublicBookingRequest hat keine Deduplication-Prüfung — dieselbe Person kann denselben Slot doppelt buchen (server merged nicht). Kein hartes Problem da manual approval, aber optionaler Schutz gegen Doppelbuchungen wäre sinnvoll.",
+    "BookingWizard.jsx STEPS-Konstante hat 6 Elemente aber Header sagt 'Datum → Fahrzeug → Dauer → Abholort → Slot → Kontakt' — konsistent, aber Kommentar oben in Datei sagt '5-Schritt-Assistent' (obsolet, sollte '6-Schritt' heißen).",
+    "public_booking.py POST /request macht keinen Slot-Availability-Check server-seitig (verlässt sich auf GET /slots im UI). Race condition möglich wenn zwei Requests denselben Slot gleichzeitig POSTen."
+  ],
+  "updated_files": ["/app/backend/tests/test_public_booking_intelligence.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "Test-Buchungen (pytest-wizard-*@example.ch, pytest-cross-*@example.ch, pytest-wizard-ui-*@example.ch) wurden automatisch nach jedem Test-Roundtrip via DELETE /api/bookings/{id} bzw. _cleanup_test_bookings fixture entfernt.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "BookingWizard verwendet stabile data-testids: wizard-back, wizard-next, wizard-submit, wizard-date-input, wizard-vehicle-{id}, wizard-duration-{45|90|135}, wizard-pickup-{id}, wizard-slot-{HH:MM}, wizard-firstname/lastname/email/phone/notes, booking-wizard, booking-wizard-success. Admin: calendar-settings-btn öffnet booking-settings view. Accordion-Sections in BookingSettings zeigen nur eine geöffnete Section — beim Testen daher spezifische Section-Header (nicht generisches text=) klicken. Backend pytest suite: /app/backend/tests/test_public_booking.py (12) + test_public_booking_intelligence.py (2).",
+  "rca of the issue": "Keine Bugs gefunden. Testscript zeigte einige WARN bei Text-Substring-Matches (Lachen, template kinds, RTE toolbar) — diese sind Test-Artefakte durch accordion-collapse Verhalten wenn eine andere Section geöffnet wurde. Screenshots + backend responses bestätigen dass die Daten korrekt vorhanden und funktional sind."
+}

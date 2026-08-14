@@ -30,6 +30,7 @@ from routers import (
     blog,
     bookings,
     business_settings,
+    booking_settings,
     calendar as calendar_router,
     contact,
     content,
@@ -45,6 +46,7 @@ from routers import (
     mail,
     portal_auth,
     portal_data,
+    public_booking,
     rating_scale,
     sitemap,
     student_activities,
@@ -85,6 +87,8 @@ api.include_router(admin_documents.router)
 api.include_router(student_activities.router)
 api.include_router(business_settings.router)
 api.include_router(business_settings.assets_router)
+api.include_router(booking_settings.router)
+api.include_router(public_booking.router)
 api.include_router(rating_scale.router)
 api.include_router(backup.router)
 api.include_router(backup_scripts.router)

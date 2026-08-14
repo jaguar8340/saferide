@@ -34,9 +34,11 @@ import {
   ExternalLink,
   Download,
   ChevronDown,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
+import BookingSettings from "@/components/admin/booking/BookingSettings";
 
 /* Configurable calendar */
 const HOUR_START = 6;
@@ -85,6 +87,7 @@ export default function CalendarManager() {
   const [creating, setCreating] = useState(null);
   const [editing, setEditing] = useState(null);
   const [icalOpen, setIcalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(null);
   const gridRef = useRef(null);
 
@@ -258,6 +261,10 @@ export default function CalendarManager() {
 
   return (
     <div data-testid="calendar-manager" className="max-w-full">
+      {settingsOpen ? (
+        <BookingSettings onClose={() => setSettingsOpen(false)} />
+      ) : (
+      <>
       <div className="flex items-start gap-3 mb-6 flex-wrap">
         <div className="w-11 h-11 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center">
           <CalendarIcon size={18} />
@@ -286,6 +293,15 @@ export default function CalendarManager() {
           className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#0f172a] text-[#0f172a] px-4 py-2 rounded-full hover:bg-[#0f172a] hover:text-white transition-colors"
         >
           <LinkIcon size={12} /> iPhone-Sync
+        </button>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          data-testid="calendar-settings-btn"
+          title="Kalender-Einstellungen (Öffnungszeiten, Fahrzeuge, Abholorte)"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-white border border-[#e2e8f0] text-[#475569] px-3 py-2 rounded-full hover:text-[#0f172a] hover:border-[#0f172a] transition-colors"
+        >
+          <Settings size={12} />
+          <span className="hidden sm:inline">Einstellungen</span>
         </button>
       </div>
 
@@ -455,6 +471,8 @@ export default function CalendarManager() {
           onRegenerate={regenerateToken}
           onReload={load}
         />
+      )}
+      </>
       )}
     </div>
   );
