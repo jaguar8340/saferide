@@ -22,6 +22,7 @@ import {
   MapPin,
   Mail,
   ChevronDown,
+  CalendarOff,
 } from "lucide-react";
 import { api, formatApiError } from "@/lib/api";
 import RichTextEditor from "@/components/admin/booking/RichTextEditor";
@@ -99,6 +100,16 @@ export default function BookingSettings({ onClose }) {
         onToggle={() => setOpenSection(openSection === "templates" ? null : "templates")}
       >
         <EmailTemplatesEditor />
+      </Section>
+
+      <Section
+        id="blocked-dates"
+        title="Feiertage & Ferien"
+        icon={CalendarOff}
+        open={openSection === "blocked-dates"}
+        onToggle={() => setOpenSection(openSection === "blocked-dates" ? null : "blocked-dates")}
+      >
+        <BlockedDatesEditor />
       </Section>
     </div>
   );
@@ -792,6 +803,154 @@ function Loading() {
   return (
     <div className="py-8 flex items-center gap-2 text-sm text-[#78716c]">
       <Loader2 size={14} className="animate-spin" /> Lade …
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  5) Feiertage & Ferien                                                     */
+/* -------------------------------------------------------------------------- */
+function BlockedDatesEditor() {
+  const [items, setItems] = useState(null);
+  const [draft, setDraft] = useState({ date: "", label: "" });
+  const [creating, setCreating] = useState(false);
+
+  const load = async () => {
+    try {
+      const r = await api.get("/booking/blocked-dates");
+      setItems(r.data || []);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    if (!draft.date) return toast.error("Datum ist Pflicht");
+    setCreating(true);
+    try {
+      await api.post("/booking/blocked-dates", {
+        date: draft.date,
+        label: draft.label.trim(),
+      });
+      toast.success("Tag gesperrt");
+      setDraft({ date: "", label: "" });
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setCreating(false);
+    }
+  };
+  const patch = async (id, field, value) => {
+    try {
+      await api.patch(`/booking/blocked-dates/${id}`, { [field]: value });
+      load();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+  const remove = async (id) => {
+    if (!window.confirm("Diesen gesperrten Tag wirklich löschen?")) return;
+    try {
+      await api.delete(`/booking/blocked-dates/${id}`);
+      toast.success("Gelöscht");
+      load();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+
+  if (items === null) return <Loading />;
+
+  const grouped = items.reduce((acc, it) => {
+    const yr = (it.date || "").slice(0, 4);
+    (acc[yr] = acc[yr] || []).push(it);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-[#78716c] leading-relaxed">
+        Gesperrte Tage werden im öffentlichen Buchungswidget als &quot;geschlossen&quot;
+        angezeigt — Schüler können sie gar nicht erst auswählen.
+      </p>
+
+      {items.length === 0 ? (
+        <div className="bg-[#fafaf9] border border-dashed border-[#e7e5e4] rounded-2xl p-6 text-center text-sm text-[#78716c]">
+          Noch keine Feiertage oder Ferien eingetragen.
+        </div>
+      ) : (
+        Object.entries(grouped)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([year, list]) => (
+            <div key={year}>
+              <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-2">
+                {year}
+              </div>
+              <div className="divide-y divide-[#f1f5f9] border border-[#e7e5e4] rounded-2xl overflow-hidden bg-white">
+                {list.map((b) => (
+                  <div
+                    key={b.id}
+                    data-testid={`blocked-date-row-${b.id}`}
+                    className="py-2.5 px-3 grid grid-cols-1 md:grid-cols-[160px_1fr_40px] gap-2 items-center"
+                  >
+                    <input
+                      type="date"
+                      defaultValue={b.date}
+                      onBlur={(e) => e.target.value !== b.date && patch(b.id, "date", e.target.value)}
+                      className="text-sm font-semibold bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#ff5a36] tabular-nums"
+                      data-testid={`blocked-date-input-${b.id}`}
+                    />
+                    <input
+                      defaultValue={b.label || ""}
+                      onBlur={(e) => e.target.value !== (b.label || "") && patch(b.id, "label", e.target.value)}
+                      placeholder="Bezeichnung (z. B. Weihnachten, Ferien Woche 41)"
+                      className="text-sm bg-transparent focus:outline-none focus:border-b focus:border-[#ff5a36]"
+                      data-testid={`blocked-label-input-${b.id}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => remove(b.id)}
+                      data-testid={`blocked-date-delete-${b.id}`}
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-[#a8a29e] hover:text-[#dc2626] hover:bg-[#fee2e2]"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+      )}
+
+      <div className="bg-[#fafaf9] border border-dashed border-[#e7e5e4] rounded-2xl p-4">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-2">
+          Neuer gesperrter Tag
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_120px] gap-2">
+          <input
+            type="date"
+            value={draft.date}
+            onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+            className="text-sm bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] tabular-nums"
+            data-testid="blocked-date-new-date"
+          />
+          <input
+            value={draft.label}
+            onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+            placeholder="Bezeichnung (optional, z. B. Weihnachten)"
+            className="text-sm bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+            data-testid="blocked-date-new-label"
+          />
+          <button
+            type="button"
+            onClick={create}
+            disabled={creating || !draft.date}
+            data-testid="blocked-date-create"
+            className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#0f172a] text-white px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50"
+          >
+            {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+            Sperren
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -614,3 +614,16 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **BuchungPage Integration**: Neue Sektion `#termin-buchen` oberhalb der Paket-Auswahl mit Überschrift „Direkt einen Termin anfragen." + Trenner „Oder ein Paket kaufen". Paket-Flow + Canton-Filter unverändert.
   - **Regression**: Pytest-Suite `/app/backend/tests/test_public_booking.py` mit 12 Tests (Vehicles/Locations, Slot-Algorithm bei Werktag/Sonntag/vergangenem Datum, Full-Roundtrip mit Slot-Belegung + Admin-Sicht + Cleanup, Ungültige Eingaben). Testing-Subagent bestätigt Backend 100 % + Frontend 100 % keine Regressionen.
 
+
+- ✅ **Iteration 65 (14.02.2026) — Buchungsanfragen-Admin + Feiertage/Ferien (DONE, 21/21 pytest grün + Testing-Agent 100 % Backend + 100 % Frontend):**
+  - **Admin-Tab „Buchungsanfragen"** (`/app/frontend/src/components/admin/booking/BookingRequestsManager.jsx`, neu): eigener Sidebar-Eintrag zwischen Kalender und Buchhaltung. Filter-Chips (Offen / Bestätigt / Abgesagt / Alle) mit Live-Counts. Liste zeigt Kunde, Datum, Uhrzeit, Dauer + Zeitangabe. Detail-Panel mit Kontakt-Links (mailto/tel), Fahrzeug, Abholort, Notiz. Drei Aktionen mit Confirm-Modals:
+    - **Bestätigen** → `POST /api/booking/requests/{id}/approve`
+    - **Verschieben** → Datum + Uhrzeit-Modal → `POST .../reschedule`
+    - **Ablehnen** → Grund-Textarea-Modal → `POST .../decline`
+  - **Automatischer E-Mail-Versand** (`/app/backend/routers/booking_admin.py`, neu): jede Aktion versendet die passende Vorlage (`booking_email_templates.kind = requested/confirmed/rescheduled/cancelled`) via bestehendem SMTP aus `BusinessSettings`. Platzhalter-Substitution ({name}, {datum}, {uhrzeit}, {dauer}, {abholort}, {fahrzeug}, {fahrlehrerin}). SMTP-Fehler blocken den Status-Wechsel NICHT — sie werden als `email_error` im Response-Body zurückgegeben und als Warning-Toast angezeigt.
+  - **Shared SMTP-Helper** (`/app/backend/core/email.py`, neu): `build_smtp_config`, `open_smtp`, `render_template`, `send_email`, `html_to_text` extrahiert aus `invoice_email.py`, damit alle Sender die gleiche Config-Kette nutzen.
+  - **Feiertage & Ferien** (5. Sektion in `BookingSettings.jsx`): eigene aufklappbare Sektion mit Jahres-Gruppierung, Inline-Rename, Add-Form (Datum + Bezeichnung). Backend: `GET/POST/PATCH/DELETE /api/booking/blocked-dates` (Dedupe nach Datum, PATCH ändert Label oder Datum).
+  - **Slot-Algorithmus** (`public_booking.py` aktualisiert): prüft `db.calendar_blocked_dates` VOR den Wochentag-Öffnungszeiten und liefert `reason=blocked_date` + `blocked_label` zurück. Frontend `BookingWizard.jsx` zeigt daraufhin „Dieser Tag ist gesperrt ({label}). Bitte wähle einen anderen Tag." — Schüler können den Tag nicht buchen.
+  - **Race-Condition-Guard** (`public_booking.py` POST /request): 409-Fehler wenn Slot inzwischen belegt ist. Verhindert Doppelbuchungen zwischen Absenden und Admin-Approval.
+  - **Regression**: `/app/backend/tests/test_booking_admin.py` (neu, 9 Tests) + `test_public_booking.py` (12 Tests) = 21/21 pytest grün. Testing-Subagent bestätigt kompletten End-to-End-Flow (Approve/Reschedule/Decline + Feiertag anlegen + Wizard-Sperre).
+

@@ -114,7 +114,11 @@ export default function BookingWizard() {
       },
     }).then((r) => {
       setSlots(r.data?.slots || []);
-      setSlotsMeta({ opening: r.data?.opening || "", reason: r.data?.reason || "" });
+      setSlotsMeta({
+        opening: r.data?.opening || "",
+        reason: r.data?.reason || "",
+        blocked_label: r.data?.blocked_label || "",
+      });
     }).catch((e) => {
       toast.error(formatApiError(e));
       setSlots([]);
@@ -525,7 +529,9 @@ function StepSlot({ slots, meta, value, onChange, date }) {
             Keine freien Termine am {formatDateHuman(date)}.
           </p>
           <p className="text-xs text-[#78716c]">
-            {meta.reason === "closed_day"
+            {meta.reason === "blocked_date"
+              ? `Dieser Tag ist gesperrt${meta.blocked_label ? ` (${meta.blocked_label})` : ""}. Bitte wähle einen anderen Tag.`
+              : meta.reason === "closed_day"
               ? "Ich habe an diesem Tag geschlossen. Probier bitte einen anderen Tag."
               : "Bitte wähle einen anderen Tag oder eine andere Lektionsdauer."}
           </p>

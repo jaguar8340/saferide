@@ -186,6 +186,15 @@ async def public_slots(
 
     weekday = target_date.weekday()  # Mon=0..Sun=6
 
+    # ---- blocked dates (Feiertage / Ferien) trump everything else ----
+    blocked = await db.calendar_blocked_dates.find_one({"date": date}, {"_id": 0})
+    if blocked:
+        return {
+            "slots": [],
+            "reason": "blocked_date",
+            "blocked_label": blocked.get("label", ""),
+        }
+
     # ---- availability ----
     avail = await db.calendar_availability.find_one({"id": "default"}, {"_id": 0}) or {}
     weekdays = {w["weekday"]: w for w in avail.get("weekdays", []) if "weekday" in w}

@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 65 (Buchungs-Anfragen-Verwaltung + Ausgeschlossene Tage) getestet. Backend: 21/21 pytest grün (test_booking_admin 9 + test_public_booking 12). Frontend: Admin-Tab 'Buchungsanfragen' erscheint zwischen 'Kalender' und 'Buchhaltung' mit data-testid=admin-tab-booking_requests. BookingRequestsManager rendert Filter-Chips (Offen/Bestätigt/Abgesagt/Alle) mit korrekten Counts, Liste + Detail-Panel funktionieren. Alle 3 Aktionen end-to-end getestet mit 3 frisch via POST /api/booking/public/request erzeugten Requests: Approve → confirmed (Toast: 'Aktion gespeichert, aber E-Mail: SMTP nicht konfiguriert' – EXPECTED da SMTP im Preview nicht konfiguriert), Reschedule → confirmed + neue preferred_time, Decline → cancelled + admin_note. Blocked-dates (Feiertage & Ferien) in BookingSettings-Sektion 5 funktioniert (Create + Jahres-Gruppierung + Delete). Slot-Algorithmus respektiert blocked-date: wizard-no-slots zeigt korrekt 'Dieser Tag ist gesperrt (UI-Test Feiertag). Bitte wähle einen anderen Tag.' Regression: BuchungPage 6-Schritt-Wizard + Paket-Auswahl mit Canton-Filter darunter arbeitet weiterhin.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_booking_admin.py",
+    "/app/backend/tests/test_public_booking.py",
+    "/app/test_reports/pytest/iter64_booking_admin.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BookingRequestsManager.runApprove verwendet window.confirm() – blockiert in Headless-Playwright ohne dialog handler. Nicht kritisch, aber inkonsistent mit Reschedule/Decline die eigene Modals nutzen. Ein inline Bestätigungs-Popover wäre UX-konsistenter.",
+    "core/email.py: build_smtp_config gibt cfg mit host='' zurück wenn SMTP nicht konfiguriert. send_email prüft `if not cfg.host` und returned Fehler-String – sauber. Response-Struktur {ok:true, email_error: '...'} ist eindeutig.",
+    "booking_admin.py POST /requests/{id}/reschedule aktualisiert start_datetime + end_datetime + preferred_time/date, macht aber KEINEN Availability-Check gegen andere confirmed bookings/travel-matrix. Admin kann versehentlich Konflikte anlegen. Empfehlung: gleichen slot-check wie /request server-seitig auch für reschedule.",
+    "public_booking.py /slots liefert bei blocked_date: reason='blocked_date' + blocked_label. Front-end Wizard zeigt den Label sauber. Keine Änderung nötig."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "3 Test-Buchungsanfragen (pytest-ui64-appr/resc/decl@example.ch) via POST /api/booking/public/request erzeugt und nach dem Test via DELETE /api/bookings/{id} aufgeräumt (insgesamt 4 gelöscht, 1 preexisting UI-Tester zusätzlich). 1 blocked-date '2029-07-15 UI-Test Feiertag' erzeugt und aufgeräumt.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "SMTP ist im Preview-Env NICHT konfiguriert – jedes approve/reschedule/decline liefert email_error='SMTP nicht konfiguriert (Fahrschul-Daten → E-Mail-Versand)' im Response-Body und als warning-Toast. Status-Änderung erfolgt trotzdem korrekt. window.confirm() in runApprove muss via page.on('dialog', d.accept()) im Playwright-Script akzeptiert werden. data-testids: admin-tab-booking_requests, booking-requests-manager, requests-filter-{pending|confirmed|cancelled|all}, request-row-{id}, request-detail-{id}, request-approve, request-reschedule-{open|date|time|submit}, request-decline-{open|reason|submit}. BlockedDates: booking-settings-toggle-blocked-dates, blocked-date-new-{date|label}, blocked-date-create, blocked-date-row-{id}, blocked-date-delete-{id}.",
+  "rca of the issue": "Keine Bugs. Beim ersten Approve-UI-Test schlug es fehl (booking blieb pending) weil Playwright window.confirm() automatisch dismissed. Nach Zufügen von page.on('dialog', accept) und Reset des Status auf pending funktionierte der komplette Flow inkl. Toast 'SMTP nicht konfiguriert'."
+}

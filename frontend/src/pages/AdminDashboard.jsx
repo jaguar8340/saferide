@@ -40,6 +40,7 @@ import BusinessSettingsManager from "@/components/admin/BusinessSettingsManager"
 import UsersManager from "@/components/admin/UsersManager";
 import BackupManager from "@/components/admin/BackupManager";
 import CalendarManager from "@/components/admin/CalendarManager";
+import BookingRequestsManager from "@/components/admin/booking/BookingRequestsManager";
 import EmailSettingsManager from "@/components/admin/EmailSettingsManager";
 import MailModule from "@/components/admin/MailModule";
 import TermsManager from "@/components/admin/TermsManager";
@@ -56,6 +57,7 @@ import {
 const TABS = [
   { id: "students", icon: UserRound, key: "students", label_de: "Schüler", label_en: "Students" },
   { id: "calendar", icon: Calendar, key: "calendar", label_de: "Kalender", label_en: "Calendar" },
+  { id: "booking_requests", icon: Inbox, key: "booking_requests", label_de: "Buchungsanfragen", label_en: "Booking Requests" },
   { id: "accounting", icon: Wallet, key: "accounting", label_de: "Buchhaltung", label_en: "Accounting" },
   { id: "fk_master", icon: ClipboardList, key: "fk_master", label_de: "Fahrkontrolle-Stammdaten", label_en: "Fahrkontrolle Masters" },
   { id: "business", icon: Building2, key: "business", label_de: "Fahrschul-Daten", label_en: "Business Settings" },
@@ -223,6 +225,7 @@ export default function AdminDashboard() {
         <main className="flex-1 p-4 md:p-8 overflow-x-hidden min-w-0">
           {tab === "students" && <StudentsManager />}
           {tab === "calendar" && <CalendarManager />}
+          {tab === "booking_requests" && <BookingRequestsManager />}
           {tab === "accounting" && <AccountingPage />}
           {tab === "fk_master" && <MasterDataTab />}
           {tab === "business" && <BusinessSettingsManager />}
