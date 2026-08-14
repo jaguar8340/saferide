@@ -1393,7 +1393,8 @@ function IcalModal({ settings, onClose, onRegenerate, onReload }) {
               <div className="text-sm text-[#475569] leading-relaxed">
                 Kopiere die iCal-Abo-URL aus deinem privaten Kalender hier rein.
                 Termine daraus werden als <span className="font-semibold text-[#334155]">gestreifte, graue Blöcke</span> im
-                Kalender angezeigt und blockieren Doppelbuchungen. Import läuft alle 5 Minuten.
+                Kalender angezeigt und blockieren Doppelbuchungen — sowohl im Admin-Kalender
+                als auch im öffentlichen Buchungs-Widget. Import läuft alle 5 Minuten.
               </div>
               <div>
                 <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">

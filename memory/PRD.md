@@ -627,3 +627,11 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **Race-Condition-Guard** (`public_booking.py` POST /request): 409-Fehler wenn Slot inzwischen belegt ist. Verhindert Doppelbuchungen zwischen Absenden und Admin-Approval.
   - **Regression**: `/app/backend/tests/test_booking_admin.py` (neu, 9 Tests) + `test_public_booking.py` (12 Tests) = 21/21 pytest grün. Testing-Subagent bestätigt kompletten End-to-End-Flow (Approve/Reschedule/Decline + Feiertag anlegen + Wizard-Sperre).
 
+
+
+- ✅ **Iteration 66 (14.02.2026) — iCal-Sync in Slot-Berechnung (DONE, 24/24 pytest grün):**
+  - **Externe iCal-Feeds blockieren jetzt öffentliche Slots**: Der Slot-Algorithmus in `public_booking.py` importiert `_load_external_events` aus `calendar.py` und fügt private iPhone/Google-Termine (aus `settings.external_ical_urls`) als zusätzliche „belegt"-Intervalle in die Konfliktprüfung ein. Der bestehende 5-Minuten-Cache und die HTTPS/webcal-Auto-Umschreibung werden mitverwendet.
+  - **Neuer Helper** `_external_intervals_on(date_iso)`: konvertiert iCal-Events des Tages in Minuten-of-Day-Intervalle (mit `pickup_id=None`, damit sie nur den Standard-Puffer, nicht die Reisezeit-Matrix, brauchen). Ganztägige Events und über Mitternacht laufende Termine werden korrekt auf den Zieltag geclippt.
+  - **POST /request Konflikt-Guard erweitert**: HTTP 409 wird jetzt auch geworfen, wenn ein Slot mit einem privaten iCal-Event überlappt — nicht nur wenn eine andere pending Booking existiert.
+  - **UI-Text im IcalModal präzisiert**: „…blockieren Doppelbuchungen — sowohl im Admin-Kalender als auch im öffentlichen Buchungs-Widget."
+  - **Regression** `/app/backend/tests/test_ical_slot_integration.py` (neu, 3 Tests): startet einen lokalen HTTP-Server der ein VCALENDAR/VEVENT für 14:00–16:00 UTC ausliefert, registriert es via `POST /calendar/external-feeds`, invalidiert den Cache via `/refresh` und verifiziert: (a) `/slots` schließt 14:00–15:30 aus, (b) `POST /request` mit 14:30 liefert 409, (c) `POST /request` mit 09:00 (außerhalb) liefert 200. Gesamt-Suite: 24/24 grün.

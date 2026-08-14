@@ -13,6 +13,9 @@ The slot algorithm respects
   – the manual **travel-time matrix** between pickup locations
     (`pickup_distances`) — added ON TOP of the default buffer when the
     previous or next appointment on that day has a different pickup.
+  – **external iCal feeds** (iPhone/Google) merged in as read-only
+    "belegt"-slots so private appointments never collide with public
+    bookings.
 
 All submitted requests are stored in the **existing `bookings` collection**
 with `status="pending"` + `source="public"` + `entry_type="appointment"`,
@@ -30,6 +33,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from core.db import db
+from routers.calendar import _load_external_events, _parse_iso as _parse_iso_ext
 
 
 router = APIRouter(prefix="/booking/public", tags=["booking-public"])
@@ -134,6 +138,53 @@ def _required_gap(
     return default_buffer + travel
 
 
+async def _external_intervals_on(date_iso: str) -> List[Dict[str, Any]]:
+    """Fetch external iCal events (iPhone / Google) that overlap `date_iso`
+    and return them as `{start, end, pickup_id=None}` intervals in local
+    minutes-of-day. Private events have no pickup so they don't participate
+    in the travel-time matrix — only the default buffer applies.
+
+    All-day external events collapse to (0, 24*60) so they fully block the
+    day. Events that span midnight are clipped to the day window.
+    """
+    try:
+        y, m, d = date_iso.split("-")
+        day = datetime(int(y), int(m), int(d))
+    except Exception:
+        return []
+    day_start_utc = day.replace(tzinfo=timezone.utc)
+    day_end_utc = day_start_utc + timedelta(days=1)
+    events = await _load_external_events(day_start_utc, day_end_utc + timedelta(days=1))
+    out: List[Dict[str, Any]] = []
+    for ev in events:
+        s = _parse_iso_ext(ev.get("start_datetime") or "")
+        e = _parse_iso_ext(ev.get("end_datetime") or "")
+        if not s or not e:
+            continue
+        # Normalise to naive local time (icalendar returns aware datetimes,
+        # our booking model works in the same local timezone conceptually).
+        if s.tzinfo is not None:
+            s = s.astimezone(timezone.utc).replace(tzinfo=None)
+        if e.tzinfo is not None:
+            e = e.astimezone(timezone.utc).replace(tzinfo=None)
+        # Clip to the target day
+        day_naive_start = day
+        day_naive_end = day + timedelta(days=1)
+        if e <= day_naive_start or s >= day_naive_end:
+            continue
+        clip_s = max(s, day_naive_start)
+        clip_e = min(e, day_naive_end)
+        out.append(
+            {
+                "start": clip_s.hour * 60 + clip_s.minute,
+                "end": clip_e.hour * 60 + clip_e.minute if clip_e < day_naive_end else 24 * 60,
+                "pickup_id": None,
+                "source": "external",
+            }
+        )
+    return out
+
+
 # ---------------------------------------------------------------------------
 #  Public listings (no auth) – only expose the essentials
 # ---------------------------------------------------------------------------
@@ -236,6 +287,11 @@ async def public_slots(
         )
     intervals.sort(key=lambda x: x["start"])
 
+    # ---- external iCal feeds (iPhone / Google private appointments) ----
+    ext_intervals = await _external_intervals_on(date)
+    intervals.extend(ext_intervals)
+    intervals.sort(key=lambda x: x["start"])
+
     # ---- iterate candidate slots ----
     slots: List[str] = []
     # If date is today, don't return slots that already started
@@ -309,18 +365,23 @@ async def create_public_request(payload: PublicBookingRequest):
     # Reject if the exact same time-slot is already reserved. This prevents
     # a race condition where two visitors submit the same slot at the same
     # moment before the admin approves either. Cancelled / declined slots
-    # are ignored so admins can free them up again.
+    # are ignored so admins can free them up again. External iCal events
+    # are ALSO considered so private (iPhone/Google) appointments block.
     hh, mm = _parse_hhmm(time_norm)
     req_start = _to_minutes(hh, mm)
     req_end = req_start + payload.duration_min
     same_day_docs = await db.bookings.find({}, {"_id": 0}).to_list(5000)
+    all_intervals: List[Dict[str, Any]] = []
     for b in _bookings_on_day(same_day_docs, payload.date):
         b_dt = _parse_iso(b.get("start_datetime") or "")
         if not b_dt:
             continue
         b_start = b_dt.hour * 60 + b_dt.minute
         b_end = b_start + int(b.get("duration_min") or 60)
-        if req_start < b_end and req_end > b_start:
+        all_intervals.append({"start": b_start, "end": b_end})
+    all_intervals.extend(await _external_intervals_on(payload.date))
+    for it in all_intervals:
+        if req_start < it["end"] and req_end > it["start"]:
             raise HTTPException(
                 status_code=409,
                 detail="Dieser Slot ist inzwischen belegt. Bitte wähle einen anderen Zeitpunkt.",
