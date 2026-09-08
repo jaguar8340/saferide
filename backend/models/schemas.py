@@ -222,6 +222,12 @@ class StudentCreate(BaseModel):
 class Student(StudentCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # Relaxed on the READ model so legacy documents with empty names (e.g.
+    # company entries imported from an older system) don't 500 the whole
+    # list-response. Input-side (StudentCreate) keeps min_length=1, so new
+    # entries still require a proper first/last name.
+    first_name: str = Field(default="", max_length=120)
+    last_name: str = Field(default="", max_length=120)
     # AGB (Terms) confirmation state — populated by /api/terms/send + /api/terms/confirm
     #  Legacy student-side fields (mirror the split fields below for backwards compat)
     agb_sent_at: Optional[str] = None

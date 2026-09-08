@@ -1,7 +1,9 @@
 """Students – CRUD for the admin-only Fahrschüler management module."""
+import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 
 from core.activity import log_activity
 from core.db import db
@@ -9,11 +11,24 @@ from core.security import get_current_admin
 from models.schemas import Student, StudentCreate, StudentPatch
 
 router = APIRouter(prefix="/students", tags=["students"])
+log = logging.getLogger("students")
 
 
 @router.get("", response_model=List[Student])
 async def list_students(admin=Depends(get_current_admin)):
-    return await db.students.find({}, {"_id": 0}).sort("last_name", 1).to_list(2000)
+    # Serialise defensively: a single malformed legacy doc must never take
+    # the entire list down. Skip + log any row that fails validation.
+    docs = await db.students.find({}, {"_id": 0}).sort("last_name", 1).to_list(2000)
+    out: List[Student] = []
+    for doc in docs:
+        try:
+            out.append(Student(**doc))
+        except ValidationError as e:
+            log.warning(
+                "students.list: skipping malformed doc id=%s err=%s",
+                doc.get("id"), e.errors()[:2],
+            )
+    return out
 
 
 @router.post("", response_model=Student)
