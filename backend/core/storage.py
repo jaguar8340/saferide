@@ -212,6 +212,42 @@ def delete_object(path: str) -> None:
         log.warning("Hetzner delete_object failed for %s: %s", path, e)
 
 
+def list_objects(prefix: str = "") -> list[dict]:
+    """List every object in the bucket (optionally under `prefix`).
+
+    Returns a list of ``{"key", "size", "last_modified"}``. Paginates
+    automatically. Used by the full-backup endpoint to gather every file
+    that has ever been uploaded.
+    """
+    s3 = _get_s3()
+    if not s3:
+        return []
+    out: list[dict] = []
+    token = None
+    while True:
+        kwargs: dict = {"Bucket": _bucket(), "Prefix": prefix, "MaxKeys": 1000}
+        if token:
+            kwargs["ContinuationToken"] = token
+        try:
+            resp = s3.list_objects_v2(**kwargs)
+        except ClientError as e:
+            log.warning("list_objects failed: %s", e)
+            return out
+        for it in resp.get("Contents") or []:
+            out.append({
+                "key": it["Key"],
+                "size": int(it.get("Size") or 0),
+                "last_modified": (it.get("LastModified").isoformat()
+                                  if it.get("LastModified") else ""),
+            })
+        if not resp.get("IsTruncated"):
+            break
+        token = resp.get("NextContinuationToken")
+        if not token:
+            break
+    return out
+
+
 # Back-compat shim (old name, still used in tests)
 def init_storage() -> Optional[str]:
     return "hetzner" if _get_s3() else None

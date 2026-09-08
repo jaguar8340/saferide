@@ -49,6 +49,37 @@ const formatDMY = (iso) => {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
 };
 
+/**
+ * Fetch invoice PDF for {student_id, invoice_id} and open in a new browser tab.
+ * Uses an object URL so the browser reuses the file cache; revokes it after
+ * a minute so we don't leak blobs.
+ */
+async function openInvoicePdf(studentId, invoiceId, number) {
+  if (!studentId || !invoiceId) {
+    toast.error("Rechnung ist nicht mit einem Schüler verknüpft");
+    return;
+  }
+  try {
+    const r = await api.get(
+      `/students/${studentId}/invoices/${invoiceId}.pdf`,
+      { responseType: "blob" },
+    );
+    const blob = new Blob([r.data], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) {
+      // Popup blocked → force download instead
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${number || "Rechnung"}.pdf`;
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (e) {
+    toast.error(formatApiError(e));
+  }
+}
+
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
   "Juli", "August", "September", "Oktober", "November", "Dezember",
@@ -381,7 +412,20 @@ function InvoicesSubtab({ year, direct = false }) {
                   data-testid={`accounting-invoice-row-${i.id}`}
                   className="border-t border-[#f1f5f9] hover:bg-[#fafaf9]"
                 >
-                  <td className="px-4 py-3 font-semibold text-[#0f172a] whitespace-nowrap">{i.number}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => openInvoicePdf(i.student_id, i.id, i.number)}
+                      data-testid={`invoice-open-pdf-${i.id}`}
+                      title="PDF öffnen"
+                      className="font-semibold text-[#0f172a] hover:text-[#ff5a36] inline-flex items-center gap-1.5 group"
+                    >
+                      <FileText size={13} className="text-[#94a3b8] group-hover:text-[#ff5a36]" />
+                      <span className="underline decoration-dotted underline-offset-4 decoration-[#cbd5e1] group-hover:decoration-[#ff5a36]">
+                        {i.number}
+                      </span>
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-[#334155] tabular-nums whitespace-nowrap">{formatDMY(i.date)}</td>
                   <td className="px-4 py-3">
                     {i.student_name || "—"}
