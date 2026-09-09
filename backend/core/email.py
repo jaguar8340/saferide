@@ -42,6 +42,9 @@ def open_smtp(cfg: dict):
         raise HTTPException(status_code=400, detail="SMTP-Host ist nicht gesetzt")
     try:
         if cfg["port"] == 465:
+            # Implicit SSL — the connection starts encrypted. `use_tls` is
+            # ignored in this branch to avoid the accidental STARTTLS-on-465
+            # miscombination that produces "UNEXPECTED_EOF_WHILE_READING".
             context = ssl.create_default_context()
             server = smtplib.SMTP_SSL(cfg["host"], cfg["port"], timeout=15, context=context)
         else:
@@ -59,6 +62,24 @@ def open_smtp(cfg: dict):
             detail=f"SMTP-Anmeldung fehlgeschlagen: "
                    f"{e.smtp_error.decode('utf-8', 'replace') if hasattr(e, 'smtp_error') else e}",
         )
+    except ssl.SSLError as e:
+        # Very common admin mistake — SSL negotiation failed. Tell them
+        # exactly which knob to touch instead of dumping the raw OpenSSL msg.
+        hint = (
+            "SSL-Fehler beim Verbindungsaufbau. "
+            "Wenn du Port 465 nutzt und dieser Fehler kommt, versuche Port 587 "
+            "mit aktiviertem STARTTLS. Wenn du Port 587 nutzt und dieser Fehler "
+            "kommt, prüfe ob STARTTLS aktiviert ist."
+        )
+        raise HTTPException(status_code=400, detail=f"{hint} (Details: {e})")
+    except (ConnectionError, TimeoutError, OSError) as e:
+        # These are typical for firewall/port-blocked situations.
+        hint = (
+            "Der SMTP-Server konnte nicht erreicht werden. "
+            "Bei Hostpoint funktioniert normalerweise Port 587 mit STARTTLS. "
+            "Prüfe Host, Port und ob der Provider die Verbindung blockiert."
+        )
+        raise HTTPException(status_code=400, detail=f"{hint} (Details: {e})")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"SMTP-Verbindung fehlgeschlagen: {e}")
 
