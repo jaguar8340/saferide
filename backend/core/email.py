@@ -15,13 +15,19 @@ from fastapi import HTTPException
 
 
 def build_smtp_config(settings: dict, override: Optional[Dict] = None) -> dict:
-    """Merge stored BusinessSettings.smtp_* fields with optional overrides."""
+    """Merge stored BusinessSettings.smtp_* fields with optional overrides.
+
+    Now also carries the Resend fields so `send_email` can pick whichever
+    transport is configured without a second lookup.
+    """
     cfg = {
         "host": settings.get("smtp_host") or "",
         "port": int(settings.get("smtp_port") or 587),
         "user": settings.get("smtp_username") or "",
         "password": settings.get("smtp_password") or "",
         "use_tls": bool(settings.get("smtp_use_tls", True)),
+        "resend_api_key": settings.get("resend_api_key") or "",
+        "resend_from_email": settings.get("resend_from_email") or "",
     }
     if override:
         for src, dst in [
@@ -30,6 +36,8 @@ def build_smtp_config(settings: dict, override: Optional[Dict] = None) -> dict:
             ("smtp_username", "user"),
             ("smtp_password", "password"),
             ("smtp_use_tls", "use_tls"),
+            ("resend_api_key", "resend_api_key"),
+            ("resend_from_email", "resend_from_email"),
         ]:
             if override.get(src) is not None:
                 cfg[dst] = override[src]
@@ -117,15 +125,48 @@ def send_email(
     body_html: str = "",
     from_email: str,
     from_name: str = "",
+    reply_to: Optional[str] = None,
+    attachments: Optional[list] = None,
 ) -> None:
-    """Compose + send a plain-or-HTML email. Raises HTTPException on failure."""
+    """Compose + send a plain-or-HTML email.
+
+    Transport is chosen automatically:
+      - If `cfg["resend_api_key"]` is set → send via Resend HTTPS API
+        (works from any IP, avoids Hostpoint/Abusix blacklists).
+      - Otherwise fall back to direct SMTP via smtplib.
+
+    `attachments` (optional) is a list of `{filename, content, content_type}`.
+    """
+    if cfg.get("resend_api_key"):
+        _send_via_resend(
+            cfg,
+            to=to,
+            subject=subject,
+            body_text=body_text,
+            body_html=body_html,
+            from_email=from_email,
+            from_name=from_name,
+            reply_to=reply_to,
+            attachments=attachments,
+        )
+        return
+
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = f"{from_name} <{from_email}>" if from_name else from_email
     msg["To"] = to
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(body_text or html_to_text(body_html))
     if body_html:
         msg.add_alternative(body_html, subtype="html")
+    for att in attachments or []:
+        msg.add_attachment(
+            att["content"],
+            maintype=att.get("content_type", "application/octet-stream").split("/")[0],
+            subtype=att.get("content_type", "application/octet-stream").split("/", 1)[-1],
+            filename=att["filename"],
+        )
 
     server = open_smtp(cfg)
     try:
@@ -137,3 +178,63 @@ def send_email(
             server.quit()
         except Exception:
             pass
+
+
+def _send_via_resend(
+    cfg: dict,
+    *,
+    to: str,
+    subject: str,
+    body_text: str,
+    body_html: str = "",
+    from_email: str,
+    from_name: str = "",
+    reply_to: Optional[str] = None,
+    attachments: Optional[list] = None,
+) -> None:
+    """Send via Resend's REST API. Errors surface as HTTP 400 so callers can
+    display them the same way as smtplib errors."""
+    try:
+        import resend                            # local import — optional dep
+    except ImportError:
+        raise HTTPException(
+            status_code=500,
+            detail="Resend-SDK ist nicht installiert. Bitte `pip install resend` ausführen.",
+        )
+
+    resend.api_key = cfg["resend_api_key"]
+    # Prefer explicit Resend-From, fall back to the SMTP-From so Nadine only
+    # needs to set the API key + verified domain once.
+    sender = cfg.get("resend_from_email") or from_email
+    if not sender:
+        raise HTTPException(
+            status_code=400,
+            detail="Resend-Absender-E-Mail fehlt (Fahrschul-Daten → E-Mail-Versand).",
+        )
+    params: dict = {
+        "from": f"{from_name} <{sender}>" if from_name else sender,
+        "to": [to],
+        "subject": subject or "(kein Betreff)",
+    }
+    if body_html:
+        params["html"] = body_html
+    if body_text or not body_html:
+        params["text"] = body_text or html_to_text(body_html)
+    if reply_to:
+        params["reply_to"] = reply_to
+    if attachments:
+        # Resend expects base64-encoded content
+        import base64
+        params["attachments"] = [
+            {
+                "filename": a["filename"],
+                "content": base64.b64encode(a["content"]).decode("ascii"),
+                "content_type": a.get("content_type", "application/octet-stream"),
+            }
+            for a in attachments
+        ]
+
+    try:
+        resend.Emails.send(params)
+    except Exception as e:                                   # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"Resend-Versand fehlgeschlagen: {e}")

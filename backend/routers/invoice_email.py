@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from core.activity import log_activity
 from core.db import db
+from core.email import build_smtp_config, render_template, send_email
 from core.security import get_current_admin
 from routers.business_settings import get_or_create_settings
 from routers.invoice_pdf import build_invoice_pdf
@@ -141,11 +142,11 @@ async def send_invoice_email(
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
 
     settings = await get_or_create_settings()
-    cfg = _build_smtp_config(settings, override=None)
-    if not cfg["host"]:
+    cfg = build_smtp_config(settings, override=None)
+    if not cfg["host"] and not cfg.get("resend_api_key"):
         raise HTTPException(
             status_code=400,
-            detail="SMTP ist noch nicht konfiguriert. Bitte zuerst in Fahrschul-Daten → E-Mail-Versand einrichten.",
+            detail="Weder SMTP noch Resend sind eingerichtet. Bitte zuerst in Fahrschul-Daten → E-Mail-Versand einrichten.",
         )
 
     from_email = settings.get("smtp_from_email") or settings.get("smtp_username") or ""
@@ -179,31 +180,22 @@ async def send_invoice_email(
     }
     subject_tpl = payload.subject or settings.get("email_subject_template") or "Rechnung {number}"
     body_tpl = payload.body or settings.get("email_body_template") or "Hallo {first_name},\n\nim Anhang die Rechnung {number}."
-    subject = _render_template(subject_tpl, ctx)
-    body = _render_template(body_tpl, ctx)
+    subject = render_template(subject_tpl, ctx)
+    body = render_template(body_tpl, ctx)
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = f"{from_name} <{from_email}>" if from_name else from_email
-    msg["To"] = to_email
-    msg.set_content(body)
-    msg.add_attachment(
-        pdf_bytes,
-        maintype="application",
-        subtype="pdf",
-        filename=f"{number}.pdf",
+    send_email(
+        cfg,
+        to=to_email,
+        subject=subject,
+        body_text=body,
+        from_email=from_email,
+        from_name=from_name,
+        attachments=[{
+            "filename": f"{number}.pdf",
+            "content": pdf_bytes,
+            "content_type": "application/pdf",
+        }],
     )
-
-    server = _open_smtp(cfg)
-    try:
-        server.send_message(msg)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"E-Mail-Versand fehlgeschlagen: {e}")
-    finally:
-        try:
-            server.quit()
-        except Exception:
-            pass
 
     await log_activity(
         student_id,

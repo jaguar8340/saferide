@@ -517,6 +517,10 @@ class BusinessSettings(BaseModel):
     smtp_from_email: str = ""
     smtp_from_name: str = ""
     smtp_use_tls: bool = True                               # STARTTLS on 587 / implicit SSL on 465
+    # Resend-Relay — used as a drop-in replacement for direct SMTP when the
+    # SMTP host blacklists our cloud IP. If both are configured, Resend wins.
+    resend_api_key: str = ""
+    resend_from_email: str = ""                             # e.g. no-reply@saferide.ch
     # IMAP (Webmail Posteingang lesen)
     imap_host: str = ""
     imap_port: int = 993
@@ -567,6 +571,8 @@ class BusinessSettingsPatch(BaseModel):
     smtp_from_name: Optional[str] = None
     external_ical_urls: Optional[List[str]] = None
     smtp_use_tls: Optional[bool] = None
+    resend_api_key: Optional[str] = None
+    resend_from_email: Optional[str] = None
     imap_host: Optional[str] = None
     imap_port: Optional[int] = None
     imap_user: Optional[str] = None
