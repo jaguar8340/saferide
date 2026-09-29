@@ -134,9 +134,30 @@ async def update_invoice(
     if "payment_method" in updates and updates["payment_method"] not in PAYMENT_METHODS:
         raise HTTPException(status_code=400, detail="Ungültige Zahlungsweise")
 
+    # Load current row so we can react to state transitions.
+    existing = await db.student_invoices.find_one(
+        {"id": invoice_id, "student_id": student_id}, {"_id": 0}
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+
+    # -------- Auto-stamp paid_at when flipping to paid --------
+    #  * status changes to "paid" AND caller didn't set paid_at explicitly
+    #    → default to today.
+    #  * status leaves "paid" → clear paid_at.
+    if "status" in updates:
+        was_paid = existing.get("status") == "paid"
+        will_be_paid = updates["status"] == "paid"
+        if will_be_paid and not was_paid and "paid_at" not in updates:
+            updates["paid_at"] = datetime.now(timezone.utc).date().isoformat()
+        elif not will_be_paid and was_paid and "paid_at" not in updates:
+            updates["paid_at"] = ""
+
     # Invalidate the PDF archive whenever any invoice field changes –
     # simplest correctness win. Next PDF download regenerates + re-archives.
-    invalidate_archive = any(k not in ("status", "payment_method") for k in updates.keys())
+    invalidate_archive = any(
+        k not in ("status", "payment_method", "paid_at") for k in updates.keys()
+    )
     if invalidate_archive:
         updates["archive_path"] = ""
         updates["archive_url"] = ""

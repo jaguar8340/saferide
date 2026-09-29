@@ -31,6 +31,37 @@ async def list_students(admin=Depends(get_current_admin)):
     return out
 
 
+@router.get("/check-duplicate")
+async def check_student_duplicate(
+    first_name: str,
+    last_name: str,
+    admin=Depends(get_current_admin),
+):
+    """Return existing students with the same first+last name (case-insensitive).
+
+    Used by the New-Student form to warn Nadine before creating a doppelter Eintrag.
+    Legit duplicates (father/son, same-name family members) can still be created —
+    the frontend just surfaces a warning modal.
+    """
+    fn = (first_name or "").strip()
+    ln = (last_name or "").strip()
+    if not fn or not ln:
+        return {"matches": []}
+    # Case-insensitive exact match via regex anchors (^...$).
+    import re
+    fn_re = re.compile(f"^{re.escape(fn)}$", re.IGNORECASE)
+    ln_re = re.compile(f"^{re.escape(ln)}$", re.IGNORECASE)
+    docs = await db.students.find(
+        {"first_name": fn_re, "last_name": ln_re},
+        {
+            "_id": 0, "id": 1, "first_name": 1, "last_name": 1,
+            "email": 1, "phone": 1, "city": 1, "category": 1,
+            "start_date": 1, "created_at": 1, "archived": 1,
+        },
+    ).to_list(20)
+    return {"matches": docs}
+
+
 @router.post("", response_model=Student)
 async def create_student(payload: StudentCreate, admin=Depends(get_current_admin)):
     student = Student(**payload.model_dump())

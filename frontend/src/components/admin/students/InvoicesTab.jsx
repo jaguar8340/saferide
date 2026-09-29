@@ -8,7 +8,7 @@
  * on top. A "PDF" button per row streams a formatted invoice PDF.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive, ChevronDown, Ban, RotateCcw } from "lucide-react";
+import { Loader2, Trash2, Plus, Check, CircleDot, XCircle, FileDown, Mail, Archive, ChevronDown, Ban, RotateCcw, AlertCircle, BellRing, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -52,6 +52,8 @@ export default function InvoicesTab({ student }) {
   const [creating, setCreating] = useState(false);
   const [downloading, setDownloading] = useState(null);
   const [sending, setSending] = useState(null);
+  const [reminderOpen, setReminderOpen] = useState(null);    // invoice being mahned
+  const [paidDatePrompt, setPaidDatePrompt] = useState(null); // { invoice, currentDate }
   const [draft, setDraft] = useState({
     lesson_date: new Date().toISOString().slice(0, 10),
     duration_min: 45,
@@ -134,7 +136,32 @@ export default function InvoicesTab({ student }) {
 
   const setStatus = async (invoice, next) => {
     if (next === invoice.status) return;
+    // When flipping to "paid" open a date-picker so the admin can confirm
+    // the Zahlungseingangs-Datum. Default = today.
+    if (next === "paid") {
+      setPaidDatePrompt({
+        invoice,
+        date: new Date().toISOString().slice(0, 10),
+      });
+      return;
+    }
     await patch(invoice.id, "status", next);
+  };
+
+  const confirmPaid = async () => {
+    if (!paidDatePrompt) return;
+    const { invoice, date } = paidDatePrompt;
+    try {
+      await api.patch(`/students/${student.id}/invoices/${invoice.id}`, {
+        status: "paid",
+        paid_at: date || new Date().toISOString().slice(0, 10),
+      });
+      toast.success(`Als bezahlt markiert am ${date ? formatDMY(date) : "heute"}`);
+      setPaidDatePrompt(null);
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
   };
 
   const cancelInvoice = async (inv) => {
@@ -515,6 +542,11 @@ export default function InvoicesTab({ student }) {
                       {inv.status === "open" && <CircleDot size={11} />}
                       {inv.status === "cancelled" && <XCircle size={11} />}
                       {st.label}
+                      {inv.status === "paid" && inv.paid_at && (
+                        <span className="ml-1 opacity-70 font-normal normal-case tracking-normal">
+                          · {formatDMY(inv.paid_at)}
+                        </span>
+                      )}
                       <ChevronDown size={11} className="opacity-60" />
                     </button>
                   </DropdownMenuTrigger>
@@ -538,6 +570,15 @@ export default function InvoicesTab({ student }) {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {inv.reminder_level > 0 && (
+                  <span
+                    data-testid={`invoice-reminder-badge-${inv.id}`}
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2.5 py-1 rounded-full shrink-0"
+                    title={`Letzte Mahnung: ${inv.last_reminder_at ? new Date(inv.last_reminder_at).toLocaleDateString("de-CH") : "—"}${inv.reminder_fee_chf ? ` · Gebühren CHF ${Number(inv.reminder_fee_chf).toFixed(2)}` : ""}`}
+                  >
+                    <BellRing size={10} /> {inv.reminder_level}. Mahnung
+                  </span>
+                )}
                 <input
                   type="text"
                   defaultValue={inv.item_title || ""}
@@ -607,6 +648,17 @@ export default function InvoicesTab({ student }) {
                     )}
                     E-Mail
                   </button>
+                  {inv.status === "open" && !inv.is_direct && (
+                    <button
+                      onClick={() => setReminderOpen(inv)}
+                      data-testid={`invoice-reminder-${inv.id}`}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-3 py-2 rounded-full hover:opacity-90"
+                      title={inv.reminder_level >= 3 ? "Bereits 3 Mahnungen versendet" : "Mahnung senden"}
+                    >
+                      <BellRing size={11} />
+                      Mahnung
+                    </button>
+                  )}
                   {inv.status === "cancelled" ? (
                     <button
                       onClick={() => reactivateInvoice(inv)}
@@ -633,6 +685,23 @@ export default function InvoicesTab({ student }) {
           );
         })}
       </div>
+      {paidDatePrompt && (
+        <PaidDateModal
+          value={paidDatePrompt.date}
+          invoiceNumber={paidDatePrompt.invoice.number}
+          onChange={(d) => setPaidDatePrompt((p) => ({ ...p, date: d }))}
+          onCancel={() => setPaidDatePrompt(null)}
+          onConfirm={confirmPaid}
+        />
+      )}
+      {reminderOpen && (
+        <ReminderModal
+          student={student}
+          invoice={reminderOpen}
+          onClose={() => setReminderOpen(null)}
+          onSent={() => { setReminderOpen(null); load(); }}
+        />
+      )}
     </div>
   );
 }
@@ -644,6 +713,279 @@ function FieldGroup({ label, children }) {
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+/** Small modal that asks for the payment-received date when flipping to "paid". */
+function PaidDateModal({ value, onChange, onCancel, onConfirm, invoiceNumber }) {
+  return (
+    <div
+      data-testid="paid-date-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-[#dcfce7] text-[#15803d] flex items-center justify-center shrink-0">
+            <Check size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display text-xl leading-tight text-[#0f172a]">
+              Zahlungseingang
+            </h3>
+            <p className="text-sm text-[#475569] mt-1">
+              Wann ist die Zahlung für {invoiceNumber} eingetroffen?
+            </p>
+          </div>
+          <button
+            onClick={onCancel}
+            data-testid="paid-date-close"
+            className="text-[#94a3b8] hover:text-[#0f172a] p-1"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+          Bezahlt am
+        </label>
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          data-testid="paid-date-input"
+          className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] mb-5"
+        />
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onCancel}
+            data-testid="paid-date-cancel"
+            className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={onConfirm}
+            data-testid="paid-date-confirm"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#16a34a] text-white px-4 py-2 rounded-full hover:opacity-90"
+          >
+            <Check size={12} /> Als bezahlt markieren
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Modal that previews and sends a payment reminder (Mahnung). */
+function ReminderModal({ student, invoice, onClose, onSent }) {
+  const [level, setLevel] = useState(null);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [fee, setFee] = useState(0);
+  const [to, setTo] = useState(student.email || "");
+  const [daysOverdue, setDaysOverdue] = useState(0);
+  const [previewing, setPreviewing] = useState(true);
+  const [sending, setSendingLoc] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setPreviewing(true);
+      try {
+        const r = await api.post(
+          `/students/${student.id}/invoices/${invoice.id}/reminder/preview`,
+          { level: level || undefined },
+        );
+        setLevel(r.data.level);
+        setSubject(r.data.subject);
+        setBody(r.data.body);
+        setFee(r.data.fee);
+        setDaysOverdue(r.data.days_overdue);
+        setTo(r.data.to || student.email || "");
+      } catch (e) {
+        toast.error(formatApiError(e));
+      } finally {
+        setPreviewing(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
+
+  const send = async () => {
+    if (!to.trim()) {
+      toast.error("Empfänger-E-Mail fehlt");
+      return;
+    }
+    setSendingLoc(true);
+    try {
+      await api.post(`/students/${student.id}/invoices/${invoice.id}/reminder`, {
+        level,
+        to: to.trim(),
+        subject,
+        body,
+        fee,
+      });
+      toast.success(`${level}. Mahnung an ${to.trim()} versendet`);
+      onSent?.();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSendingLoc(false);
+    }
+  };
+
+  return (
+    <div
+      data-testid="reminder-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-[#fef3c7] text-[#b45309] flex items-center justify-center shrink-0">
+            <BellRing size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display text-xl leading-tight text-[#0f172a]">
+              Mahnung senden
+            </h3>
+            <p className="text-sm text-[#475569] mt-1">
+              Rechnung <strong>{invoice.number}</strong> · {daysOverdue} Tage überfällig
+              {invoice.reminder_level > 0 && (
+                <span className="ml-2 text-[#b45309]">
+                  · Bisherige Mahnungen: {invoice.reminder_level}
+                </span>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            data-testid="reminder-modal-close"
+            className="text-[#94a3b8] hover:text-[#0f172a] p-1"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Level selector */}
+        <div className="mb-4">
+          <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-2">
+            Mahnstufe
+          </label>
+          <div className="inline-flex gap-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-full p-1">
+            {[1, 2, 3].map((n) => (
+              <button
+                key={n}
+                onClick={() => setLevel(n)}
+                data-testid={`reminder-level-${n}`}
+                className={`text-[10px] font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full transition-colors ${
+                  level === n
+                    ? "bg-[#f59e0b] text-white"
+                    : "text-[#78716c] hover:text-[#0f172a]"
+                }`}
+              >
+                {n === 1 ? "1. Mahnung" : n === 2 ? "2. Mahnung" : "3. Mahnung"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {previewing ? (
+          <div className="flex items-center gap-2 text-sm text-[#78716c] py-8">
+            <Loader2 size={14} className="animate-spin" /> Vorlage wird geladen …
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+                  Empfänger
+                </label>
+                <input
+                  type="email"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  data-testid="reminder-to"
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+                  Mahngebühr (CHF)
+                </label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={fee}
+                  onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+                  data-testid="reminder-fee"
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+                Betreff
+              </label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                data-testid="reminder-subject"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </div>
+            <div className="mb-5">
+              <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">
+                Nachricht
+              </label>
+              <textarea
+                rows={10}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                data-testid="reminder-body"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] font-mono resize-none"
+              />
+              <p className="text-[10px] text-[#94a3b8] mt-1">
+                Standard-Text bearbeitbar unter Admin → Mail → E-Mail Einstellungen.
+              </p>
+            </div>
+            <div className="bg-[#fff7ed] border border-[#fed7aa] rounded-xl p-3 text-xs text-[#9a3412] mb-4 flex items-start gap-2">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <div>
+                Die Mahnung wird per E-Mail versendet, mit einer aktualisierten Rechnungs-PDF (inkl. Mahngebühr) als Anhang.
+                Der Status der Rechnung bleibt „offen", die Mahnstufe wird auf <strong>{level}</strong> gesetzt.
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            data-testid="reminder-cancel"
+            className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={send}
+            disabled={previewing || sending}
+            data-testid="reminder-send"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-5 py-2.5 rounded-full hover:opacity-90 disabled:opacity-50"
+          >
+            {sending ? <Loader2 size={12} className="animate-spin" /> : <BellRing size={12} />}
+            Mahnung senden
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

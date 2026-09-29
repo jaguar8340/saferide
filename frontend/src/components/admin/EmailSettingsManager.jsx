@@ -304,6 +304,120 @@ export default function EmailSettingsManager() {
         </div>
       </div>
 
+      {/* Mahnwesen — reminder templates + config */}
+      <div className="bg-white border border-[#e7e5e4] rounded-2xl p-5 mb-4">
+        <div className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] mb-1">
+          Mahnwesen · Vorlagen & Fristen
+        </div>
+        <p className="text-xs text-[#78716c] mb-4">
+          Standard-Texte und -Beträge, die beim Versand einer Mahnung geladen werden.
+          Beim Versand pro Rechnung kannst du sie jederzeit noch anpassen.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div>
+            <label className="text-[11px] font-semibold text-[#475569] block mb-1">
+              Zahlungsfrist (Tage)
+              {savingKey === "payment_deadline_days" && (
+                <Loader2 size={10} className="inline-block ml-2 animate-spin text-[#ff5a36]" />
+              )}
+            </label>
+            <input
+              type="number"
+              min="0"
+              defaultValue={data.payment_deadline_days ?? 10}
+              onBlur={(e) => save("payment_deadline_days", parseInt(e.target.value, 10) || 0)}
+              data-testid="bs-payment_deadline_days"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+            />
+            <p className="text-[10px] text-[#94a3b8] mt-1">Ab Rechnungsdatum bis 1. Mahnung fällig</p>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-[#475569] block mb-1">
+              Mahnintervall (Tage)
+              {savingKey === "reminder_interval_days" && (
+                <Loader2 size={10} className="inline-block ml-2 animate-spin text-[#ff5a36]" />
+              )}
+            </label>
+            <input
+              type="number"
+              min="0"
+              defaultValue={data.reminder_interval_days ?? 10}
+              onBlur={(e) => save("reminder_interval_days", parseInt(e.target.value, 10) || 0)}
+              data-testid="bs-reminder_interval_days"
+              className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+            />
+            <p className="text-[10px] text-[#94a3b8] mt-1">Zwischen den Mahnstufen</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((n) => (
+              <div key={n}>
+                <label className="text-[11px] font-semibold text-[#475569] block mb-1">
+                  Gebühr {n}
+                  {savingKey === `reminder_fee_${n}` && (
+                    <Loader2 size={10} className="inline-block ml-1 animate-spin text-[#ff5a36]" />
+                  )}
+                </label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  defaultValue={data[`reminder_fee_${n}`] ?? 0}
+                  onBlur={(e) => save(`reminder_fee_${n}`, parseFloat(e.target.value) || 0)}
+                  data-testid={`bs-reminder_fee_${n}`}
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="mb-4 pt-4 border-t border-[#f3f0eb] first:border-t-0 first:pt-0">
+            <div className="text-[11px] font-semibold text-[#0f172a] mb-2 flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#fef3c7] text-[#b45309] text-[10px] font-bold">
+                {n}
+              </span>
+              {n === 1 ? "Zahlungserinnerung" : n === 2 ? "2. Mahnung" : "3. und letzte Mahnung"}
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[10px] font-semibold text-[#475569] block mb-1">
+                  Betreff
+                  {savingKey === `reminder_${n}_subject` && (
+                    <Loader2 size={10} className="inline-block ml-2 animate-spin text-[#ff5a36]" />
+                  )}
+                </label>
+                <input
+                  type="text"
+                  defaultValue={data[`reminder_${n}_subject`] ?? ""}
+                  onBlur={(e) => save(`reminder_${n}_subject`, e.target.value)}
+                  data-testid={`bs-reminder_${n}_subject`}
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-[#475569] block mb-1">
+                  Body
+                  {savingKey === `reminder_${n}_body` && (
+                    <Loader2 size={10} className="inline-block ml-2 animate-spin text-[#ff5a36]" />
+                  )}
+                </label>
+                <textarea
+                  rows={6}
+                  defaultValue={data[`reminder_${n}_body`] ?? ""}
+                  onBlur={(e) => save(`reminder_${n}_body`, e.target.value)}
+                  data-testid={`bs-reminder_${n}_body`}
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="text-[10px] text-[#94a3b8]">
+          Platzhalter: <code>{"{first_name}"}</code>, <code>{"{last_name}"}</code>, <code>{"{number}"}</code>, <code>{"{invoice_date}"}</code>, <code>{"{total}"}</code>, <code>{"{days_overdue}"}</code>, <code>{"{reminder_fee}"}</code>, <code>{"{new_total}"}</code>, <code>{"{business_name}"}</code>
+        </div>
+      </div>
+
       <button
         onClick={testConnection}
         disabled={testing || !data.smtp_host}

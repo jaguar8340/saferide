@@ -16,6 +16,8 @@ import {
   Clock,
   Circle,
   Send,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -61,6 +63,7 @@ export default function StudentsManager() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
+  const [duplicateWarning, setDuplicateWarning] = useState(null);   // { matches: [...], form: {...} }
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "gr";
     return window.localStorage.getItem("admin.students.region_tab") || "gr";
@@ -91,12 +94,32 @@ export default function StudentsManager() {
       toast.error("Vor- und Nachname sind Pflicht");
       return;
     }
+    // Duplicate check BEFORE hitting POST — server-side check would only
+    // reject after insert, we want the admin to make an informed choice.
+    try {
+      const r = await api.get("/students/check-duplicate", {
+        params: { first_name: form.first_name.trim(), last_name: form.last_name.trim() },
+      });
+      const matches = r.data?.matches || [];
+      if (matches.length > 0) {
+        setDuplicateWarning({ matches, form: { ...form } });
+        return;
+      }
+    } catch (err) {
+      // Non-blocking — fall through to create if the check fails.
+      console.warn("duplicate check failed", err);
+    }
+    await createActual(form);
+  };
+
+  const createActual = async (formData) => {
     setCreating(true);
     try {
-      const r = await api.post("/students", form);
+      const r = await api.post("/students", formData);
       setItems((cur) => [...(cur || []), r.data]);
       setForm(EMPTY_FORM);
       setShowForm(false);
+      setDuplicateWarning(null);
       toast.success("Schüler angelegt");
     } catch (err) {
       toast.error(formatApiError(err));
@@ -476,6 +499,115 @@ export default function StudentsManager() {
           ))}
         </div>
       )}
+      {duplicateWarning && (
+        <DuplicateStudentWarning
+          matches={duplicateWarning.matches}
+          form={duplicateWarning.form}
+          onCancel={() => setDuplicateWarning(null)}
+          onCreate={() => createActual(duplicateWarning.form)}
+          creating={creating}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Modal shown when creating a student whose Vor+Nachname already exists. */
+function DuplicateStudentWarning({ matches, form, onCancel, onCreate, creating }) {
+  const fmt = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleDateString("de-CH");
+    } catch {
+      return iso.slice(0, 10);
+    }
+  };
+  return (
+    <div
+      data-testid="student-duplicate-warning-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-[#fef3c7] text-[#b45309] flex items-center justify-center shrink-0">
+            <AlertTriangle size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display text-xl leading-tight text-[#0f172a]">
+              Achtung: möglicher Doppeleintrag
+            </h3>
+            <p className="text-sm text-[#475569] mt-1">
+              Es existiert bereits {matches.length === 1 ? "ein Schüler" : `${matches.length} Schüler`} mit dem Namen{" "}
+              <strong className="text-[#0f172a]">{form.first_name} {form.last_name}</strong>.
+            </p>
+          </div>
+          <button
+            onClick={onCancel}
+            data-testid="student-duplicate-close"
+            className="text-[#94a3b8] hover:text-[#0f172a] p-1"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-2 mb-5 max-h-64 overflow-y-auto">
+          {matches.map((m) => (
+            <div
+              key={m.id}
+              data-testid={`student-duplicate-match-${m.id}`}
+              className="border border-[#fde68a] bg-[#fffbeb] rounded-xl p-3 text-sm"
+            >
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="font-semibold text-[#0f172a]">
+                  {m.first_name} {m.last_name}
+                  {m.category && (
+                    <span className="ml-2 text-[10px] font-semibold tracking-widest uppercase text-[#94a3b8]">
+                      Kat. {m.category}
+                    </span>
+                  )}
+                  {m.archived && (
+                    <span className="ml-2 text-[10px] font-semibold tracking-widest uppercase bg-[#e2e8f0] text-[#475569] px-2 py-0.5 rounded-full">
+                      Archiv
+                    </span>
+                  )}
+                </div>
+                <Link
+                  to={`/admin/students/${m.id}`}
+                  data-testid={`student-duplicate-open-${m.id}`}
+                  className="text-[10px] font-semibold tracking-widest uppercase text-[#ff5a36] hover:underline"
+                >
+                  Öffnen →
+                </Link>
+              </div>
+              <div className="text-xs text-[#78716c] mt-1">
+                {[m.email, m.phone, m.city].filter(Boolean).join(" · ") || "keine Kontaktdaten"}
+                {m.created_at && <span className="ml-2 text-[#a8a29e]">· angelegt {fmt(m.created_at)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-2 flex-wrap">
+          <button
+            onClick={onCancel}
+            data-testid="student-duplicate-cancel"
+            className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={onCreate}
+            disabled={creating}
+            data-testid="student-duplicate-confirm"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#ff5a36] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+          >
+            {creating && <Loader2 size={12} className="animate-spin" />}
+            Trotzdem anlegen
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

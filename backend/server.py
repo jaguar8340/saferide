@@ -42,6 +42,7 @@ from routers import (
     gps,
     invoice_email,
     invoice_pdf,  # noqa: F401 – imported for side-effect / registration only
+    invoice_reminders,
     locations,
     mail,
     portal_auth,
@@ -110,6 +111,8 @@ api.include_router(mail.router)
 api.include_router(users.router)
 api.include_router(invoice_email.invoice_router)
 api.include_router(invoice_email.settings_router)
+api.include_router(invoice_reminders.router)
+api.include_router(invoice_reminders.accounting_router)
 api.include_router(calendar_router.router)
 api.include_router(calendar_router.ical_router)
 api.include_router(calendar_router.student_summary_router)

@@ -56,6 +56,16 @@ async def get_or_create_settings() -> dict:
         await db.business_settings.update_one(
             {"id": "default"}, {"$set": {"calendar_token": token}}
         )
+    # Legacy back-fill: any field newly added to BusinessSettings that isn't
+    # yet present on this Mongo row → set to its Pydantic default. Keeps
+    # `settings.get("reminder_1_body")` etc. non-None for consumers.
+    defaults = BusinessSettings().model_dump()
+    missing = {k: v for k, v in defaults.items() if k not in doc}
+    if missing:
+        doc.update(missing)
+        await db.business_settings.update_one(
+            {"id": "default"}, {"$set": missing}
+        )
     return doc
 
 

@@ -403,6 +403,14 @@ class StudentInvoice(StudentInvoiceCreate):
     archived_at: str = ""                                   # ISO timestamp of last archive write
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_by: str = ""
+    # Payment tracking — when status flips to "paid" we stamp this ISO date.
+    # Nullable string (default "") because legacy invoices don't have it.
+    paid_at: str = Field(default="", max_length=40)         # ISO date when payment was received
+    # Dunning / Mahnwesen — count of reminders sent (0,1,2,3), last reminder ISO
+    # timestamp and cumulative reminder fees (added to price on the PDF).
+    reminder_level: int = Field(default=0, ge=0, le=3)      # 0=no reminder yet, 1..3 = Mahnstufe
+    last_reminder_at: str = Field(default="", max_length=40)  # ISO timestamp of last reminder mail
+    reminder_fee_chf: float = Field(default=0.0, ge=0, le=10_000)  # cumulative Mahngebühren
 
 
 class StudentInvoicePatch(BaseModel):
@@ -417,6 +425,7 @@ class StudentInvoicePatch(BaseModel):
     is_direct: Optional[bool] = None
     storno_note: Optional[str] = None
     date: Optional[str] = None                              # invoice date (rarely edited)
+    paid_at: Optional[str] = None                           # ISO date the payment was received
 
 
 # ---------- Student documents ----------
@@ -534,6 +543,47 @@ class BusinessSettings(BaseModel):
         "Bei Fragen melde dich jederzeit.\n\n"
         "Herzlichen Dank und liebe Grüsse\n{business_name}"
     )
+    # -------- Mahnwesen (Dunning) --------
+    # Zahlungsfrist in Tagen ab Rechnungsdatum, bevor die 1. Mahnung fällig wird.
+    payment_deadline_days: int = 10
+    # Anzahl Tage zwischen den Mahnstufen.
+    reminder_interval_days: int = 10
+    # Mahngebühren pro Stufe (CHF).
+    reminder_fee_1: float = 0.0
+    reminder_fee_2: float = 20.0
+    reminder_fee_3: float = 40.0
+    # E-Mail-Vorlagen pro Mahnstufe (Betreff + Body).
+    reminder_1_subject: str = "Zahlungserinnerung zu Rechnung {number}"
+    reminder_1_body: str = (
+        "Hallo {first_name},\n\n"
+        "wir möchten dich freundlich daran erinnern, dass die Rechnung {number} "
+        "über CHF {total} vom {invoice_date} noch offen ist ({days_overdue} Tage überfällig).\n\n"
+        "Falls du bereits bezahlt hast, betrachte diese E-Mail bitte als gegenstandslos.\n\n"
+        "Herzlichen Dank und liebe Grüsse\n{business_name}"
+    )
+    reminder_2_subject: str = "2. Mahnung zu Rechnung {number}"
+    reminder_2_body: str = (
+        "Hallo {first_name},\n\n"
+        "trotz unserer freundlichen Erinnerung ist die Rechnung {number} vom "
+        "{invoice_date} über CHF {total} weiterhin offen ({days_overdue} Tage überfällig).\n\n"
+        "Wir bitten dich, den offenen Betrag inklusive Mahngebühr von "
+        "CHF {reminder_fee} (neuer Gesamtbetrag: CHF {new_total}) innert 7 Tagen "
+        "zu begleichen.\n\n"
+        "Bei Fragen melde dich bitte umgehend bei uns.\n\n"
+        "Freundliche Grüsse\n{business_name}"
+    )
+    reminder_3_subject: str = "3. und letzte Mahnung – Rechnung {number}"
+    reminder_3_body: str = (
+        "Hallo {first_name},\n\n"
+        "die Rechnung {number} vom {invoice_date} über CHF {total} ist "
+        "trotz zweier Mahnungen weiterhin offen ({days_overdue} Tage überfällig).\n\n"
+        "Wir fordern dich hiermit ein LETZTES Mal auf, den offenen Betrag "
+        "inklusive Mahngebühren von CHF {reminder_fee} "
+        "(neuer Gesamtbetrag: CHF {new_total}) innert 7 Tagen zu begleichen.\n\n"
+        "Sollte der Betrag nicht rechtzeitig eingehen, sehen wir uns gezwungen, "
+        "ohne weitere Ankündigung rechtliche Schritte (Betreibung) einzuleiten.\n\n"
+        "Freundliche Grüsse\n{business_name}"
+    )
     # iCal-Sync – zufälliges Token, generiert bei get_or_create_settings falls leer
     calendar_token: str = ""
     # External iCal feeds abonnieren (z. B. iPhone-Kalender). Belegte Slots
@@ -580,6 +630,17 @@ class BusinessSettingsPatch(BaseModel):
     imap_use_ssl: Optional[bool] = None
     email_subject_template: Optional[str] = None
     email_body_template: Optional[str] = None
+    payment_deadline_days: Optional[int] = None
+    reminder_interval_days: Optional[int] = None
+    reminder_fee_1: Optional[float] = None
+    reminder_fee_2: Optional[float] = None
+    reminder_fee_3: Optional[float] = None
+    reminder_1_subject: Optional[str] = None
+    reminder_1_body: Optional[str] = None
+    reminder_2_subject: Optional[str] = None
+    reminder_2_body: Optional[str] = None
+    reminder_3_subject: Optional[str] = None
+    reminder_3_body: Optional[str] = None
 
 
 

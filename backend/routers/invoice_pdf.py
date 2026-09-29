@@ -239,6 +239,26 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     bottom = 18 * mm
 
     # ------------------------------------------------------------------
+    #  „BEZAHLT" watermark stamp — only when the invoice is paid.
+    #  Drawn FIRST so the entire content below overlays it (subtle look).
+    # ------------------------------------------------------------------
+    if invoice.get("status") == "paid":
+        c.saveState()
+        c.translate(page_w / 2, page_h / 2)
+        c.rotate(20)
+        c.setFillColor(colors.HexColor("#16a34a"))
+        c.setStrokeColor(colors.HexColor("#16a34a"))
+        c.setFillAlpha(0.14)
+        c.setStrokeAlpha(0.20)
+        c.setFont("Helvetica-Bold", 96)
+        c.drawCentredString(0, -20, "BEZAHLT")
+        if invoice.get("paid_at"):
+            c.setFont("Helvetica", 14)
+            c.setFillAlpha(0.20)
+            c.drawCentredString(0, -50, f"am {_fmt_dmy(invoice.get('paid_at'))}")
+        c.restoreState()
+
+    # ------------------------------------------------------------------
     #  Letterhead — Logo (left) + business identity (right of logo)
     # ------------------------------------------------------------------
     logo = _load_logo(settings)
@@ -321,7 +341,12 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     title_y = rcpt_y - 30 * mm
     c.setFillColor(NAVY)
     c.setFont("Helvetica-Bold", 16)                # was 22
-    c.drawString(left, title_y, f"Rechnung {invoice.get('number', '')}")
+    reminder_level = int(invoice.get("reminder_level") or 0)
+    if reminder_level >= 1 and invoice.get("status") == "open":
+        prefix = {1: "Zahlungserinnerung", 2: "2. Mahnung", 3: "3. Mahnung"}.get(reminder_level, "Mahnung")
+        c.drawString(left, title_y, f"{prefix} zu Rechnung {invoice.get('number', '')}")
+    else:
+        c.drawString(left, title_y, f"Rechnung {invoice.get('number', '')}")
 
     c.setFillColor(MUTED)                           # muted grey, no red
     c.setFont("Helvetica", 10)
@@ -356,7 +381,11 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     meta_y -= 12 * mm
     meta_pair(left, "Kundennummer", (student.get("id") or "")[:8].upper() or "—")
     meta_pair(left + 60 * mm, "Zahlungsweise", PAYMENT_LABEL.get(invoice.get("payment_method"), "—"))
-    meta_pair(left + 115 * mm, "Status", STATUS_LABEL.get(invoice.get("status"), "—"))
+    # Status shows „Bezahlt am dd.mm.yyyy" if paid_at is stored, else the plain status label.
+    status_label = STATUS_LABEL.get(invoice.get("status"), "—")
+    if invoice.get("status") == "paid" and invoice.get("paid_at"):
+        status_label = f"Bezahlt am {_fmt_dmy(invoice.get('paid_at'))}"
+    meta_pair(left + 115 * mm, "Status", status_label)
 
     # ------------------------------------------------------------------
     #  Salutation  (kein "Hallo Name," mehr — nur noch der Einleitungssatz)
@@ -464,11 +493,25 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     total_row(total_y, "Zwischentotal", f"CHF {_money(subtotal)}")
     total_row(total_y - 5 * mm, f"MWST {mwst_rate:.1f} %", f"CHF {_money(mwst_amount)}")
 
+    # Mahngebühren — cumulative fees from all past reminders. Only shown
+    # when > 0. Positioned above the "Total inkl. MWST" underline.
+    reminder_fee_val = float(invoice.get("reminder_fee_chf") or 0)
+    show_reminder_fee = reminder_fee_val > 0 and invoice.get("status") == "open"
+    if show_reminder_fee:
+        total_row(total_y - 10 * mm, "Mahngebühr", f"CHF {_money(reminder_fee_val)}")
+        total_incl = round(total_incl + reminder_fee_val, 2)
+        # Push the underline + Total row down by 5 mm to make room
+        underline_y = total_y - 13 * mm
+        total_label_y = total_y - 17 * mm
+    else:
+        underline_y = total_y - 8 * mm
+        total_label_y = total_y - 12 * mm
+
     # Bold total with underline
     c.setStrokeColor(NAVY)
     c.setLineWidth(0.6)
-    c.line(col_price - 5 * mm, total_y - 8 * mm, col_total, total_y - 8 * mm)
-    total_row(total_y - 12 * mm, "Total inkl. MWST", f"CHF {_money(total_incl)}", bold=True)
+    c.line(col_price - 5 * mm, underline_y, col_total, underline_y)
+    total_row(total_label_y, "Total inkl. MWST", f"CHF {_money(total_incl)}", bold=True)
 
     # ------------------------------------------------------------------
     #  Closing paragraph
@@ -524,10 +567,12 @@ def build_invoice_pdf(invoice: dict, student: dict, settings: dict) -> bytes:
     # the QR-Bill lives on its own page while the plain footer above stays
     # on page 1. We do NOT call c.showPage() again here to avoid an empty
     # trailing page.
-    _draw_qr_bill(
-        c, invoice, student, settings, total=total_incl,
-        page_w=page_w, page_h=page_h,
-    )
+    # Only include a QR-Bill payslip for OPEN invoices — paid ones don't need one.
+    if invoice.get("status") == "open":
+        _draw_qr_bill(
+            c, invoice, student, settings, total=total_incl,
+            page_w=page_w, page_h=page_h,
+        )
 
     c.save()
     data = buf.getvalue()
