@@ -635,3 +635,37 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
   - **POST /request Konflikt-Guard erweitert**: HTTP 409 wird jetzt auch geworfen, wenn ein Slot mit einem privaten iCal-Event überlappt — nicht nur wenn eine andere pending Booking existiert.
   - **UI-Text im IcalModal präzisiert**: „…blockieren Doppelbuchungen — sowohl im Admin-Kalender als auch im öffentlichen Buchungs-Widget."
   - **Regression** `/app/backend/tests/test_ical_slot_integration.py` (neu, 3 Tests): startet einen lokalen HTTP-Server der ein VCALENDAR/VEVENT für 14:00–16:00 UTC ausliefert, registriert es via `POST /calendar/external-feeds`, invalidiert den Cache via `/refresh` und verifiziert: (a) `/slots` schließt 14:00–15:30 aus, (b) `POST /request` mit 14:30 liefert 409, (c) `POST /request` mit 09:00 (außerhalb) liefert 200. Gesamt-Suite: 24/24 grün.
+
+
+- ✅ **Iteration 67 (29.09.2026) — Zahlungsdatum + Mahnwesen + Duplikat-Warnung (DONE, 15/15 pytest grün · Backend + Frontend testing_agent 100 %):**
+  - **Zahlungseingang bei Rechnungen (`paid_at`):**
+    - Neues Feld `paid_at` (ISO-Datum) in `StudentInvoice` und `StudentInvoicePatch` (`/app/backend/models/schemas.py` 395-419).
+    - PATCH-Handler `student_invoices.py` L120-180: setzt `paid_at = heute` automatisch beim Wechsel Status → `paid` (wenn nicht explizit übergeben), löscht es beim Wechsel weg von `paid`.
+    - Frontend `InvoicesTab.jsx`: neuer `PaidDateModal` öffnet sich beim Setzen des Status auf „Bezahlt" via Dropdown, Default = heute, überschreibbar. Status-Pill zeigt „Bezahlt · dd/mm/yyyy" wenn `paid_at` gesetzt.
+    - PDF-Generator (`invoice_pdf.py`): grosser diagonaler „BEZAHLT"-Wasserzeichen-Stempel + „Bezahlt am dd.mm.yyyy" in Meta-Zeile. Für `status=paid` wird kein Swiss QR-Bill mehr angehängt.
+  - **Mahnwesen (Dunning):**
+    - Neuer Router `/app/backend/routers/invoice_reminders.py` mit 4 Endpoints:
+      - `POST /students/{sid}/invoices/{iid}/reminder/preview` → gibt Betreff/Body/Fee für die berechnete oder angeforderte Mahnstufe zurück (kein Versand)
+      - `POST /students/{sid}/invoices/{iid}/reminder` → sendet die Mahn-E-Mail via Resend/SMTP, aktualisiert `reminder_level`, `reminder_fee_chf`, `last_reminder_at`, invalidiert das PDF-Archiv, PDF wird mit Mahngebühr regeneriert
+      - `POST /students/{sid}/invoices/{iid}/reminder/reset` → setzt Mahnstufe wieder auf 0 (falls versehentlich versendet)
+      - `GET /accounting/reminders/candidates` → alle überfälligen Rechnungen mit `days_overdue` und `next_level`
+    - Neue Felder in `StudentInvoice`: `reminder_level` (0-3), `reminder_fee_chf`, `last_reminder_at`.
+    - PDF-Generator zeigt bei `reminder_level ≥ 1` einen anderen Titel („Zahlungserinnerung zu Rechnung RE-…", „2. Mahnung zu…", „3. Mahnung zu…") und listet die kumulative Mahngebühr im Total-Block.
+    - Frontend `InvoicesTab.jsx`: neuer `ReminderModal` mit Level-Toggle (1/2/3), editierbaren Betreff/Body-Feldern (Standard aus Settings vorgeladen), Mahngebühr-Feld, Empfänger. Preview wird bei Level-Wechsel neu geladen. Reminder-Badge (`1./2./3. Mahnung`) neben Status-Pill sichtbar wenn `reminder_level > 0`.
+  - **Konfigurierbare Mahntexte (in `BusinessSettings`):**
+    - Neue Felder: `payment_deadline_days` (default 10), `reminder_interval_days` (default 10), `reminder_fee_1/2/3` (default 0/20/40 CHF), `reminder_1/2/3_subject`, `reminder_1/2/3_body` mit sinnvollen deutschen Standard-Texten inkl. Platzhaltern `{first_name}`, `{number}`, `{total}`, `{days_overdue}`, `{reminder_fee}`, `{new_total}`, `{invoice_date}`, `{business_name}`.
+    - Neue Sektion „Mahnwesen · Vorlagen & Fristen" in `EmailSettingsManager.jsx` (Admin → Mail → E-Mail Einstellungen).
+    - `get_or_create_settings` in `business_settings.py` L37-70: füllt fehlende Felder in Legacy-Dokumenten automatisch mit Model-Defaults (schema evolution).
+  - **Duplikat-Warnung bei Schüler-Anlage:**
+    - Neuer Endpoint `GET /api/students/check-duplicate?first_name=X&last_name=Y` in `students.py` L17-45. Regex mit `^`/`$`-Anchor + `IGNORECASE` → case-insensitive exakter Match.
+    - Frontend `StudentsManager.jsx`: Modal `DuplicateStudentWarning` erscheint beim Submit, wenn Backend Matches liefert. Zeigt bestehende Schüler mit Kontaktdaten, Kategorie, Anlagedatum, „Öffnen"-Link + Buttons „Abbrechen" / „Trotzdem anlegen".
+    - Nicht-blockierend: hard-block wäre falsch (z. B. Vater + Sohn mit gleichem Namen).
+  - **Test-Coverage** `/app/backend/tests/test_iteration66_paid_reminder_duplicate.py` (neu, 15 Tests): 
+    - Paid_at auto-stamp + manual override + reset
+    - Reminder preview (auto-level, forced level, fee correctness)
+    - Reminder send blocked without SMTP (400 mit klarer Fehlermeldung)
+    - Reset-Endpoint
+    - Reminder-Candidates-Listing (nur open, nicht direct)
+    - Business-Settings Backfill für Legacy-Dokumente
+    - Duplicate-Check case-insensitive Match + case-sensitive Non-Match + leerer Query
+  - **Regression sauber**: existing invoice/PDF/AGB/booking flows unverändert.

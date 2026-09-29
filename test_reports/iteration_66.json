@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 66 — full backend + frontend testing of Saferide CMS features: (1) invoice paid_at auto-stamp, (2) Mahnung/Reminder flow (preview + level advancement + fee + 400 without SMTP + reset), (3) BusinessSettings Mahnwesen fields (payment_deadline_days, reminder_interval_days, reminder_fee_1..3, reminder_1..3_subject/body), (4) case-insensitive duplicate student check + warning modal. Backend pytest: 15/15 passed. Frontend UI (desktop 1440x900): PaidDateModal opens on status→paid dropdown with today's date pre-filled and PATCH returns paid_at=2026-09-29+status=paid; ReminderModal shows all required testids (reminder-level-1/2/3, reminder-to/fee/subject/body/send), body is pre-filled with 'Hallo Stefan', 'RE-2026-0150', '65 Tage überfällig', level→2 triggers POST /reminder/preview and fee updates to 20; EmailSettingsManager 'Mahnwesen · Vorlagen & Fristen' section renders all 11 testids and onBlur PATCH /api/settings/business returns 200; StudentsManager add-form with 'stefan HAAS' triggers student-duplicate-warning-modal with 1 match card and cancel/confirm/open-<id> buttons.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iteration66_paid_reminder_duplicate.py",
+    "/app/test_reports/pytest/iteration66.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "invoice_reminders.py L279: build_smtp_config accepts SMTP OR Resend; guard is correct — the 400 message references only 'SMTP oder Resend'. Good UX.",
+    "students.py check-duplicate uses regex escape+^$ anchors — safe against ReDoS. Good.",
+    "student_invoices.py L148-154 paid_at auto-stamp: when status flips 'paid'→'paid' (idempotent), paid_at is left alone. Correct.",
+    "business_settings.py L59-68 legacy back-fill: missing fields are added on read; nice for schema evolution but every GET does an extra write for legacy rows on first hit — negligible."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration66_paid_reminder_duplicate.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "Created 1 TEST_ invoice in TestPaidAtAutoStamp fixture, auto-deleted in teardown. Reminder reset endpoint restored RE-2026-0150 to reminder_level=0 after tests. Business settings reminder_fee_1 briefly changed to 13 via UI then restored to 0.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 4 new features work end-to-end. Data restored: RE-2026-0150 status=open, paid_at='', reminder_level=0. Business settings reset. Run tests with `REACT_APP_BACKEND_URL=... pytest /app/backend/tests/test_iteration66_paid_reminder_duplicate.py -o addopts=''` (avoid xdist)."
+}
