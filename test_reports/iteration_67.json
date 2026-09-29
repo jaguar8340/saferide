@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 67 — Mahnwesen (RemindersSubtab) tab in Buchhaltung: verified backend GET /api/accounting/reminders/candidates returns 4 enriched candidates (all fields present); verified frontend renders new 'Mahnwesen' subtab (BellRing icon) between 'Rechnungen' and 'Ausgaben' with correct data-testid='accounting-subtab-reminders'. Container 'reminders-subtab' shows 5 KPI cards (Offen=4, Ohne=4, 1./2./3.=0/0/0, >30 T=4, Betrag=CHF 415.00), 6 filter chips with live counts, 4 rows all red-tinted (>=30 days). Bulk button disabled with 0 selection, enabled after selection; toggle-all selects all 4; only 1 row has an email (Stefan Haas RE-2026-0150) so 3 rows have disabled checkbox+Mahnen button (correct). Quick-paid modal opens with today's date (2026-09-29) pre-filled; quick-reminder modal loads preview (to=s.haas@auto-hinwil.ch, subject/body prefilled, fee=0 for level 1), switching to level 3 triggers new POST /reminder/preview and fee updates to 40 (from business settings). All 7 existing subtabs (overview/monthly/invoices/expenses/accounts/income/direct) still render without errors. No actual reminders sent (SMTP not configured, all modals cancelled).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Buchhaltung › Ausgaben (pre-existing, not iteration 67)", "issues": ["React hydration warning: <span> child inside <option> in expense-new-account select (AccountingPage.jsx L1015). Warning only – functionally fine. Comes from dev-instrumentation injecting a wrapper span into every dynamic child; harmless in production but should be cleaned up eventually."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "RemindersSubtab useEffect for level preview has `level` in dep array but sets `level` inside — first render passes level=null → server picks next_level. Level re-clicks trigger correct re-preview. Good.",
+    "bulkSend loops sequential POSTs with await — safe against server overload but slow for large lists; acceptable given expected volume (<20 candidates).",
+    "open_amount computes price*(1+mwst/100) + reminder_fee_chf; matches backend definition. Consistent.",
+    "quick-paid-modal: `paid_at: date || today` fallback covers edge case of cleared date input. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "None. Existing 4 overdue invoices used read-only. All modals cancelled without state changes.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Mahnwesen tab is production-ready UI-wise. Only 1 of 4 seeded overdue invoices has a student_email (Stefan Haas / RE-2026-0150) — the other 3 (TEST_it39 Inv/Doc) are correctly rendered with disabled checkbox+Mahnen and 'keine E-Mail' badge. To test true 2+ row bulk-send flow, seed 2 more students with valid email + overdue invoices. Backend SMTP still not configured, so live send would return 400 via /reminder endpoint."
+}

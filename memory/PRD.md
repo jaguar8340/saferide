@@ -669,3 +669,17 @@ admin@saferide.ch / SafeRide2026!  (siehe `/app/memory/test_credentials.md`)
     - Business-Settings Backfill für Legacy-Dokumente
     - Duplicate-Check case-insensitive Match + case-sensitive Non-Match + leerer Query
   - **Regression sauber**: existing invoice/PDF/AGB/booking flows unverändert.
+
+
+- ✅ **Iteration 68 (29.09.2026) — Mahnwesen-Übersicht in Buchhaltung (DONE, Testing-Agent 100 % Backend + 100 % Frontend):**
+  - **Neuer Sub-Tab „Mahnwesen"** in `/app/frontend/src/pages/AccountingPage.jsx` (zwischen Rechnungen und Ausgaben) mit `BellRing`-Icon (`data-testid="accounting-subtab-reminders"`).
+  - **`RemindersSubtab`-Komponente** (Zeilen 1789–2160):
+    - **5 KPI-Karten**: Offen/überfällig, Noch nicht gemahnt, 1./2./3. Mahnung, >30 Tage, Offener Betrag (Summe inkl. bereits verhängter Mahngebühren).
+    - **6 Filter-Chips** mit Live-Counts: Alle, Ohne, 1./2./3., >30 Tage.
+    - **Tabelle** mit `reminder-row-<id>`: Auswahl-Checkbox, PDF-öffnen-Link auf Rechnungsnr., Schüler mit E-Mail-Warnung falls keine hinterlegt, Datum, Tage-überfällig-Badge (color-coded), Mahnstufe + Vorschlag, Betrag mit Mahngebühr-Hinweis, Aktionen (Bezahlt-Button grün + Mahnen-Button amber).
+    - **Zeilenhintergrund** gestuft nach Dringlichkeit: rot-tint (≥30 T), amber-tint (≥14 T), neutral.
+    - **Bulk-Send** mit „Ausgewählte mahnen"-Button (`reminders-bulk-send`) → Bestätigungs-Modal → sequenzielle POST `/reminder` mit `level = next_level`. Zeilen ohne E-Mail werden übersprungen (Checkbox disabled).
+    - **QuickReminderModal** (identische Semantik wie `ReminderModal` in InvoicesTab): Level-Toggle 1/2/3, Preview via POST `/reminder/preview`, editierbare Empfänger/Gebühr/Betreff/Body. Level-Wechsel triggert Re-Preview.
+    - **QuickPaidModal**: Zahlungsdatum-Picker (Default heute), PATCH auf Rechnung mit `status=paid` + `paid_at`.
+  - **Backend unverändert** — nutzt bestehenden `GET /accounting/reminders/candidates` aus Iteration 67.
+  - **Keine Regression**: Alle 7 bestehenden Buchhaltungs-Sub-Tabs (Übersicht, Monatsjournal, Rechnungen, Ausgaben, Kontenplan, Erfolgsrechnung, DIREKT) laufen unverändert weiter.
