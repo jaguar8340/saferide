@@ -1,0 +1,23 @@
+{
+  "summary": "Iteration 65 — verified migration of portal_auth, terms and mail routers to shared core.email.send_email so Resend transport is honored everywhere. 11/11 backend pytest cases pass (settings persistence, portal-invite fallback, AGB fallback, invoice-email 400 fallback, general /mail/send 502 friendly error, plus regression on /students, /bookings, /backup/status, /auth/login). Frontend UI on desktop 1440x900 and mobile 390x844: Resend section is visible ABOVE SMTP with EMPFOHLEN badge, testids bs-resend_api_key + bs-resend_from_email present, resend.com link works, save on blur triggers 'Gespeichert' toast and 'Resend aktiv — SMTP wird umgangen' pill. Settings restored to empty (resend_api_key='', resend_from_email='', smtp_host='') after tests as instructed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iteration65_resend_migration.py",
+    "/app/test_reports/pytest/iteration65.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "portal_auth.py and terms.py still import _build_smtp_config / _open_smtp from routers.invoice_email as 'noqa: F401 — kept for legacy imports'. Now that core.email.build_smtp_config exists, these legacy imports can be removed in a follow-up cleanup (not blocking).",
+    "invoice_email.py still contains local _build_smtp_config / _open_smtp duplicates of core.email helpers — dead code once the noqa imports above are removed. Minor DRY improvement, not blocking."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration65_resend_migration.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@saferide.ch / SafeRide2026!",
+  "seed_data_creation": "none — used existing seeded students; test data only touched business_settings (reset to empty afterwards)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Business settings are left with empty smtp_host and empty resend_api_key/resend_from_email. Test file /app/backend/tests/test_iteration65_resend_migration.py is idempotent — it PATCHes and always resets. Note pytest.ini uses xdist by default; run with `-o addopts=\"\"` to avoid load-scheduler conflicts."
+}
