@@ -25,6 +25,10 @@ import {
   FileDown,
   CalendarDays,
   X,
+  BellRing,
+  AlertCircle,
+  Check,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
@@ -33,6 +37,7 @@ const SUBTABS = [
   { id: "overview",       icon: LayoutDashboard, label: "Übersicht" },
   { id: "monthly",        icon: CalendarDays,    label: "Monatsjournal" },
   { id: "invoices",       icon: Receipt,         label: "Rechnungen" },
+  { id: "reminders",      icon: BellRing,        label: "Mahnwesen" },
   { id: "expenses",       icon: ArrowDownLeft,   label: "Ausgaben" },
   { id: "accounts",       icon: BookOpenCheck,   label: "Kontenplan" },
   { id: "income",         icon: BarChart3,       label: "Erfolgsrechnung" },
@@ -131,6 +136,7 @@ export default function AccountingPage() {
       {subtab === "overview"  && <OverviewSubtab year={year} onGoto={setSubtab} />}
       {subtab === "monthly"   && <MonthlyJournalSubtab year={year} />}
       {subtab === "invoices"  && <InvoicesSubtab year={year} direct={false} />}
+      {subtab === "reminders" && <RemindersSubtab />}
       {subtab === "expenses"  && <ExpensesSubtab year={year} />}
       {subtab === "accounts"  && <AccountsSubtab />}
       {subtab === "income"    && <IncomeStatementSubtab year={year} />}
@@ -1780,3 +1786,602 @@ function ReceiptThumb({ url, index, onRemove }) {
     </div>
   );
 }
+
+// =====================================================================
+//  RemindersSubtab — overdue-invoice list with quick reminder actions
+// =====================================================================
+function RemindersSubtab() {
+  const [items, setItems] = useState(null);
+  const [filter, setFilter] = useState("all");          // all | level_0 | level_1..3 | high_overdue
+  const [selected, setSelected] = useState(new Set());
+  const [reminderModal, setReminderModal] = useState(null); // {student_id, invoice_id, number, student_email, student_name, level}
+  const [paidModal, setPaidModal] = useState(null);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+
+  const load = async () => {
+    try {
+      const r = await api.get("/accounting/reminders/candidates");
+      setItems(Array.isArray(r.data) ? r.data : []);
+    } catch (e) {
+      toast.error(formatApiError(e));
+      setItems([]);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = useMemo(() => {
+    if (!items) return [];
+    return items.filter((it) => {
+      if (filter === "all") return true;
+      if (filter === "level_0") return (it.reminder_level || 0) === 0;
+      if (filter === "level_1") return it.reminder_level === 1;
+      if (filter === "level_2") return it.reminder_level === 2;
+      if (filter === "level_3") return it.reminder_level === 3;
+      if (filter === "high_overdue") return it.days_overdue >= 30;
+      return true;
+    });
+  }, [items, filter]);
+
+  const stats = useMemo(() => {
+    const list = items || [];
+    return {
+      total: list.length,
+      level_0: list.filter((i) => (i.reminder_level || 0) === 0).length,
+      level_1: list.filter((i) => i.reminder_level === 1).length,
+      level_2: list.filter((i) => i.reminder_level === 2).length,
+      level_3: list.filter((i) => i.reminder_level === 3).length,
+      high_overdue: list.filter((i) => i.days_overdue >= 30).length,
+      open_amount: list.reduce((sum, i) => {
+        const price = Number(i.price_chf) || 0;
+        const mwst = Number(i.mwst_rate) || 0;
+        return sum + price * (1 + mwst / 100) + (Number(i.reminder_fee_chf) || 0);
+      }, 0),
+    };
+  }, [items]);
+
+  const toggle = (id) => {
+    setSelected((cur) => {
+      const nx = new Set(cur);
+      if (nx.has(id)) nx.delete(id);
+      else nx.add(id);
+      return nx;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set());
+    else setSelected(new Set(filtered.map((i) => i.id)));
+  };
+
+  const bulkSend = async () => {
+    setConfirmBulk(false);
+    setBulkRunning(true);
+    let ok = 0, fail = 0;
+    const toRun = filtered.filter((i) => selected.has(i.id) && i.student_email);
+    for (const inv of toRun) {
+      try {
+        await api.post(`/students/${inv.student_id}/invoices/${inv.id}/reminder`, {
+          level: inv.next_level || 1,
+        });
+        ok += 1;
+      } catch (e) {
+        fail += 1;
+        console.warn("bulk reminder failed", inv.number, e);
+      }
+    }
+    setBulkRunning(false);
+    setSelected(new Set());
+    if (ok) toast.success(`${ok} Mahnung${ok > 1 ? "en" : ""} versendet`);
+    if (fail) toast.error(`${fail} Mahnung${fail > 1 ? "en" : ""} fehlgeschlagen`);
+    load();
+  };
+
+  if (items === null) {
+    return (
+      <div className="flex items-center gap-2 text-[#78716c] text-sm">
+        <Loader2 size={14} className="animate-spin" /> Kandidaten werden geladen …
+      </div>
+    );
+  }
+
+  const canBulk = selected.size > 0 && !bulkRunning;
+
+  return (
+    <div data-testid="reminders-subtab" className="space-y-4">
+      {/* KPI header */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <ReminderKpi label="Offen (überfällig)" value={stats.total} accent="#dc2626" />
+        <ReminderKpi label="Noch nicht gemahnt" value={stats.level_0} accent="#f59e0b" />
+        <ReminderKpi label="1./2./3. Mahnung" value={`${stats.level_1}/${stats.level_2}/${stats.level_3}`} accent="#b45309" />
+        <ReminderKpi label=">30 Tage überfällig" value={stats.high_overdue} accent="#7f1d1d" />
+        <ReminderKpi label="Offener Betrag" value={money(stats.open_amount)} accent="#0f172a" />
+      </div>
+
+      {/* Filter + Bulk bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="inline-flex gap-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-full p-1">
+          {[
+            { id: "all", label: `Alle (${stats.total})` },
+            { id: "level_0", label: `Ohne (${stats.level_0})` },
+            { id: "level_1", label: `1. (${stats.level_1})` },
+            { id: "level_2", label: `2. (${stats.level_2})` },
+            { id: "level_3", label: `3. (${stats.level_3})` },
+            { id: "high_overdue", label: `>30 T (${stats.high_overdue})` },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => { setFilter(f.id); setSelected(new Set()); }}
+              data-testid={`reminders-filter-${f.id}`}
+              className={`text-[10px] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full transition-colors ${
+                filter === f.id
+                  ? "bg-[#ff5a36] text-white"
+                  : "text-[#78716c] hover:text-[#0f172a]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {selected.size > 0 && (
+            <span className="text-xs text-[#78716c]" data-testid="reminders-selected-count">
+              {selected.size} ausgewählt
+            </span>
+          )}
+          <button
+            onClick={() => setConfirmBulk(true)}
+            disabled={!canBulk}
+            data-testid="reminders-bulk-send"
+            className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            title={canBulk ? "Alle ausgewählten Mahnungen versenden" : "Wähle mindestens eine Rechnung"}
+          >
+            {bulkRunning ? <Loader2 size={11} className="animate-spin" /> : <BellRing size={11} />}
+            Ausgewählte mahnen
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-dashed border-[#e7e5e4] rounded-2xl p-10 text-center">
+          <BellRing size={28} className="mx-auto text-[#94a3b8] mb-3" />
+          <div className="text-sm text-[#0f172a] font-semibold">
+            {stats.total === 0 ? "Keine überfälligen Rechnungen" : "Keine Rechnungen in diesem Filter"}
+          </div>
+          <p className="text-xs text-[#78716c] mt-1">
+            {stats.total === 0
+              ? "Sobald eine Rechnung überfällig wird, taucht sie hier auf."
+              : "Wechsle den Filter oben, um weitere Rechnungen zu sehen."}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white border border-[#e7e5e4] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#fbf9f6] text-[10px] font-semibold tracking-widest uppercase text-[#475569]">
+                <tr>
+                  <th className="p-3 text-left w-10">
+                    <input
+                      type="checkbox"
+                      checked={selected.size === filtered.length && filtered.length > 0}
+                      onChange={toggleAll}
+                      data-testid="reminders-toggle-all"
+                      className="accent-[#ff5a36]"
+                    />
+                  </th>
+                  <th className="p-3 text-left">Rechnung</th>
+                  <th className="p-3 text-left">Schüler:in</th>
+                  <th className="p-3 text-left">Datum</th>
+                  <th className="p-3 text-right">Überfällig</th>
+                  <th className="p-3 text-left">Mahnstufe</th>
+                  <th className="p-3 text-right">Betrag</th>
+                  <th className="p-3 text-right">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((inv) => {
+                  const price = Number(inv.price_chf) || 0;
+                  const mwst = Number(inv.mwst_rate) || 0;
+                  const total = price * (1 + mwst / 100) + (Number(inv.reminder_fee_chf) || 0);
+                  const level = inv.reminder_level || 0;
+                  const rowTint =
+                    inv.days_overdue >= 30 ? "bg-[#fef2f2]" :
+                    inv.days_overdue >= 14 ? "bg-[#fffbeb]" : "";
+                  return (
+                    <tr
+                      key={inv.id}
+                      data-testid={`reminder-row-${inv.id}`}
+                      className={`border-t border-[#f3f0eb] hover:bg-[#fbf9f6] ${rowTint}`}
+                    >
+                      <td className="p-3">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(inv.id)}
+                          onChange={() => toggle(inv.id)}
+                          disabled={!inv.student_email}
+                          data-testid={`reminder-select-${inv.id}`}
+                          className="accent-[#ff5a36]"
+                          title={!inv.student_email ? "Keine E-Mail beim Schüler hinterlegt" : ""}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => openInvoicePdf(inv.student_id, inv.id, inv.number)}
+                          data-testid={`reminder-open-pdf-${inv.id}`}
+                          className="text-[#ff5a36] hover:underline font-medium"
+                          title="PDF öffnen"
+                        >
+                          {inv.number}
+                        </button>
+                      </td>
+                      <td className="p-3">
+                        <div className="font-medium text-[#0f172a]">{inv.student_name || "—"}</div>
+                        {inv.student_email ? (
+                          <div className="text-[11px] text-[#78716c]">{inv.student_email}</div>
+                        ) : (
+                          <div className="text-[11px] text-[#dc2626] flex items-center gap-1">
+                            <AlertCircle size={10} /> keine E-Mail
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-3 text-[#475569]">{formatDMY(inv.date)}</td>
+                      <td className="p-3 text-right">
+                        <span
+                          className={`inline-block text-[10px] font-semibold tabular-nums ${
+                            inv.days_overdue >= 30 ? "text-[#dc2626]" :
+                            inv.days_overdue >= 14 ? "text-[#b45309]" : "text-[#78716c]"
+                          }`}
+                        >
+                          {inv.days_overdue} Tage
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        {level > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2 py-0.5 rounded-full">
+                            <BellRing size={9} /> {level}.
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-[#78716c]">—</span>
+                        )}
+                        {inv.next_level > level && (
+                          <span className="ml-1 text-[10px] text-[#78716c]" title="Vorschlag">
+                            → {inv.next_level}.
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-semibold tabular-nums">
+                        {money(total)}
+                        {inv.reminder_fee_chf > 0 && (
+                          <div className="text-[10px] text-[#b45309] font-normal">
+                            inkl. CHF {Number(inv.reminder_fee_chf).toFixed(2)} Mahngebühr
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setPaidModal(inv)}
+                            data-testid={`reminder-mark-paid-${inv.id}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#16a34a] text-white px-3 py-1.5 rounded-full hover:opacity-90"
+                            title="Als bezahlt markieren"
+                          >
+                            <Check size={10} /> Bezahlt
+                          </button>
+                          <button
+                            onClick={() => setReminderModal(inv)}
+                            disabled={!inv.student_email}
+                            data-testid={`reminder-send-${inv.id}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-3 py-1.5 rounded-full hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={inv.student_email ? "Mahnung senden" : "Keine E-Mail beim Schüler"}
+                          >
+                            <Mail size={10} /> Mahnen
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk-confirm modal */}
+      {confirmBulk && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setConfirmBulk(false)}
+          data-testid="reminders-bulk-confirm-modal"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#fef3c7] text-[#b45309] flex items-center justify-center shrink-0">
+                <BellRing size={20} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-xl leading-tight text-[#0f172a]">
+                  {selected.size} Mahnung{selected.size > 1 ? "en" : ""} versenden?
+                </h3>
+                <p className="text-sm text-[#475569] mt-1">
+                  Für jede ausgewählte Rechnung wird die nächst-höhere Mahnstufe versendet.
+                  Kunden ohne E-Mail werden übersprungen.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setConfirmBulk(false)}
+                className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={bulkSend}
+                data-testid="reminders-bulk-confirm"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-5 py-2.5 rounded-full hover:opacity-90"
+              >
+                <BellRing size={12} /> Jetzt senden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single-send reminder modal (reuses same inline form) */}
+      {reminderModal && (
+        <QuickReminderModal
+          invoice={reminderModal}
+          onClose={() => setReminderModal(null)}
+          onSent={() => { setReminderModal(null); load(); }}
+        />
+      )}
+      {paidModal && (
+        <QuickPaidModal
+          invoice={paidModal}
+          onClose={() => setPaidModal(null)}
+          onSaved={() => { setPaidModal(null); load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ReminderKpi({ label, value, accent }) {
+  return (
+    <div className="bg-white border border-[#e7e5e4] rounded-2xl p-4">
+      <div className="text-[10px] font-semibold tracking-widest uppercase text-[#78716c]">{label}</div>
+      <div className="mt-2 text-2xl font-display leading-none" style={{ color: accent }}>{value}</div>
+    </div>
+  );
+}
+
+/** Compact reminder modal used inside RemindersSubtab.
+ *  Loads preview from backend and sends via POST /reminder. */
+function QuickReminderModal({ invoice, onClose, onSent }) {
+  const [level, setLevel] = useState(null);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [fee, setFee] = useState(0);
+  const [to, setTo] = useState(invoice.student_email || "");
+  const [previewing, setPreviewing] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setPreviewing(true);
+      try {
+        const r = await api.post(
+          `/students/${invoice.student_id}/invoices/${invoice.id}/reminder/preview`,
+          { level: level || undefined },
+        );
+        if (!alive) return;
+        setLevel(r.data.level);
+        setSubject(r.data.subject);
+        setBody(r.data.body);
+        setFee(r.data.fee);
+        setTo(r.data.to || invoice.student_email || "");
+      } catch (e) {
+        if (alive) toast.error(formatApiError(e));
+      } finally {
+        if (alive) setPreviewing(false);
+      }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
+
+  const send = async () => {
+    if (!to.trim()) {
+      toast.error("Empfänger-E-Mail fehlt");
+      return;
+    }
+    setSending(true);
+    try {
+      await api.post(`/students/${invoice.student_id}/invoices/${invoice.id}/reminder`, {
+        level, to: to.trim(), subject, body, fee,
+      });
+      toast.success(`${level}. Mahnung an ${to.trim()} versendet`);
+      onSent?.();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div
+      data-testid="quick-reminder-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-[#fef3c7] text-[#b45309] flex items-center justify-center shrink-0">
+            <BellRing size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display text-xl leading-tight text-[#0f172a]">Mahnung senden</h3>
+            <p className="text-sm text-[#475569] mt-1">
+              Rechnung <strong>{invoice.number}</strong> · {invoice.student_name} · {invoice.days_overdue} Tage überfällig
+              {invoice.reminder_level > 0 && (
+                <span className="ml-2 text-[#b45309]">· Bisher: {invoice.reminder_level}</span>
+              )}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] p-1">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="mb-4">
+          <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-2">Mahnstufe</label>
+          <div className="inline-flex gap-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-full p-1">
+            {[1, 2, 3].map((n) => (
+              <button
+                key={n}
+                onClick={() => setLevel(n)}
+                data-testid={`quick-reminder-level-${n}`}
+                className={`text-[10px] font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full transition-colors ${
+                  level === n ? "bg-[#f59e0b] text-white" : "text-[#78716c] hover:text-[#0f172a]"
+                }`}
+              >
+                {n}. Mahnung
+              </button>
+            ))}
+          </div>
+        </div>
+        {previewing ? (
+          <div className="flex items-center gap-2 text-sm text-[#78716c] py-8">
+            <Loader2 size={14} className="animate-spin" /> Vorlage wird geladen …
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">Empfänger</label>
+                <input
+                  type="email" value={to} onChange={(e) => setTo(e.target.value)}
+                  data-testid="quick-reminder-to"
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">Mahngebühr (CHF)</label>
+                <input
+                  type="number" step="0.05" min="0" value={fee} onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+                  data-testid="quick-reminder-fee"
+                  className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">Betreff</label>
+              <input
+                type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
+                data-testid="quick-reminder-subject"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36]"
+              />
+            </div>
+            <div className="mb-5">
+              <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">Nachricht</label>
+              <textarea
+                rows={9} value={body} onChange={(e) => setBody(e.target.value)}
+                data-testid="quick-reminder-body"
+                className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] font-mono resize-none"
+              />
+            </div>
+          </>
+        )}
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={send} disabled={previewing || sending}
+            data-testid="quick-reminder-send"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#f59e0b] text-white px-5 py-2.5 rounded-full hover:opacity-90 disabled:opacity-50"
+          >
+            {sending ? <Loader2 size={12} className="animate-spin" /> : <BellRing size={12} />}
+            Mahnung senden
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Small modal to mark an invoice as paid with a chosen date. */
+function QuickPaidModal({ invoice, onClose, onSaved }) {
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.patch(`/students/${invoice.student_id}/invoices/${invoice.id}`, {
+        status: "paid", paid_at: date || new Date().toISOString().slice(0, 10),
+      });
+      toast.success(`${invoice.number} als bezahlt markiert`);
+      onSaved?.();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      data-testid="quick-paid-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-[#dcfce7] text-[#15803d] flex items-center justify-center shrink-0">
+            <Check size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display text-xl leading-tight text-[#0f172a]">Als bezahlt markieren</h3>
+            <p className="text-sm text-[#475569] mt-1">{invoice.number} · {invoice.student_name}</p>
+          </div>
+          <button onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] p-1">
+            <X size={18} />
+          </button>
+        </div>
+        <label className="text-[10px] font-semibold tracking-widest uppercase text-[#475569] block mb-1">Bezahlt am</label>
+        <input
+          type="date" value={date} onChange={(e) => setDate(e.target.value)}
+          data-testid="quick-paid-date"
+          className="w-full text-sm bg-[#fbf9f6] border border-[#e2e8f0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#ff5a36] mb-5"
+        />
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full text-[#475569] hover:bg-[#f1f5f9]"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={save} disabled={saving}
+            data-testid="quick-paid-confirm"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase bg-[#16a34a] text-white px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+            Als bezahlt markieren
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
