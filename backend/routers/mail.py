@@ -332,8 +332,11 @@ async def get_message(
 def _smtp_config(settings: dict) -> dict:
     from routers.invoice_email import _build_smtp_config
     cfg = _build_smtp_config(settings, override=None)
-    if not cfg.get("host"):
-        raise HTTPException(400, "SMTP nicht konfiguriert")
+    # Also carry Resend so send_email can prefer it.
+    cfg["resend_api_key"] = settings.get("resend_api_key") or ""
+    cfg["resend_from_email"] = settings.get("resend_from_email") or ""
+    if not cfg.get("host") and not cfg["resend_api_key"]:
+        raise HTTPException(400, "Weder SMTP noch Resend eingerichtet")
     return cfg
 
 
@@ -360,6 +363,32 @@ def _persist_sent(msg: EmailMessage, cfg: dict) -> None:
         pass
 
 
+def _send_msg(msg: EmailMessage, cfg: dict) -> None:
+    """Send the given EmailMessage using Resend (if configured) or SMTP.
+
+    Kept as a small helper so both `/send` and `/reply` share the same
+    transport-selection code path.
+    """
+    from core.email import send_email
+    to_list = [addr for _, addr in email.utils.getaddresses(msg.get_all("To", [])) if addr]
+    if not to_list:
+        raise HTTPException(400, "Empfänger fehlt")
+    body_text = msg.get_content() if not msg.is_multipart() else ""
+    from_header = msg["From"] or ""
+    # Best-effort split of "Name <mail>" into name+email
+    fn, fe = email.utils.parseaddr(from_header)
+    reply_to = msg.get("Reply-To")
+    send_email(
+        cfg,
+        to=", ".join(to_list),
+        subject=msg["Subject"] or "",
+        body_text=body_text,
+        from_email=fe or from_header,
+        from_name=fn or "",
+        reply_to=reply_to,
+    )
+
+
 @router.post("/send")
 async def send_mail(payload: MailComposeIn, admin=Depends(get_current_admin)):
     if not payload.to:
@@ -368,7 +397,11 @@ async def send_mail(payload: MailComposeIn, admin=Depends(get_current_admin)):
     cfg = _smtp_config(settings)
 
     msg = EmailMessage()
-    msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
+    msg["From"] = (
+        settings.get("smtp_from_email")
+        or cfg.get("user")
+        or "no-reply@saferide.ch"
+    )
     msg["To"] = ", ".join(payload.to)
     if payload.cc:
         msg["Cc"] = ", ".join(payload.cc)
@@ -376,11 +409,11 @@ async def send_mail(payload: MailComposeIn, admin=Depends(get_current_admin)):
     msg.set_content(payload.body)
 
     try:
-        from routers.invoice_email import _open_smtp
-        with _open_smtp(cfg) as server:
-            server.send_message(msg)
+        _send_msg(msg, cfg)
+    except HTTPException:
+        raise
     except Exception as e:      # noqa: BLE001
-        raise HTTPException(502, f"SMTP-Versand fehlgeschlagen: {e}")
+        raise HTTPException(502, f"E-Mail-Versand fehlgeschlagen: {e}")
 
     _persist_sent(msg, cfg)
     return {"ok": True}
@@ -420,7 +453,11 @@ async def reply_mail(payload: MailReplyIn, admin=Depends(get_current_admin)):
                     cc_list.append(addr)
 
     msg = EmailMessage()
-    msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
+    msg["From"] = (
+        settings.get("smtp_from_email")
+        or cfg.get("user")
+        or "no-reply@saferide.ch"
+    )
     msg["To"] = ", ".join(to_list)
     if cc_list:
         msg["Cc"] = ", ".join(cc_list)
@@ -435,11 +472,11 @@ async def reply_mail(payload: MailReplyIn, admin=Depends(get_current_admin)):
     msg.set_content(body)
 
     try:
-        from routers.invoice_email import _open_smtp
-        with _open_smtp(cfg) as server:
-            server.send_message(msg)
+        _send_msg(msg, cfg)
+    except HTTPException:
+        raise
     except Exception as e:      # noqa: BLE001
-        raise HTTPException(502, f"SMTP: {e}")
+        raise HTTPException(502, f"E-Mail-Versand fehlgeschlagen: {e}")
 
     _persist_sent(msg, cfg)
     return {"ok": True}

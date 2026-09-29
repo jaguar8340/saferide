@@ -27,6 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 
 from core.db import db
+from core.email import send_email
 from core.security import (
     create_access_token,
     get_current_admin,
@@ -35,7 +36,7 @@ from core.security import (
     verify_password,
 )
 from routers.business_settings import get_or_create_settings
-from routers.invoice_email import _build_smtp_config, _open_smtp
+from routers.invoice_email import _build_smtp_config, _open_smtp  # noqa: F401 – kept for legacy imports
 
 
 router = APIRouter(prefix="/portal", tags=["portal-auth"])
@@ -87,10 +88,20 @@ async def _send_setup_email(student: dict, setup_url: str) -> tuple[bool, str]:
         return False, "Schüler hat keine E-Mail-Adresse"
     settings = await get_or_create_settings()
     cfg = _build_smtp_config(settings, override=None)
-    if not cfg.get("host"):
-        return False, "SMTP nicht konfiguriert (E-Mail-Versand-Tab)"
+    # Populate resend fields for the shared send_email (build_smtp_config in
+    # invoice_email.py predates that support).
+    cfg["resend_api_key"] = settings.get("resend_api_key") or ""
+    cfg["resend_from_email"] = settings.get("resend_from_email") or ""
+    if not cfg.get("host") and not cfg["resend_api_key"]:
+        return False, "Weder SMTP noch Resend eingerichtet (Mail → E-Mail Einstellungen)"
 
     business_name = settings.get("business_name") or "Fahrschule Safe Ride"
+    from_email = (
+        settings.get("smtp_from_email")
+        or settings.get("smtp_username")
+        or "no-reply@saferide.ch"
+    )
+    from_name = settings.get("smtp_from_name") or business_name
     first = student.get("first_name") or ""
     subject = f"Dein persönlicher Schülerbereich bei {business_name}"
     body = f"""Hallo {first},
@@ -107,16 +118,18 @@ Bis bald auf der Strasse!
 {business_name}
 """.strip()
 
-    msg = EmailMessage()
-    msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
-    msg["To"] = student["email"]
-    msg["Subject"] = subject
-    msg.set_content(body)
-
     try:
-        with _open_smtp(cfg) as server:
-            server.send_message(msg)
+        send_email(
+            cfg,
+            to=student["email"],
+            subject=subject,
+            body_text=body,
+            from_email=from_email,
+            from_name=from_name,
+        )
         return True, ""
+    except HTTPException as e:
+        return False, str(e.detail)
     except Exception as e:      # noqa: BLE001
         return False, str(e)
 

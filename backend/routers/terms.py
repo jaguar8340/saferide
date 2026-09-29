@@ -23,9 +23,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from core.db import db
+from core.email import send_email
 from core.security import get_current_admin, get_current_student
 from routers.business_settings import get_or_create_settings
-from routers.invoice_email import _build_smtp_config, _open_smtp
+from routers.invoice_email import _build_smtp_config, _open_smtp  # noqa: F401 – kept for legacy imports
 from routers.portal_auth import _portal_public_url
 
 
@@ -138,17 +139,24 @@ async def send_terms(
     await db.students.update_one({"id": student_id}, {"$set": set_fields})
     confirm_url = f"{_portal_public_url()}/agb/{token}"
 
-    # Try to send via SMTP; fall back to returning the raw URL.
+    # Try to send via configured transport (Resend if key set, otherwise SMTP);
+    # fall back to returning the raw URL.
     settings = await get_or_create_settings()
     cfg = _build_smtp_config(settings, override=None)
-    sent, detail = False, "SMTP nicht konfiguriert"
-    if cfg.get("host"):
+    cfg["resend_api_key"] = settings.get("resend_api_key") or ""
+    cfg["resend_from_email"] = settings.get("resend_from_email") or ""
+    sent, detail = False, "Weder SMTP noch Resend eingerichtet"
+    if cfg.get("host") or cfg["resend_api_key"]:
         business = settings.get("business_name") or "Fahrschule Safe Ride"
-        msg = EmailMessage()
-        msg["From"] = cfg.get("from_email") or cfg.get("user") or "no-reply@saferide.ch"
-        msg["To"] = email
+        from_email = (
+            settings.get("smtp_from_email")
+            or settings.get("smtp_username")
+            or "no-reply@saferide.ch"
+        )
+        from_name = settings.get("smtp_from_name") or business
+
         if target == "guardian":
-            msg["Subject"] = f"AGB {business} – bitte für {student.get('first_name', '')} {student.get('last_name', '')} bestätigen"
+            subject = f"AGB {business} – bitte für {student.get('first_name', '')} {student.get('last_name', '')} bestätigen"
             greeting = f"Guten Tag {recipient_name or 'liebe Eltern'}"
             intro = (
                 f"anbei die Allgemeinen Geschäftsbedingungen der {business} für die "
@@ -157,14 +165,14 @@ async def send_terms(
                 f"den Link unten."
             )
         else:
-            msg["Subject"] = f"AGB {business} – bitte kurz bestätigen"
+            subject = f"AGB {business} – bitte kurz bestätigen"
             greeting = f"Hallo {recipient_name}"
             intro = (
                 f"anbei die Allgemeinen Geschäftsbedingungen der {business}. Bitte lies "
                 f"sie kurz durch und bestätige sie mit einem Klick auf den Link unten oder "
                 f'antworte einfach auf diese E-Mail mit "einverstanden".'
             )
-        msg.set_content(f"""{greeting},
+        body = f"""{greeting},
 
 {intro}
 
@@ -173,11 +181,19 @@ Bestätigen:
 
 Vielen Dank und bis bald auf der Strasse!
 {business}
-""".strip())
+""".strip()
         try:
-            with _open_smtp(cfg) as server:
-                server.send_message(msg)
+            send_email(
+                cfg,
+                to=email,
+                subject=subject,
+                body_text=body,
+                from_email=from_email,
+                from_name=from_name,
+            )
             sent, detail = True, ""
+        except HTTPException as e:
+            detail = str(e.detail)
         except Exception as e:      # noqa: BLE001
             detail = str(e)
 
